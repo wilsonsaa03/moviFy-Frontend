@@ -1,0 +1,80 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* CONTENEDOR GENERAL */
+.landing-container {
+  width: 100%;
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+/* BARRA SUPERIOR */
+.header {
+  width: 100%;
+  padding: 15px;
+  background: #64b5f6;
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  width: 80px;
+}
+
+/* CUERPO PRINCIPAL */
+.main {
+  display: flex;
+  justify-content: space-between;
+  padding: 40px;
+}
+
+/* IZQUIERDA */
+.left {
+  width: 50%;
+  font-family: Arial, sans-serif;
+}
+
+.left h2 {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.desc {
+  width: 80%;
+  font-size: 15px;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+/* DERECHA */
+.right {
+  width: 50%;
+  text-align: center;
+}
+
+.promo-img {
+  width: 65%;
+  border-radius: 10px;
+}
+
+.slogan {
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .main {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .left, .right {
+    width: 100%;
+    text-align: center;
+  }
+
+  .desc {
+    width: 100%;
+  }
+}
