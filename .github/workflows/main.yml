@@ -1,0 +1,46 @@
+name: 🚀 Deploy Angular App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: 🟢 Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Instalar dependencias
+        run: npm ci
+
+      - name: 🏗️ Build Angular (producción)
+        run: npm run build -- --configuration production
+
+      # 🧹 Limpiar carpeta (sin borrar .htaccess)
+      - name: 🧹 Limpiar servidor
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            find /var/www/ds2/movify -mindepth 1 ! -name '.htaccess' -delete
+
+      # 🚀 Subir SOLO el browser build
+      - name: 🚀 Deploy via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "dist/browser/*"
+          target: "/var/www/ds2/movify"
