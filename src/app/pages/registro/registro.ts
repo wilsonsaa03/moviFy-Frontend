@@ -2,10 +2,10 @@ import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  selector: 'app-landing',
+  selector: 'app-registro',
   standalone: true,
   imports: [RouterModule],
-  templateUrl: './landing.html',
-  styleUrl: './landing.css'
+  templateUrl: './registro.html',
+  styleUrl: './registro.css'
 })
-export class Landing {}
+export class Registro {}

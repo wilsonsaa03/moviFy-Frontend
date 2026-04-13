@@ -1,253 +1,16 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MoviFY</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-
-    body{
-      font-family:'Inter',sans-serif;
-      background:linear-gradient(180deg,#cfe3ff,#f7fbff);
-      color:#0f172a;
-    }
-
-    /* HEADER */
-    header{
-      position:absolute;
-      top:0;
-      left:0;
-      width:100%;
-      padding:20px 80px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      z-index:10;
-    }
-
-    .logo{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight:800;
-      font-size:22px;
-    }
-
-    .logo img{width:45px}
-
-    .btn{
-      border:none;
-      padding:12px 22px;
-      border-radius:14px;
-      font-weight:600;
-      cursor:pointer;
-      transition:.3s;
-    }
-
-    .green{
-      background:linear-gradient(135deg,#4CAF50,#2e7d32);
-      color:#fff;
-      box-shadow:0 10px 25px rgba(76,175,80,.4);
-    }
-
-    .blue{
-      background:linear-gradient(135deg,#2196f3,#1565c0);
-      color:#fff;
-      box-shadow:0 10px 25px rgba(33,150,243,.4);
-    }
-
-    .btn:hover{transform:translateY(-3px)}
-
-    /* HERO */
-    .hero{
-      position:relative;
-      height:100vh;
-      display:flex;
-      align-items:center;
-      overflow:hidden;
-    }
-
-    .hero-bg{
-      position:absolute;
-      top:0;
-      left:0;
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      z-index:1;
-    }
-
-    .hero::before{
-      content:"";
-      position:absolute;
-      top:0;
-      left:0;
-      width:55%;
-      height:100%;
-      background:linear-gradient(
-        to right,
-        rgba(255,255,255,0.85),
-        rgba(255,255,255,0.55),
-        rgba(255,255,255,0)
-      );
-      z-index:2;
-    }
-
-    .hero-content{
-      position:relative;
-      z-index:3;
-      max-width:550px;
-      margin-left:80px;
-    }
-
-    .hero h1{
-      font-size:60px;
-      font-weight:800;
-      line-height:1.05;
-    }
-
-    .hero p{
-      margin:25px 0;
-      font-size:18px;
-      color:#475569;
-    }
-
-    .login-link span{
-      color:#2563eb;
-      font-weight:600;
-      cursor:pointer;
-    }
-
-    /* CONTENIDO */
-    .container{
-      padding:80px;
-    }
-
-    .section{
-      margin-top:100px;
-      text-align:center;
-    }
-
-    .cards{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:30px;
-      margin-top:40px;
-    }
-
-    .card{
-      background:linear-gradient(180deg,#fff,#f1f5f9);
-      padding:25px;
-      border-radius:25px;
-      box-shadow:0 20px 40px rgba(0,0,0,.08);
-      transition:.3s;
-      text-align:left;
-    }
-
-    .card img{
-      width:100%;
-      border-radius:15px;
-      margin-bottom:15px;
-    }
-
-    .card:hover{transform:translateY(-10px)}
-
-    .bottom{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:60px;
-      margin-top:100px;
-    }
-
-    .benefit{
-      display:flex;
-      gap:20px;
-      margin-bottom:20px;
-      background:#fff;
-      padding:20px;
-      border-radius:18px;
-      box-shadow:0 10px 25px rgba(0,0,0,.08);
-    }
-
-    .register{
-      background:linear-gradient(180deg,#fff,#f8fafc);
-      padding:35px;
-      border-radius:25px;
-      box-shadow:0 25px 50px rgba(0,0,0,.1);
-    }
-
-    .register input{
-      width:100%;
-      padding:14px;
-      margin:12px 0;
-      border-radius:12px;
-      border:1px solid #cbd5f5;
-    }
-
-    footer{
-      text-align:center;
-      margin-top:80px;
-      color:#94a3b8;
-    }
-
-    /* RESPONSIVE */
-    @media(max-width:900px){
-
-      header{
-        padding:20px;
-      }
-
-      .hero{
-        height:auto;
-        padding:120px 20px;
-      }
-
-      .hero-bg{
-        opacity:0.3;
-      }
-
-      .hero::before{
-        width:100%;
-        background:rgba(255,255,255,0.9);
-      }
-
-      .hero-content{
-        margin-left:0;
-      }
-
-      .hero h1{
-        font-size:38px;
-      }
-
-      .container{
-        padding:30px;
-      }
-
-      .cards{
-        grid-template-columns:1fr;
-      }
-
-      .bottom{
-        grid-template-columns:1fr;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
 <header>
   <div class="logo">
     <img src="icons/movify.jpg">
     MoviFY
   </div>
   <div>
-    <button class="btn green">Registrarse</button>
-    <button class="btn blue">Iniciar Sesión</button>
+    <button class="btn green" routerLink="/registro">
+      Registrarse
+    </button>
+
+    <button class="btn blue" routerLink="/login">
+      Iniciar Sesión
+    </button>
   </div>
 </header>
 
@@ -258,7 +21,10 @@
     <h1>Muévete mejor,<br>vive mejor.</h1>
     <p>Con MoviFY solicita <b>transporte, envíos y domicilios</b> rápidamente desde tu celular.</p>
     <button class="btn green">Descargar App</button>
-    <p class="login-link">¿Ya tienes cuenta? <span>Iniciar sesión</span></p>
+    <p class="login-link">
+      ¿Ya tienes cuenta? 
+      <span routerLink="/login">Iniciar sesión</span>
+    </p>
   </div>
 </section>
 
@@ -269,76 +35,69 @@
 
     <div class="cards">
       <div class="card">
-        
-      
-      
-        <b>transporte</b>
-        <p class=" parrafo">Solicita una moto rápidamente.</p>
-        <img src="/icons/conductor verde.png">
-        
+        <b>Transporte</b>
+        <p class="parrafo">Solicita una moto rápidamente.</p>
+        <img src="icons/conductor verde.png">
       </div>
 
       <div class="card">
         <h3>Domicilios</h3>
-        <p class=" parrafo">Recibe pedidos en casa.</p>
-        <img src="/icons/conductor naranja.png">
-        
+        <p class="parrafo">Recibe pedidos en casa.</p>
+        <img src="icons/conductor naranja.png">
       </div>
 
       <div class="card">
         <h3>Envíos</h3>
-        <p class=" parrafo">Envía paquetes fácilmente.</p>
-        <img src="/icons/conductor azul.png">
-        
-        
+        <p class="parrafo">Envía paquetes fácilmente.</p>
+        <img src="icons/conductor azul.png">
       </div>
     </div>
   </section>
 
   <section class="bottom">
 
-  <div class="benefits">
-    <h2>¿Por qué elegir MoviFY?</h2>
-    <div class="benefit">
-      <img src="/icons/rayo.png" class="benefit-icon">
-      <div>
-        <b>Rápido y fácil</b>
-        <p>Pide en segundos desde tu celular</p>
+    <div class="benefits">
+      <h2>¿Por qué elegir MoviFY?</h2>
+
+      <div class="benefit">
+        <img src="icons/rayo.png" class="benefit-icon">
+        <div>
+          <b>Rápido y fácil</b>
+          <p>Pide en segundos desde tu celular</p>
+        </div>
       </div>
+
+      <div class="benefit">
+        <img src="icons/verificado.png" class="benefit-icon">
+        <div>
+          <b>Seguro</b>
+          <p>Conductores verificados</p>
+        </div>
+      </div>
+
+      <div class="benefit">
+        <img src="icons/dinero.jpg" class="benefit-icon">
+        <div>
+          <b>Económico</b>
+          <p>Precios accesibles</p>
+        </div>
+      </div>
+
     </div>
 
-    <div class="benefit">
-      <img src="/icons/verificado.png" class="benefit-icon">
-      <div>
-        <b>Seguro</b>
-        <p>Conductores verificados</p>
-      </div>
+    <div class="register">
+      <h3>Regístrate</h3>
+      <input placeholder="Correo">
+      <input placeholder="Contraseña">
+      <button class="btn green" routerLink="/registro">
+        Registrarse
+      </button>
     </div>
 
-    <div class="benefit">
-      <img src="/icons/dinero.jpg" class="benefit-icon">
-      <div>
-        <b>Económico</b>
-        <p>Precios accesibles</p>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="register">
-    <h3>Regístrate</h3>
-    <input placeholder="Correo">
-    <input placeholder="Contraseña">
-    <button class="btn green">Registrarse</button>
-  </div>
-
-</section>
+  </section>
 
   <footer>
     © 2026 MoviFY
   </footer>
 
 </div>
-
-</body>
-</html>
