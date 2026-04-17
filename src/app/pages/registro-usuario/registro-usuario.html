@@ -1,11 +1,35 @@
+<button class="back" routerLink="/registro">
+← Volver
+</button>
+
 <div class="container">
+
   <div class="form">
+
+    <div class="logo">
+      <img src="/icons/movify.jpg">
+      <span>MoviFY</span>
+    </div>
+
     <h2>Registro Usuario</h2>
+    <p class="subtitle">
+      Solicita transporte, envíos y domicilios
+    </p>
 
-    <input placeholder="Nombre">
-    <input placeholder="Correo">
-    <input placeholder="Contraseña">
+    <input placeholder="Nombre completo">
+    <input placeholder="Correo electrónico">
+    <input type="password" placeholder="Contraseña">
+    <input type="password" placeholder="Confirmar contraseña">
 
-    <button class="btn">Registrarse</button>
+    <button class="btn">
+      Crear cuenta
+    </button>
+
+    <p class="login">
+      ¿Ya tienes cuenta?
+      <span routerLink="/login">Iniciar sesión</span>
+    </p>
+
   </div>
+
 </div>

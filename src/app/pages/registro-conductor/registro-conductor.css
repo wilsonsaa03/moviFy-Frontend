@@ -1,46 +1,115 @@
-.container{
-min-height:100vh;
+:host{
 display:flex;
 justify-content:center;
 align-items:center;
-background:linear-gradient(180deg,#cfe3ff,#f7fbff);
+min-height:100vh;
 font-family:'Inter',sans-serif;
-padding:40px 0;
+background:linear-gradient(180deg,#cfe3ff,#f7fbff);
+padding:40px;
+}
+
+.container{
+width:100%;
+max-width:430px;
 }
 
 .form{
-width:450px;
 background:white;
 padding:40px;
 border-radius:25px;
 box-shadow:0 25px 50px rgba(0,0,0,.1);
 }
 
-.form h2{
+/* LOGO */
+.logo{
+display:flex;
+align-items:center;
+gap:10px;
 margin-bottom:20px;
 }
 
-.form input{
+.logo img{
+width:38px;
+}
+
+.logo span{
+font-weight:800;
+font-size:20px;
+}
+
+/* TEXT */
+h2{
+margin-bottom:5px;
+}
+
+.subtitle{
+color:#64748b;
+margin-bottom:20px;
+}
+
+/* INPUTS */
+input{
 width:100%;
 padding:14px;
 margin:10px 0;
 border-radius:12px;
 border:1px solid #cbd5f5;
+outline:none;
+transition:.2s;
 }
 
+input:focus{
+border-color:#4CAF50;
+}
+
+/* BUTTON */
 .btn{
 width:100%;
 margin-top:15px;
 padding:14px;
 border:none;
 border-radius:14px;
-background:linear-gradient(135deg,#2196f3,#1565c0);
+background:linear-gradient(135deg,#4CAF50,#2e7d32);
 color:white;
 font-weight:600;
 cursor:pointer;
 transition:.3s;
+box-shadow:0 10px 25px rgba(76,175,80,.3);
 }
 
 .btn:hover{
+transform:translateY(-2px);
+}
+
+/* LOGIN LINK */
+.login{
+text-align:center;
+margin-top:20px;
+color:#64748b;
+}
+
+.login span{
+color:#2563eb;
+cursor:pointer;
+font-weight:600;
+}
+
+/* BACK BUTTON */
+.back{
+position:fixed;
+top:30px;
+left:30px;
+border:none;
+padding:10px 18px;
+border-radius:12px;
+cursor:pointer;
+font-weight:600;
+color:white;
+background:linear-gradient(135deg,#ff9800,#ef6c00);
+box-shadow:0 10px 25px rgba(255,152,0,.4);
+z-index:999;
+}
+
+.back:hover{
 transform:translateY(-2px);
 }

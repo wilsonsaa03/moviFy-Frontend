@@ -1,29 +1,65 @@
-.role-container{
-height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
+:host{
+display:block;
+min-height:100vh;
+font-family:'Inter',sans-serif;
 background:linear-gradient(180deg,#cfe3ff,#f7fbff);
+padding:80px;
+}
+
+.role-container{
+max-width:1100px;
+margin:auto;
+}
+
+.role-container h1{
+font-size:32px;
+font-weight:800;
+margin-bottom:10px;
+}
+
+.role-container p{
+color:#64748b;
+margin-bottom:40px;
 }
 
 .roles{
-display:flex;
+display:grid;
+grid-template-columns:repeat(2,1fr);
 gap:40px;
-margin-top:40px;
 }
 
 .card{
-width:260px;
-padding:30px;
-background:white;
-border-radius:20px;
-box-shadow:0 20px 40px rgba(0,0,0,.1);
+background:linear-gradient(180deg,#ffffff,#f1f5f9);
+padding:35px;
+border-radius:25px;
+box-shadow:0 20px 40px rgba(0,0,0,.08);
 cursor:pointer;
 transition:.3s;
-text-align:center;
 }
 
 .card:hover{
-transform:translateY(-8px);
+transform:translateY(-10px);
+box-shadow:0 30px 60px rgba(0,0,0,.12);
+}
+
+.card h2{
+font-size:22px;
+margin-bottom:10px;
+}
+
+.card p{
+color:#64748b;
+}
+
+.card img{
+width:100%;
+border-radius:15px;
+margin-top:15px;
+}
+
+
+.card{
+text-decoration:none;
+color:inherit;
+display:block;
 }

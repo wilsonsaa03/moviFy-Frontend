@@ -2,10 +2,10 @@ import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  selector: 'app-registro-usuario',
+  selector: 'app-registro-admin',
   standalone: true,
   imports: [RouterModule],
-  templateUrl: './registro-usuario.html',
-  styleUrl: './registro-usuario.css'
+  templateUrl: './registro-admin.html',
+  styleUrl: './registro-admin.css'
 })
-export class RegistroUsuario {}
+export class RegistroAdmin {}
