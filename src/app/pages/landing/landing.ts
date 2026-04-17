@@ -1,11 +1,14 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router'; // <--- IMPORTANTE
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [RouterModule],
+  imports: [CommonModule, RouterModule], // <--- IMPORTANTE: Agregarlo aquí
   templateUrl: './landing.html',
-  styleUrl: './landing.css'
+  styleUrls: ['./landing.css']
 })
-export class Landing {}
+export class LandingComponent {
+  // Como Scrum Master, mantén este archivo limpio para el equipo
+}

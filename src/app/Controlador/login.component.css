@@ -1,0 +1,81 @@
+/* Contenedor principal que centra todo en la pantalla */
+.login-wrapper { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    background-color: #f0f2f5; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+}
+
+/* Tarjeta blanca del login */
+.login-card { 
+    background: white; 
+    padding: 40px; 
+    border-radius: 12px; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+    width: 100%;
+    max-width: 380px; 
+    text-align: center; 
+}
+
+/* Títulos */
+.login-card h1 {
+    color: #1a73e8;
+    margin-bottom: 10px;
+}
+
+.login-card p {
+    color: #5f6368;
+    margin-bottom: 25px;
+}
+
+/* Espaciado de los grupos de formulario */
+.form-group { 
+    margin-bottom: 20px; 
+    text-align: left; 
+}
+
+/* Etiquetas de los inputs */
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #3c4043;
+}
+
+/* Diseño de los campos de texto */
+input { 
+    width: 100%; 
+    padding: 12px; 
+    margin-top: 8px; 
+    border: 1px solid #dadce0; 
+    border-radius: 6px; 
+    box-sizing: border-box; 
+    font-size: 16px;
+    transition: border 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border: 2px solid #1a73e8;
+}
+
+/* Botón principal azul */
+.btn-primary { 
+    width: 100%; 
+    padding: 12px; 
+    background-color: #1a73e8; 
+    color: white; 
+    border: none; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-size: 16px; 
+    font-weight: 600;
+    margin-top: 15px;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover { 
+    background-color: #1557b0; 
+}

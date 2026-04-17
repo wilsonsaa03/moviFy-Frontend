@@ -1,24 +1,10 @@
 import { Routes } from '@angular/router';
-import { Landing } from './pages/landing/landing';
-import { Registro } from './pages/registro/registro';
-import { RegistroUsuario } from './pages/registro-usuario/registro-usuario';
-import { RegistroConductor } from './pages/registro-conductor/registro-conductor';
+import { LandingComponent } from './pages/landing/landing';
+import { LoginComponent } from './Controlador/login.component';
 
 export const routes: Routes = [
-  {
-    path: '',
-    component: Landing
-  },
-  {
-    path: 'registro',
-    component: Registro
-  },
-  {
-    path: 'registro/usuario',
-    component: RegistroUsuario
-  },
-  {
-    path: 'registro/conductor',
-    component: RegistroConductor
-  }
+  { path: 'landing', component: LandingComponent },
+  { path: 'login', component: LoginComponent },
+  { path: '', redirectTo: 'landing', pathMatch: 'full' }, // Si entran a la raíz, ven la landing
+  { path: '**', redirectTo: 'landing' } // Por seguridad, cualquier error vuelve a la landing
 ];
