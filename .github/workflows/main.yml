@@ -29,9 +29,9 @@ jobs:
       - name: 🧹 Limpiar servidor
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             find /var/www/ds2/movify/movify-frontend -mindepth 1 ! -name '.htaccess' -delete
 
@@ -39,8 +39,8 @@ jobs:
       - name: 🚀 Deploy via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
           source: "dist/browser/browser/*"
           target: "/var/www/ds2/movify/movify-frontend"
