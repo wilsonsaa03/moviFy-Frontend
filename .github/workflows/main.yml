@@ -1,35 +1,46 @@
-name: Deploy Frontend
+name: 🚀 Deploy Angular App
 
 on:
   push:
     branches:
-      - main 
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout código
-      uses: actions/checkout@v4
+      - name: 📥 Clonar repositorio
+        uses: actions/checkout@v4
 
-    - name: Instalar Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20 
+      - name: 🟢 Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
 
-    - name: Instalar dependencias y Build
-      run: |
-        npm install
-        npm run build
-    - name: Desplegar al VPS vía SCP
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        port: 22
-        source: "dist/*" 
-        target: "/var/www/ds2/movify/moviFy-Frontend"
-        strip_components: 1 
-        rm: true
+      - name: 📦 Instalar dependencias
+        run: npm ci
+
+      - name: 🏗️ Build Angular (producción)
+        run: npm run build -- --configuration production
+
+      # 🧹 Limpiar carpeta (sin borrar .htaccess)
+      - name: 🧹 Limpiar servidor
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            find /var/www/ds2/movify/mpvify-frontend -mindepth 1 ! -name '.htaccess' -delete
+
+      # 🚀 Subir SOLO el browser build
+      - name: 🚀 Deploy via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "dist/browser/browser/*"
+          target: "/var/www/ds2/movify/mpvify-frontend"
