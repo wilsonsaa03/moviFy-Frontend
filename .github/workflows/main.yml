@@ -33,7 +33,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            find /var/www/ds2/movify/mpvify-frontend -mindepth 1 ! -name '.htaccess' -delete
+            find /var/www/ds2/movify/movify-frontend -mindepth 1 ! -name '.htaccess' -delete
 
       # 🚀 Subir SOLO el browser build
       - name: 🚀 Deploy via SCP
@@ -43,4 +43,4 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "dist/browser/browser/*"
-          target: "/var/www/ds2/movify/mpvify-frontend"
+          target: "/var/www/ds2/movify/movify-frontend"
