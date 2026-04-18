@@ -40,7 +40,7 @@ jobs:
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
+          username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           source: "dist/browser/browser/*"
           target: "/var/www/ds2/movify/movify-frontend"
