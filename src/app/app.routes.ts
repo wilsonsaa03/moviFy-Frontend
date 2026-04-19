@@ -17,5 +17,5 @@ export const routes: Routes = [
   { path: 'registro/conductor', component: RegistroConductor },
   { path: 'registro/admin', component: RegistroAdmin },
 
-  { path: '**', redirectTo: 'landing' }
+  { path: '**', redirectTo: '' }
 ];
