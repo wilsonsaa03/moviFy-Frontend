@@ -28,15 +28,14 @@
             "styles": [
               "src/styles.css"
             ],
-            "index": "src/index.html"
+            "index": "src/index.html",
+            "polyfills": [
+              "zone.js"
+            ]
           },
           "configurations": {
             "production": {
-              "optimization": {
-                "styles": {
-                  "inlineCritical": false
-                }
-              },
+              "optimization": false,
               "budgets": [
                 {
                   "type": "initial",
