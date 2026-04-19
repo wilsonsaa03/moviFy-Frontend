@@ -28,14 +28,7 @@
             "styles": [
               "src/styles.css"
             ],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "security": {
-              "allowedHosts": []
-            },
-            "ssr": {
-              "entry": "src/server.ts"
-            }
+            "outputMode": "browser"
           },
           "configurations": {
             "production": {
@@ -57,7 +50,7 @@
                 }
               ],
               "outputHashing": "all",
-              "outputPath": "./dist/browser"
+              "outputPath": "./dist"
             },
             "development": {
               "optimization": false,

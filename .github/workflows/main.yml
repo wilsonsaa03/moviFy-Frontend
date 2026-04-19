@@ -35,12 +35,13 @@ jobs:
           script: |
             find /var/www/ds2/movify/movify-frontend -mindepth 1 ! -name '.htaccess' -delete
 
-      # 🚀 Subir SOLO el browser build
+      # 🚀 Subir build al servidor
       - name: 🚀 Deploy via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "dist/browser/browser/*"
+          source: "dist/browser/*"
           target: "/var/www/ds2/movify/movify-frontend"
+          strip_components: 2
