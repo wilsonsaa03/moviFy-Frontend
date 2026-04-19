@@ -8,9 +8,8 @@ import { RegistroConductor } from './pages/registro-conductor/registro-conductor
 import { RegistroAdmin } from './pages/registro-admin/registro-admin';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'landing', pathMatch: 'full' },
+  { path: '', component: LandingComponent },
 
-  { path: 'landing', component: LandingComponent },
   { path: 'login', component: LoginComponent },
 
   { path: 'registro', component: Registro },
