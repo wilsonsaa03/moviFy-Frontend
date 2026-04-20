@@ -3,13 +3,11 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "analytics": "bea369f0-7304-44ad-b44e-76a3af461179"
+    "analytics": "205dc65f-495f-4d79-b446-88d976babf0d"
   },
-  "newProjectRoot": "projects",
   "projects": {
     "moviFy-Frontend": {
       "projectType": "application",
-      "schematics": {},
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -17,47 +15,30 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
+            "outputPath": "dist/moviFy-Frontend",
             "browser": "src/main.ts",
+            "index": "src/index.html",
             "tsConfig": "tsconfig.app.json",
+            "polyfills": ["zone.js"],
             "assets": [
               {
                 "glob": "**/*",
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.css"
-            ],
-            "index": "src/index.html",
-            "polyfills": [
-              "zone.js"
-            ]
+            "styles": ["src/styles.css"]
           },
           "configurations": {
             "production": {
-              "optimization": false,
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "3MB",
-                  "maximumError": "5MB"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
-                }
-              ],
-              "outputHashing": "all",
-              "outputPath": "./dist"
+              "optimization": true,
+              "outputHashing": "all"
             },
             "development": {
               "optimization": false,
-              "extractLicenses": false,
               "sourceMap": true
             }
           },
-          "defaultConfiguration": "production"
+          "defaultConfiguration": "development"
         },
         "serve": {
           "builder": "@angular/build:dev-server",
