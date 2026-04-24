@@ -113,3 +113,44 @@ z-index:999;
 .back:hover{
 transform:translateY(-2px);
 }
+
+
+
+.section-title{
+margin-top:20px;
+margin-bottom:10px;
+font-size:16px;
+font-weight:600;
+}
+
+.divider{
+height:1px;
+background:#e2e8f0;
+margin:20px 0;
+}
+
+.file-group{
+margin:12px 0;
+}
+
+.file-group label{
+display:block;
+font-size:14px;
+font-weight:600;
+margin-bottom:6px;
+color:#334155;
+}
+
+.file-group input[type="file"]{
+width:100%;
+padding:10px;
+border-radius:10px;
+border:1px dashed #cbd5f5;
+background:#f8fafc;
+cursor:pointer;
+}
+
+.file-group input[type="file"]:hover{
+border-color:#4CAF50;
+background:#f1f5f9;
+}
