@@ -1,35 +1,28 @@
-<button class="back" routerLink="/registro">
-← Volver
-</button>
+<button class="back" routerLink="/registro">← Volver</button>
 
 <div class="container">
-
   <div class="form">
-
     <div class="logo">
       <img src="/icons/movify.jpg">
       <span>MoviFY</span>
     </div>
 
     <h2>Registro Usuario</h2>
-    <p class="subtitle">
-      Solicita transporte, envíos y domicilios
-    </p>
+    <p class="subtitle">Solicita transporte, envíos y domicilios</p>
 
-    <input placeholder="Nombre completo">
-    <input placeholder="Correo electrónico">
-    <input type="password" placeholder="Contraseña">
-    <input type="password" placeholder="Confirmar contraseña">
+    <input placeholder="Nombre completo" [(ngModel)]="datos.nombre">
+    <input placeholder="Correo electrónico" type="email" [(ngModel)]="datos.correo">
+    <input placeholder="Teléfono" [(ngModel)]="datos.telefono">
+    <input type="password" placeholder="Contraseña" [(ngModel)]="datos.password">
+    <input type="password" placeholder="Confirmar contraseña" [(ngModel)]="confirmar">
 
-    <button class="btn">
-      Crear cuenta
+    <p style="color:red; font-size:13px;" *ngIf="error">{{ error }}</p>
+    <p style="color:green; font-size:13px;" *ngIf="exito">{{ exito }}</p>
+
+    <button class="btn" (click)="registrar()" [disabled]="cargando">
+      {{ cargando ? 'Registrando...' : 'Crear cuenta' }}
     </button>
 
-    <p class="login">
-      ¿Ya tienes cuenta?
-      <span routerLink="/login">Iniciar sesión</span>
-    </p>
-
+    <p class="login">¿Ya tienes cuenta? <span routerLink="/login">Iniciar sesión</span></p>
   </div>
-
 </div>

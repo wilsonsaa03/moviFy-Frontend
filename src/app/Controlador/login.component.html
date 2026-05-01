@@ -4,6 +4,7 @@
     <p>Inicia sesión para continuar</p>
 
     <form (ngSubmit)="onLogin()">
+
       <div class="form-group">
         <label>Correo Electrónico</label>
         <input type="email" name="correo" [(ngModel)]="usuario.correo" required>
@@ -11,10 +12,15 @@
 
       <div class="form-group">
         <label>Contraseña</label>
-        <input type="password" name="contrasena" [(ngModel)]="usuario.contrasena" required>
+        <input type="password" name="password" [(ngModel)]="usuario.password" required>
       </div>
 
+      <p style="color:red; font-size:14px; margin-bottom:10px;" *ngIf="error">
+        {{ error }}
+      </p>
+
       <button type="submit" class="btn-primary">Entrar</button>
+
     </form>
   </div>
 </div>
