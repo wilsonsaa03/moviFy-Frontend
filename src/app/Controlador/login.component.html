@@ -1,20 +1,62 @@
 <div class="login-wrapper">
-  <div class="login-card">
-    <h1>MoviFY</h1>
-    <p>Inicia sesión para continuar</p>
 
-    <form (ngSubmit)="onLogin()">
-      <div class="form-group">
-        <label>Correo Electrónico</label>
-        <input type="email" name="correo" [(ngModel)]="usuario.correo" required>
-      </div>
-
-      <div class="form-group">
-        <label>Contraseña</label>
-        <input type="password" name="contrasena" [(ngModel)]="usuario.contrasena" required>
-      </div>
-
-      <button type="submit" class="btn-primary">Entrar</button>
-    </form>
+  <div class="login-left">
+    <img src="/assets/fondologin.jpeg" class="fondo-img">
   </div>
+
+  <div class="login-right">
+
+    <div class="login-card">
+
+      <img src="/assets/movify.jpg" class="logo-img">
+      <h1>Inicia sesión</h1>
+
+      <form (ngSubmit)="onLogin()">
+
+        <div class="input-group">
+          <span class="icon">✉️</span>
+          <input type="email" name="correo" [(ngModel)]="usuario.correo"
+            placeholder="Correo electrónico" required>
+        </div>
+
+        <div class="input-group">
+          <span class="icon">🔒</span>
+          <input [type]="mostrarPassword ? 'text' : 'password'"
+            name="password" [(ngModel)]="usuario.password"
+            placeholder="Contraseña" required>
+          <span class="toggle" (click)="mostrarPassword = !mostrarPassword">
+            {{ mostrarPassword ? '🙈' : '👁️' }}
+          </span>
+        </div>
+
+        <p class="olvidaste">¿Olvidaste tu contraseña?</p>
+
+        <p class="error-msg" *ngIf="error">{{ error }}</p>
+
+        <button type="submit" class="btn-login">Iniciar sesión</button>
+
+      </form>
+
+      <div class="separador">
+        <span>o continua con</span>
+      </div>
+
+      <div class="social-buttons">
+        <button class="btn-social">
+          <img src="https://www.google.com/favicon.ico" width="18"> Google
+        </button>
+        <button class="btn-social">
+          <img src="https://www.facebook.com/favicon.ico" width="18"> Facebook
+        </button>
+      </div>
+
+      <p class="registrate">
+        ¿No tienes cuenta?
+        <span routerLink="/registro">Regístrate</span>
+      </p>
+
+    </div>
+
+  </div>
+
 </div>

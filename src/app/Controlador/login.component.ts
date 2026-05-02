@@ -1,29 +1,35 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common'; // Obligatorio para Standalone
-import { FormsModule } from '@angular/forms'; // <--- ESTO QUITA EL ERROR ROJO DEL HTML
-import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { UsuarioService } from '../Base_de_datos/usuario.service';
 import { Usuario } from '../Modelo/usuario.model';
 
 @Component({
   selector: 'app-login',
-  standalone: true, // Tu versión de Angular es moderna
-  imports: [CommonModule, FormsModule], // <--- ESTO ACTIVA EL [(ngModel)]
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
-  usuario: Usuario = { correo: '', contrasena: '', rol: '' };
+  usuario: Usuario = { correo: '', password: '', rol: '' };
+  error = '';
+  mostrarPassword = false;
 
-  constructor(private usuarioService: UsuarioService, private router: Router) { }
+  constructor(private usuarioService: UsuarioService, private router: Router) {}
 
   onLogin(): void {
     this.usuarioService.login(this.usuario).subscribe({
       next: (res: any) => {
-        console.log('Login exitoso', res);
-        this.router.navigate(['/inicio']);
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('rol', res.rol);
+        localStorage.setItem('nombre', res.nombre);
+        if (res.rol === 'admin') this.router.navigate(['/admin']);
+        else if (res.rol === 'conductor') this.router.navigate(['/conductor']);
+        else this.router.navigate(['/cliente']);
       },
-      error: (err: any) => alert('Credenciales incorrectas')
+      error: () => this.error = 'Correo o contraseña incorrectos'
     });
   }
 }
