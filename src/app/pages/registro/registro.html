@@ -1,24 +1,54 @@
-<div class="role-container">
+<div class="registro-wrapper">
 
-<h1>¿Cómo quieres registrarte?</h1>
+  <div class="registro-header">
+    <h1>¿Cómo quieres registrarte?</h1>
+    <p>Elige el tipo de cuenta que mejor se adapte a ti</p>
+  </div>
 
-<div class="roles">
+  <div class="cards-grid">
 
-  <a class="card" routerLink="/registro/usuario">
-    <h2>Usuario</h2>
-    <p>Solicitar transporte y domicilios</p>
-  </a>
+    <!-- USUARIO -->
+    <div class="card card-usuario">
+      <div class="card-icon-wrapper icon-verde">
+        <img src="/assets/usuario.png" class="card-icon">
+      </div>
+      <h2 class="card-title title-verde">Usuario</h2>
+      <div class="card-line line-verde"></div>
+      <p class="card-desc">Solicita transporte y domicilios de forma fácil y segura.</p>
+      <div class="card-wave wave-verde"></div>
+      <button class="btn-card btn-verde" routerLink="/registro/usuario">
+        Continuar →
+      </button>
+    </div>
 
-  <a class="card" routerLink="/registro/conductor">
-    <h2>Conductor</h2>
-    <p>Ganar dinero haciendo viajes</p>
-  </a>
+    <!-- CONDUCTOR -->
+    <div class="card card-conductor">
+      <div class="card-icon-wrapper icon-naranja">
+        <img src="/assets/conductor.png" class="card-icon">
+      </div>
+      <h2 class="card-title title-naranja">Conductor</h2>
+      <div class="card-line line-naranja"></div>
+      <p class="card-desc">Gana dinero haciendo viajes y maneja tu propio tiempo.</p>
+      <div class="card-wave wave-naranja"></div>
+      <button class="btn-card btn-naranja" routerLink="/registro/conductor">
+        Continuar →
+      </button>
+    </div>
 
-  <a class="card" routerLink="/registro/admin">
-    <h2>Administrador</h2>
-    <p>Gestionar usuarios y conductores</p>
-  </a>
+    <!-- ADMINISTRADOR -->
+    <div class="card card-admin">
+      <div class="card-icon-wrapper icon-azul">
+        <img src="/assets/admin.png" class="card-icon">
+      </div>
+      <h2 class="card-title title-azul">Administrador</h2>
+      <div class="card-line line-azul"></div>
+      <p class="card-desc">Gestiona usuarios, conductores y controla la plataforma.</p>
+      <div class="card-wave wave-azul"></div>
+      <button class="btn-card btn-azul" routerLink="/registro/admin">
+        Entrar →
+      </button>
+    </div>
 
-</div>
+  </div>
 
 </div>

@@ -1,38 +1,75 @@
-<button class="back" routerLink="/registro">
-← Volver
-</button>
+<div class="registro-wrapper">
 
-<div class="container">
+  <button class="btn-volver" routerLink="/registro">← Volver</button>
 
-  <div class="form">
+  <!-- LADO IZQUIERDO - FONDO -->
+  <div class="lado-izquierdo">
+    <img src="/assets/fondoconductor.png" class="fondo-img">
+  </div>
 
-    <div class="logo">
-      <img src="/icons/movify.jpg">
-      <span>MoviFY</span>
+  <!-- LADO DERECHO - FORMULARIO -->
+  <div class="lado-derecho">
+    <div class="form-card">
+
+      <img src="/assets/movify.jpg" class="form-logo">
+      <h1>Registro Conductor</h1>
+      <p class="subtitle">Gana dinero realizando viajes y domicilios</p>
+
+      <div class="input-group">
+        <span class="icon">👤</span>
+        <input type="text" placeholder="Nombre completo" [(ngModel)]="datos.nombre">
+      </div>
+
+      <div class="input-group">
+        <span class="icon">✉️</span>
+        <input type="email" placeholder="Correo electrónico" [(ngModel)]="datos.correo">
+      </div>
+
+      <div class="input-group">
+        <span class="icon">🔒</span>
+        <input [type]="mostrarPassword ? 'text' : 'password'"
+          placeholder="Contraseña" [(ngModel)]="datos.password">
+        <span class="toggle" (click)="mostrarPassword = !mostrarPassword">
+          {{ mostrarPassword ? '🙈' : '👁️' }}
+        </span>
+      </div>
+
+      <div class="input-group">
+        <span class="icon">🔒</span>
+        <input [type]="mostrarConfirmar ? 'text' : 'password'"
+          placeholder="Confirmar contraseña" [(ngModel)]="confirmar">
+        <span class="toggle" (click)="mostrarConfirmar = !mostrarConfirmar">
+          {{ mostrarConfirmar ? '🙈' : '👁️' }}
+        </span>
+      </div>
+
+      <div class="input-group">
+        <span class="icon">🏍️</span>
+        <input type="text" placeholder="Placa de la moto"
+          [(ngModel)]="placa">
+        <span class="hint">Ej: ABC12D</span>
+      </div>
+
+      <div class="input-group">
+        <span class="icon">🔧</span>
+        <input type="text" placeholder="Modelo de la moto"
+          [(ngModel)]="modelo">
+        <span class="hint">Ej: Yamaha FZ 2.0</span>
+      </div>
+
+      <p class="msg-error" *ngIf="error">❌ {{ error }}</p>
+      <p class="msg-exito" *ngIf="exito">✅ {{ exito }}</p>
+
+      <button class="btn-crear" (click)="registrar()" [disabled]="cargando">
+        👤 {{ cargando ? 'Registrando...' : 'Crear cuenta de conductor' }}
+      </button>
+
+      <p class="ir-login">
+        ¿Ya tienes cuenta?
+        <span routerLink="/login">Iniciar sesión ›</span>
+      </p>
+
     </div>
-
-    <h2>Registro Conductor</h2>
-    <p class="subtitle">
-      Gana dinero realizando viajes y domicilios
-    </p>
-
-    <input placeholder="Nombre completo">
-    <input placeholder="Correo electrónico">
-    <input type="password" placeholder="Contraseña">
-    <input type="password" placeholder="Confirmar contraseña">
-
-    <input placeholder="Placa de la moto">
-    <input placeholder="Modelo de la moto">
-
-    <button class="btn">
-      Crear cuenta de conductor
-    </button>
-
-    <p class="login">
-      ¿Ya tienes cuenta?
-      <span routerLink="/login">Iniciar sesión</span>
-    </p>
-
   </div>
 
 </div>

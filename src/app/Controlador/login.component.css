@@ -9,7 +9,6 @@
   overflow: hidden;
 }
 
-/* FONDO - cubre toda la pantalla */
 .login-left {
   position: fixed;
   top: 0;
@@ -26,7 +25,6 @@
   object-position: center;
 }
 
-/* FORMULARIO - izquierda centrado verticalmente */
 .login-right {
   position: absolute;
   left: 3%;
@@ -44,7 +42,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.2rem;
 }
 
 .logo-img {
@@ -60,7 +58,6 @@ h1 {
   margin-bottom: 0.3rem;
 }
 
-/* INPUTS */
 .input-group {
   display: flex;
   align-items: center;
@@ -99,7 +96,8 @@ h1 {
   font-size: 0.85rem;
   cursor: pointer;
   align-self: flex-start;
-  margin-top: -0.3rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .error-msg {
@@ -108,7 +106,6 @@ h1 {
   align-self: flex-start;
 }
 
-/* BOTÓN LOGIN */
 .btn-login {
   width: 100%;
   padding: 1rem;
@@ -127,7 +124,6 @@ h1 {
   background: #388e3c;
 }
 
-/* SEPARADOR */
 .separador {
   display: flex;
   align-items: center;
@@ -145,7 +141,6 @@ h1 {
   background: #e0e0e0;
 }
 
-/* BOTONES SOCIALES */
 .social-buttons {
   display: flex;
   gap: 0.8rem;
@@ -174,7 +169,6 @@ h1 {
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-/* REGÍSTRATE */
 .registrate {
   font-size: 0.9rem;
   color: #666;
@@ -191,7 +185,6 @@ h1 {
   text-decoration: underline;
 }
 
-/* RESPONSIVE */
 @media (max-width: 600px) {
   .login-right {
     left: 50%;
