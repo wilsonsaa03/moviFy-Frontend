@@ -6,6 +6,7 @@ import { Registro } from './pages/registro/registro';
 import { RegistroUsuario } from './pages/registro-usuario/registro-usuario';
 import { RegistroConductor } from './pages/registro-conductor/registro-conductor';
 import { RegistroAdmin } from './pages/registro-admin/registro-admin';
+import { HomeUsuarioComponent } from './pages/home-usuario/home-usuario';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -16,6 +17,7 @@ export const routes: Routes = [
   { path: 'registro/usuario', component: RegistroUsuario },
   { path: 'registro/conductor', component: RegistroConductor },
   { path: 'registro/admin', component: RegistroAdmin },
+  {path: 'home-usuario', component: HomeUsuarioComponent },
 
   { path: '**', redirectTo: '' }
 ];
