@@ -9,50 +9,107 @@
     <div class="login-card">
 
       <img src="/assets/movify.jpg" class="logo-img">
+
       <h1>Inicia sesión</h1>
 
       <form (ngSubmit)="onLogin()">
 
+        <!-- CORREO -->
         <div class="input-group">
           <span class="icon">✉️</span>
-          <input type="email" name="correo" [(ngModel)]="usuario.correo"
-            placeholder="Correo electrónico" required>
+
+          <input
+            type="email"
+            name="correo"
+            [(ngModel)]="usuario.correo"
+            placeholder="Correo electrónico"
+            required
+          >
         </div>
 
+        <!-- ERROR CORREO -->
+        <p class="error-msg" *ngIf="errores.correo">
+          {{ errores.correo }}
+        </p>
+
+        <!-- PASSWORD -->
         <div class="input-group">
+
           <span class="icon">🔒</span>
-          <input [type]="mostrarPassword ? 'text' : 'password'"
-            name="password" [(ngModel)]="usuario.password"
-            placeholder="Contraseña" required>
-          <span class="toggle" (click)="mostrarPassword = !mostrarPassword">
+
+          <input
+            [type]="mostrarPassword ? 'text' : 'password'"
+            name="password"
+            [(ngModel)]="usuario.password"
+            placeholder="Contraseña"
+            required
+          >
+
+          <span
+            class="toggle"
+            (click)="mostrarPassword = !mostrarPassword"
+          >
             {{ mostrarPassword ? '🙈' : '👁️' }}
           </span>
+
         </div>
 
-        <p class="olvidaste">¿Olvidaste tu contraseña?</p>
+        <!-- ERROR PASSWORD -->
+        <p class="error-msg" *ngIf="errores.password">
+          {{ errores.password }}
+        </p>
 
-        <p class="error-msg" *ngIf="error">{{ error }}</p>
+        <!-- OLVIDAR -->
+        <p class="olvidaste">
+          ¿Olvidaste tu contraseña?
+        </p>
 
-        <button type="submit" class="btn-login">Iniciar sesión</button>
+        <!-- ERROR GENERAL -->
+        <p class="error-msg" *ngIf="error">
+          {{ error }}
+        </p>
+
+        <!-- LOGIN NORMAL -->
+        <button type="submit" class="btn-login">
+          Iniciar sesión
+        </button>
 
       </form>
 
+      <!-- SEPARADOR -->
       <div class="separador">
         <span>o continua con</span>
       </div>
 
+      <!-- LOGIN SOCIAL -->
       <div class="social-buttons">
-        <button class="btn-social">
-          <img src="https://www.google.com/favicon.ico" width="18"> Google
+
+        <!-- GOOGLE (renderizado por Google) -->
+        <div id="google-btn"></div>
+
+        <!-- FACEBOOK -->
+        <button
+          class="btn-social"
+          type="button"
+          (click)="loginFacebook()"
+        >
+          <img
+            src="https://www.facebook.com/favicon.ico"
+            width="18"
+          >
+
+          Facebook
         </button>
-        <button class="btn-social">
-          <img src="https://www.facebook.com/favicon.ico" width="18"> Facebook
-        </button>
+
       </div>
 
+      <!-- REGISTRO -->
       <p class="registrate">
         ¿No tienes cuenta?
-        <span routerLink="/registro">Regístrate</span>
+
+        <span routerLink="/registro">
+          Regístrate
+        </span>
       </p>
 
     </div>

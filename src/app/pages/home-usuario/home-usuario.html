@@ -1,56 +1,144 @@
-<div class="dashboard">
-        <div class="trip">
-          <div>
-            <h4>Centro Comercial Unicentro</h4>
-            <p>20 may, 8:30 AM</p>
-          </div>
+<div class="home-wrapper">
 
-          <strong>$8.500</strong>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+
+    <div class="navbar-left">
+      <img src="/assets/movify.jpg" class="nav-logo">
+      <span class="nav-brand">MoviFY</span>
+    </div>
+
+    <div class="navbar-right">
+
+      <div class="nav-perfil">
+
+        <img
+          *ngIf="foto"
+          [src]="foto"
+          class="nav-avatar"
+        >
+
+        <div
+          *ngIf="!foto"
+          class="nav-avatar-placeholder"
+        >
+          {{ nombre.charAt(0).toUpperCase() }}
         </div>
 
-        <div class="trip">
-          <div>
-            <h4>Casa</h4>
-            <p>18 may, 6:15 PM</p>
-          </div>
-
-          <strong>$6.200</strong>
-        </div>
-
-        <div class="trip">
-          <div>
-            <h4>Universidad Nacional</h4>
-            <p>16 may, 10:20 AM</p>
-          </div>
-
-          <strong>$7.800</strong>
+        <div class="nav-info">
+          <span class="nav-nombre">Hola, {{ nombre }} 👋</span>
+          <span class="nav-sub">Ver mi perfil ▾</span>
         </div>
 
       </div>
 
+      <button class="btn-cerrar" (click)="cerrarSesion()">
+        Cerrar sesión →
+      </button>
+
+    </div>
+
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+
+    <div class="hero-text">
+      <h1>¿A dónde vamos hoy, <span class="nombre-highlight">{{ nombre }}</span>?</h1>
+      <p>Selecciona el servicio que necesitas</p>
+    </div>
+
+    <!-- SERVICIOS -->
+    <div class="servicios-grid">
+
+      <!-- TRANSPORTE -->
+      <div class="servicio-card" (click)="solicitarServicio('transporte')">
+        <div class="servicio-icon">🏍️</div>
+        <h3>Transporte</h3>
+        <p>Viaja rápido y seguro en moto</p>
+        <button class="btn-servicio">Solicitar</button>
+      </div>
+
+      <!-- DOMICILIOS -->
+      <div class="servicio-card" (click)="solicitarServicio('domicilio')">
+        <div class="servicio-icon">🛵</div>
+        <h3>Domicilios</h3>
+        <p>Recibe lo que necesitas en tu puerta</p>
+        <button class="btn-servicio">Solicitar</button>
+      </div>
+
+      <!-- ENCOMIENDAS -->
+      <div class="servicio-card" (click)="solicitarServicio('encomienda')">
+        <div class="servicio-icon">📦</div>
+        <h3>Encomiendas</h3>
+        <p>Envía paquetes de forma rápida</p>
+        <button class="btn-servicio">Solicitar</button>
+      </div>
+
+    </div>
+
+    <!-- HISTORIAL Y FAVORITOS dentro del hero para flotar sobre la imagen -->
+    <div class="main-content">
+
+      <!-- HISTORIAL -->
+      <div class="card">
+
+        <div class="card-header">
+          <h3>📋 Historial reciente</h3>
+          <span>Ver todo</span>
+        </div>
+
+        <div class="historial-item" *ngFor="let item of historial">
+          <div class="historial-icon">{{ item.icono }}</div>
+          <div class="historial-info">
+            <h4>{{ item.destino }}</h4>
+            <p>{{ item.fecha }} · {{ item.tipo }}</p>
+          </div>
+          <strong class="historial-precio">{{ item.precio }}</strong>
+        </div>
+
+        <div class="empty-state" *ngIf="historial.length === 0">
+          <p>Aún no tienes servicios. ¡Solicita tu primero!</p>
+        </div>
+
+      </div>
 
       <!-- FAVORITOS -->
       <div class="card">
 
         <div class="card-header">
-          <h3>Favoritos</h3>
+          <h3>⭐ Lugares favoritos</h3>
           <span>Editar</span>
         </div>
 
-        <div class="favorite">
-          <h4>🏠 Casa</h4>
-          <p>Calle 45 #20-10</p>
+        <div class="favorito-item">
+          <span class="fav-icon">🏠</span>
+          <div>
+            <h4>Casa</h4>
+            <p>Agrega tu dirección de casa</p>
+          </div>
         </div>
 
-        <div class="favorite">
-          <h4>💼 Trabajo</h4>
-          <p>Av. El Dorado #100-25</p>
+        <div class="favorito-item">
+          <span class="fav-icon">💼</span>
+          <div>
+            <h4>Trabajo</h4>
+            <p>Agrega tu dirección de trabajo</p>
+          </div>
         </div>
 
-        <div class="favorite">
-          <h4>⭐ Gimnasio</h4>
-          <p>Calle 80 #12-45</p>
+        <div class="favorito-item">
+          <span class="fav-icon">➕</span>
+          <div>
+            <h4>Agregar lugar</h4>
+            <p>Guarda tus destinos frecuentes</p>
+          </div>
         </div>
 
       </div>
 
+    </div>
+
+  </div>
+
+</div>

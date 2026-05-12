@@ -18,4 +18,12 @@ export class UsuarioService {
   registro(datos: any): Observable<any> {
     return this.http.post(`${this.BASE_URL}/registro`, datos);
   }
+
+  loginGoogle(datos: any): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/login-google`, datos);
+  }
+
+  loginFacebook(datos: any): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/login-facebook`, datos);
+  }
 }

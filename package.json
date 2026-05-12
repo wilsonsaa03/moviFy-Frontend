@@ -12,6 +12,7 @@
   "private": true,
   "packageManager": "npm@10.8.0",
   "dependencies": {
+    "@abacritt/angularx-social-login": "^2.4.0",
     "@angular/common": "^19.0.0",
     "@angular/compiler": "^19.0.0",
     "@angular/core": "^19.0.0",
