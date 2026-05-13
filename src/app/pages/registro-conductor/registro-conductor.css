@@ -111,7 +111,7 @@ h1 {
   background: transparent;
 }
 
-.icon { font-size: 1rem; }
+.icon   { font-size: 1rem; }
 .toggle { cursor: pointer; font-size: 1rem; }
 
 .hint {
@@ -119,6 +119,88 @@ h1 {
   color: #aaa;
   white-space: nowrap;
 }
+
+/* ── DOCUMENTOS ──────────────────────────────────── */
+
+.seccion-docs {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.8rem;
+  margin-top: 0.3rem;
+}
+
+.docs-titulo {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #1e293b;
+}
+
+.docs-sub {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.doc-grupo {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.doc-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.doc-requerido {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.doc-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.doc-upload:hover {
+  border-color: #4CAF50;
+  background: #f0fdf4;
+}
+
+.doc-cargado {
+  border-color: #4CAF50;
+  border-style: solid;
+  background: #f0fdf4;
+}
+
+.doc-icono {
+  font-size: 1.2rem;
+}
+
+.doc-texto {
+  font-size: 0.85rem;
+  color: #475569;
+  flex: 1;
+}
+
+.doc-error {
+  font-size: 0.8rem;
+  color: #ef4444;
+}
+
+/* ── MENSAJES ─────────────────────────────────────── */
 
 .msg-error {
   color: #e53935;
@@ -131,6 +213,8 @@ h1 {
   font-size: 0.85rem;
   align-self: flex-start;
 }
+
+/* ── BOTÓN ───────────────────────────────────────── */
 
 .btn-crear {
   width: 100%;
@@ -146,8 +230,8 @@ h1 {
   letter-spacing: 0.5px;
 }
 
-.btn-crear:hover { background: #388e3c; }
-.btn-crear:disabled { background: #ccc; cursor: not-allowed; }
+.btn-crear:hover     { background: #388e3c; }
+.btn-crear:disabled  { background: #ccc; cursor: not-allowed; }
 
 .ir-login {
   font-size: 0.9rem;
@@ -163,7 +247,9 @@ h1 {
 
 .ir-login span:hover { text-decoration: underline; }
 
+/* ── RESPONSIVE ──────────────────────────────────── */
+
 @media (max-width: 768px) {
   .lado-izquierdo { display: none; }
-  .lado-derecho { width: 100%; }
+  .lado-derecho   { width: 100%; }
 }

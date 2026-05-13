@@ -2,12 +2,12 @@
 
   <button class="btn-volver" routerLink="/registro">← Volver</button>
 
-  <!-- LADO IZQUIERDO - FONDO -->
+  <!-- LADO IZQUIERDO -->
   <div class="lado-izquierdo">
     <img src="/assets/fondoconductor.png" class="fondo-img">
   </div>
 
-  <!-- LADO DERECHO - FORMULARIO -->
+  <!-- LADO DERECHO -->
   <div class="lado-derecho">
     <div class="form-card">
 
@@ -15,16 +15,31 @@
       <h1>Registro Conductor</h1>
       <p class="subtitle">Gana dinero realizando viajes y domicilios</p>
 
+      <!-- NOMBRE -->
       <div class="input-group">
         <span class="icon">👤</span>
-        <input type="text" placeholder="Nombre completo" [(ngModel)]="datos.nombre">
+        <input type="text" placeholder="Nombre completo"
+          [(ngModel)]="datos.nombre">
       </div>
+      <p class="msg-error" *ngIf="errores.nombre">❌ {{ errores.nombre }}</p>
 
+      <!-- CORREO -->
       <div class="input-group">
         <span class="icon">✉️</span>
-        <input type="email" placeholder="Correo electrónico" [(ngModel)]="datos.correo">
+        <input type="email" placeholder="Correo electrónico"
+          [(ngModel)]="datos.correo">
       </div>
+      <p class="msg-error" *ngIf="errores.correo">❌ {{ errores.correo }}</p>
 
+      <!-- TELÉFONO -->
+      <div class="input-group">
+        <span class="icon">📱</span>
+        <input type="tel" placeholder="Teléfono"
+          [(ngModel)]="datos.telefono">
+      </div>
+      <p class="msg-error" *ngIf="errores.telefono">❌ {{ errores.telefono }}</p>
+
+      <!-- PASSWORD -->
       <div class="input-group">
         <span class="icon">🔒</span>
         <input [type]="mostrarPassword ? 'text' : 'password'"
@@ -33,7 +48,9 @@
           {{ mostrarPassword ? '🙈' : '👁️' }}
         </span>
       </div>
+      <p class="msg-error" *ngIf="errores.password">❌ {{ errores.password }}</p>
 
+      <!-- CONFIRMAR -->
       <div class="input-group">
         <span class="icon">🔒</span>
         <input [type]="mostrarConfirmar ? 'text' : 'password'"
@@ -42,24 +59,101 @@
           {{ mostrarConfirmar ? '🙈' : '👁️' }}
         </span>
       </div>
+      <p class="msg-error" *ngIf="errores.confirmar">❌ {{ errores.confirmar }}</p>
 
+      <!-- PLACA -->
       <div class="input-group">
         <span class="icon">🏍️</span>
         <input type="text" placeholder="Placa de la moto"
-          [(ngModel)]="placa">
+          [(ngModel)]="placa" maxlength="6">
         <span class="hint">Ej: ABC12D</span>
       </div>
+      <p class="msg-error" *ngIf="errores.placa">❌ {{ errores.placa }}</p>
 
+      <!-- MODELO -->
       <div class="input-group">
         <span class="icon">🔧</span>
         <input type="text" placeholder="Modelo de la moto"
           [(ngModel)]="modelo">
         <span class="hint">Ej: Yamaha FZ 2.0</span>
       </div>
+      <p class="msg-error" *ngIf="errores.modelo">❌ {{ errores.modelo }}</p>
 
+      <!-- SEPARADOR DOCUMENTOS -->
+      <div class="seccion-docs">
+        <span class="docs-titulo">📄 Documentos requeridos</span>
+        <span class="docs-sub">JPG, PNG o PDF · Máx. 5MB</span>
+      </div>
+
+      <!-- LICENCIA -->
+      <div class="doc-grupo">
+        <label class="doc-label">
+          Licencia de conducción <span class="doc-requerido">*</span>
+        </label>
+        <label class="doc-upload" [class.doc-cargado]="archivoLicencia">
+          <input type="file" accept=".jpg,.jpeg,.png,.pdf"
+            (change)="seleccionarLicencia($event)" hidden>
+          <span class="doc-icono">{{ archivoLicencia ? '✅' : '📎' }}</span>
+          <span class="doc-texto">
+            {{ archivoLicencia ? nombreArchivo(archivoLicencia) : 'Subir licencia' }}
+          </span>
+        </label>
+        <p class="doc-error" *ngIf="errorLicencia">❌ {{ errorLicencia }}</p>
+      </div>
+
+      <!-- SOAT -->
+      <div class="doc-grupo">
+        <label class="doc-label">
+          SOAT vigente <span class="doc-requerido">*</span>
+        </label>
+        <label class="doc-upload" [class.doc-cargado]="archivoSoat">
+          <input type="file" accept=".jpg,.jpeg,.png,.pdf"
+            (change)="seleccionarSoat($event)" hidden>
+          <span class="doc-icono">{{ archivoSoat ? '✅' : '📎' }}</span>
+          <span class="doc-texto">
+            {{ archivoSoat ? nombreArchivo(archivoSoat) : 'Subir SOAT' }}
+          </span>
+        </label>
+        <p class="doc-error" *ngIf="errorSoat">❌ {{ errorSoat }}</p>
+      </div>
+
+      <!-- TARJETA DE PROPIEDAD -->
+      <div class="doc-grupo">
+        <label class="doc-label">
+          Tarjeta de propiedad <span class="doc-requerido">*</span>
+        </label>
+        <label class="doc-upload" [class.doc-cargado]="archivoTarjeta">
+          <input type="file" accept=".jpg,.jpeg,.png,.pdf"
+            (change)="seleccionarTarjeta($event)" hidden>
+          <span class="doc-icono">{{ archivoTarjeta ? '✅' : '📎' }}</span>
+          <span class="doc-texto">
+            {{ archivoTarjeta ? nombreArchivo(archivoTarjeta) : 'Subir tarjeta de propiedad' }}
+          </span>
+        </label>
+        <p class="doc-error" *ngIf="errorTarjeta">❌ {{ errorTarjeta }}</p>
+      </div>
+
+      <!-- CÉDULA -->
+      <div class="doc-grupo">
+        <label class="doc-label">
+          Cédula de ciudadanía <span class="doc-requerido">*</span>
+        </label>
+        <label class="doc-upload" [class.doc-cargado]="archivoCedula">
+          <input type="file" accept=".jpg,.jpeg,.png,.pdf"
+            (change)="seleccionarCedula($event)" hidden>
+          <span class="doc-icono">{{ archivoCedula ? '✅' : '📎' }}</span>
+          <span class="doc-texto">
+            {{ archivoCedula ? nombreArchivo(archivoCedula) : 'Subir cédula' }}
+          </span>
+        </label>
+        <p class="doc-error" *ngIf="errorCedula">❌ {{ errorCedula }}</p>
+      </div>
+
+      <!-- ERRORES / ÉXITO -->
       <p class="msg-error" *ngIf="error">❌ {{ error }}</p>
       <p class="msg-exito" *ngIf="exito">✅ {{ exito }}</p>
 
+      <!-- BOTÓN -->
       <button class="btn-crear" (click)="registrar()" [disabled]="cargando">
         👤 {{ cargando ? 'Registrando...' : 'Crear cuenta de conductor' }}
       </button>

@@ -8,6 +8,7 @@ import { environment } from '../../environments/environment';
 })
 export class UsuarioService {
   private BASE_URL = `${environment.apiUrl}/auth`;
+  private CONDUCTOR_URL = `${environment.apiUrl}/conductor`;
 
   constructor(private http: HttpClient) {}
 
@@ -25,5 +26,9 @@ export class UsuarioService {
 
   loginFacebook(datos: any): Observable<any> {
     return this.http.post(`${this.BASE_URL}/login-facebook`, datos);
+  }
+
+  registroConductor(formData: FormData): Observable<any> {
+    return this.http.post(`${this.CONDUCTOR_URL}/registro`, formData);
   }
 }
