@@ -10,7 +10,11 @@
 
     <div class="navbar-right">
 
-      <div class="nav-perfil">
+      <!-- PERFIL -->
+      <div
+        class="nav-perfil"
+        (click)="menuAbierto = !menuAbierto"
+      >
 
         <img
           *ngIf="foto"
@@ -26,13 +30,73 @@
         </div>
 
         <div class="nav-info">
-          <span class="nav-nombre">Hola, {{ nombre }} 👋</span>
-          <span class="nav-sub">Ver mi perfil ▾</span>
+          <span class="nav-nombre">
+            Hola, {{ nombre }} 👋
+          </span>
+
+          <span class="nav-sub">
+            Ver mi perfil ▾
+          </span>
+        </div>
+
+        <!-- MENU DESPLEGABLE -->
+        <div
+          class="menu-perfil"
+          *ngIf="menuAbierto"
+        >
+
+          <!-- HEADER -->
+          <div class="menu-header">
+
+            <div class="menu-avatar">
+              {{ nombre.charAt(0).toUpperCase() }}
+            </div>
+
+            <div class="menu-user">
+              <h3>{{ nombre }}</h3>
+              <p>Usuario MoviFY</p>
+            </div>
+
+          </div>
+
+          <!-- OPCIONES -->
+          <button class="menu-item">
+            <span class="menu-icon">👤</span>
+            Ver perfil
+          </button>
+
+          <button class="menu-item">
+            <span class="menu-icon">✏️</span>
+            Editar perfil
+          </button>
+
+          <button class="menu-item">
+            <span class="menu-icon">⭐</span>
+            Favoritos
+          </button>
+
+          <button class="menu-item">
+            <span class="menu-icon">⚙️</span>
+            Configuración
+          </button>
+
+          <button
+            class="menu-item"
+            (click)="cerrarSesion()"
+          >
+            <span class="menu-icon">🚪</span>
+            Cerrar sesión
+          </button>
+
         </div>
 
       </div>
 
-      <button class="btn-cerrar" (click)="cerrarSesion()">
+      <!-- BOTON -->
+      <button
+        class="btn-cerrar"
+        (click)="cerrarSesion()"
+      >
         Cerrar sesión →
       </button>
 
@@ -44,40 +108,78 @@
   <div class="hero">
 
     <div class="hero-text">
-      <h1>¿A dónde vamos hoy, <span class="nombre-highlight">{{ nombre }}</span>?</h1>
-      <p>Selecciona el servicio que necesitas</p>
+      <h1>
+        ¿A dónde vamos hoy,
+        <span class="nombre-highlight">
+          {{ nombre }}
+        </span>?
+      </h1>
+
+      <p>
+        Selecciona el servicio que necesitas
+      </p>
     </div>
 
     <!-- SERVICIOS -->
     <div class="servicios-grid">
 
       <!-- TRANSPORTE -->
-      <div class="servicio-card" (click)="solicitarServicio('transporte')">
+      <div
+        class="servicio-card"
+        (click)="solicitarServicio('transporte')"
+      >
         <div class="servicio-icon">🏍️</div>
+
         <h3>Transporte</h3>
-        <p>Viaja rápido y seguro en moto</p>
-        <button class="btn-servicio">Solicitar</button>
+
+        <p>
+          Viaja rápido y seguro en moto
+        </p>
+
+        <button class="btn-servicio">
+          Solicitar
+        </button>
       </div>
 
       <!-- DOMICILIOS -->
-      <div class="servicio-card" (click)="solicitarServicio('domicilio')">
+      <div
+        class="servicio-card"
+        (click)="solicitarServicio('domicilio')"
+      >
         <div class="servicio-icon">🛵</div>
+
         <h3>Domicilios</h3>
-        <p>Recibe lo que necesitas en tu puerta</p>
-        <button class="btn-servicio">Solicitar</button>
+
+        <p>
+          Recibe lo que necesitas en tu puerta
+        </p>
+
+        <button class="btn-servicio">
+          Solicitar
+        </button>
       </div>
 
       <!-- ENCOMIENDAS -->
-      <div class="servicio-card" (click)="solicitarServicio('encomienda')">
+      <div
+        class="servicio-card"
+        (click)="solicitarServicio('encomienda')"
+      >
         <div class="servicio-icon">📦</div>
+
         <h3>Encomiendas</h3>
-        <p>Envía paquetes de forma rápida</p>
-        <button class="btn-servicio">Solicitar</button>
+
+        <p>
+          Envía paquetes de forma rápida
+        </p>
+
+        <button class="btn-servicio">
+          Solicitar
+        </button>
       </div>
 
     </div>
 
-    <!-- HISTORIAL Y FAVORITOS dentro del hero para flotar sobre la imagen -->
+    <!-- HISTORIAL Y FAVORITOS -->
     <div class="main-content">
 
       <!-- HISTORIAL -->
@@ -88,17 +190,37 @@
           <span>Ver todo</span>
         </div>
 
-        <div class="historial-item" *ngFor="let item of historial">
-          <div class="historial-icon">{{ item.icono }}</div>
+        <div
+          class="historial-item"
+          *ngFor="let item of historial"
+        >
+
+          <div class="historial-icon">
+            {{ item.icono }}
+          </div>
+
           <div class="historial-info">
             <h4>{{ item.destino }}</h4>
-            <p>{{ item.fecha }} · {{ item.tipo }}</p>
+
+            <p>
+              {{ item.fecha }} · {{ item.tipo }}
+            </p>
           </div>
-          <strong class="historial-precio">{{ item.precio }}</strong>
+
+          <strong class="historial-precio">
+            {{ item.precio }}
+          </strong>
+
         </div>
 
-        <div class="empty-state" *ngIf="historial.length === 0">
-          <p>Aún no tienes servicios. ¡Solicita tu primero!</p>
+        <div
+          class="empty-state"
+          *ngIf="historial.length === 0"
+        >
+          <p>
+            Aún no tienes servicios.
+            ¡Solicita tu primero!
+          </p>
         </div>
 
       </div>
@@ -113,6 +235,7 @@
 
         <div class="favorito-item">
           <span class="fav-icon">🏠</span>
+
           <div>
             <h4>Casa</h4>
             <p>Agrega tu dirección de casa</p>
@@ -121,6 +244,7 @@
 
         <div class="favorito-item">
           <span class="fav-icon">💼</span>
+
           <div>
             <h4>Trabajo</h4>
             <p>Agrega tu dirección de trabajo</p>
@@ -129,6 +253,7 @@
 
         <div class="favorito-item">
           <span class="fav-icon">➕</span>
+
           <div>
             <h4>Agregar lugar</h4>
             <p>Guarda tus destinos frecuentes</p>

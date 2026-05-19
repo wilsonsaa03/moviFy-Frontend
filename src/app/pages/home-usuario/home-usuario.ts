@@ -14,6 +14,9 @@ export class HomeUsuarioComponent implements OnInit {
   nombre = '';
   foto = '';
 
+  // MENU DESPLEGABLE
+  menuAbierto = false;
+
   historial = [
     {
       icono: '🏍️',
@@ -41,17 +44,53 @@ export class HomeUsuarioComponent implements OnInit {
   constructor(private router: Router) {}
 
   ngOnInit(): void {
+
     this.nombre = localStorage.getItem('nombre') || 'Usuario';
-    this.foto   = localStorage.getItem('foto')   || '';
+
+    this.foto = localStorage.getItem('foto') || '';
+
+  }
+
+  // ABRIR / CERRAR MENU
+  toggleMenu(): void {
+
+    this.menuAbierto = !this.menuAbierto;
+
+  }
+
+  // IR A PERFIL
+  verPerfil(): void {
+
+    this.router.navigate(['/perfil']);
+
+  }
+
+  // EDITAR PERFIL
+  editarPerfil(): void {
+
+    this.router.navigate(['/editar-perfil']);
+
+  }
+
+  // CONFIGURACION
+  configuracion(): void {
+
+    this.router.navigate(['/configuracion']);
+
   }
 
   solicitarServicio(tipo: string): void {
+
     this.router.navigate(['/solicitar', tipo]);
+
   }
 
   cerrarSesion(): void {
+
     localStorage.clear();
+
     this.router.navigate(['/login']);
+
   }
 
 }

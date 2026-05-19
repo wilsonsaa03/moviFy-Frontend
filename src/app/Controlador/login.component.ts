@@ -81,7 +81,7 @@ export class LoginComponent implements OnInit {
           {
             theme: 'outline',
             size: 'large',
-            width: '100%',
+            width: '100',
             text: 'signin_with'
           }
         );
@@ -110,7 +110,9 @@ export class LoginComponent implements OnInit {
 
       googleId: payload.sub,
 
-      foto: payload.picture
+      foto: payload.picture,
+
+      token: response.credential
 
     }).subscribe({
 
@@ -174,73 +176,83 @@ export class LoginComponent implements OnInit {
 
   loginFacebook(): void {
 
-    if (typeof FB === 'undefined') {
+  // VALIDAR HTTPS
+  if (location.protocol !== 'https:') {
 
-      this.error =
-        'El servicio de Facebook no está disponible.';
+    this.error =
+      'Facebook Login requiere HTTPS. Usa Google o inicia sesión normalmente en localhost.';
 
-      return;
+    return;
     }
 
-    FB.login(
+  // VALIDAR SDK
+  if (typeof FB === 'undefined') {
 
-      (loginResponse: any) => {
+    this.error =
+      'El servicio de Facebook no está disponible.';
 
-        if (loginResponse.authResponse) {
+    return;
+    }
 
-          FB.api(
+  FB.login(
 
-            '/me',
+    (loginResponse: any) => {
 
-            {
-              fields: 'name,email,picture'
-            },
+      if (loginResponse.authResponse) {
 
-            (userData: any) => {
+        FB.api(
 
-              this.usuarioService.loginFacebook({
+          '/me',
 
-                nombre: userData.name,
+          {
+            fields: 'name,email,picture'
+          },
 
-                correo: userData.email || '',
+          (userData: any) => {
 
-                facebookId: userData.id,
+            this.usuarioService.loginFacebook({
 
-                foto:
-                  userData.picture?.data?.url || ''
+              nombre: userData.name,
 
-              }).subscribe({
+              correo: userData.email || '',
 
-                next: (res: any) => {
+              facebookId: userData.id,
 
-                  this.handleLoginExitoso(res);
+              foto:
+                userData.picture?.data?.url || ''
 
-                },
+            }).subscribe({
 
-                error: () => {
+              next: (res: any) => {
 
-                  this.error =
-                    'Error al iniciar sesión con Facebook';
+                this.handleLoginExitoso(res);
 
-                }
+              },
 
-              });
+              error: () => {
 
-            }
+                this.error =
+                  'Error al iniciar sesión con Facebook';
 
-          );
+              }
 
-        } else {
+            });
 
-          this.error =
-            'Inicio de sesión con Facebook cancelado';
+          }
 
-        }
+        );
+
+      } else {
+
+        this.error =
+          'Inicio de sesión con Facebook cancelado';
+
+      }
 
       },
 
       {
-        scope: 'public_profile,email'
+      scope: 'public_profile,email'
       }
 
     );

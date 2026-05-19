@@ -1,0 +1,141 @@
+<div class="conductor-wrapper">
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+
+    <div class="navbar-left">
+      <img src="/assets/movify.jpg" class="nav-logo">
+      <span class="nav-brand">MoviFY</span>
+      <span class="nav-rol">· Conductor</span>
+    </div>
+
+    <div class="navbar-right">
+
+      <div class="nav-perfil">
+        <img *ngIf="foto" [src]="foto" class="nav-avatar">
+
+        <div *ngIf="!foto" class="nav-avatar-placeholder">
+          {{ nombre.charAt(0).toUpperCase() }}
+        </div>
+
+        <div class="nav-info">
+          <span class="nav-nombre">{{ nombre }}</span>
+          <span class="nav-sub">Ver perfil</span>
+        </div>
+      </div>
+
+      <button class="btn-cerrar" (click)="cerrarSesion()">
+        Cerrar sesión
+      </button>
+
+    </div>
+
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>¿A dónde vamos hoy, {{ nombre }}?</h1>
+    <p>Selecciona el servicio que necesitas</p>
+  </div>
+
+  <!-- CONTENIDO -->
+  <div class="main-content">
+
+    <!-- IZQUIERDA -->
+    <div class="left-column">
+
+      <div class="card">
+        <h2>📊 Resumen</h2>
+
+        <div class="stats-grid">
+
+          <div class="stat-box">
+            <h2>${{ gananciasHoy | number }}</h2>
+            <p>Ganancias hoy</p>
+          </div>
+
+          <div class="stat-box">
+            <h2>{{ viajesHoy }}</h2>
+            <p>Viajes hoy</p>
+          </div>
+
+          <div class="stat-box">
+            <h2>${{ gananciasSemana | number }}</h2>
+            <p>Semana</p>
+          </div>
+
+          <div class="stat-box">
+            <h2>{{ viajesTotal }}</h2>
+            <p>Total viajes</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SOLICITUDES -->
+      <div class="card">
+
+        <h2>📲 Solicitudes disponibles</h2>
+
+        <div class="solicitud-item" *ngFor="let s of solicitudes">
+
+          <div>
+            <strong>{{ s.tipo }}</strong>
+            <p>{{ s.destino }}</p>
+          </div>
+
+          <div class="solicitud-right">
+            <span>${{ s.precio | number }}</span>
+
+            <button class="btn-aceptar">
+              Aceptar
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- DERECHA -->
+    <div class="right-column">
+
+      <div class="card">
+
+        <h2>🏍️ Mi vehículo</h2>
+
+        <div class="vehiculo-item">
+          <span>Placa:</span>
+          <strong>{{ placa }}</strong>
+        </div>
+
+        <div class="vehiculo-item">
+          <span>Modelo:</span>
+          <strong>{{ modelo }}</strong>
+        </div>
+
+      </div>
+
+      <div class="card">
+
+        <h2>📋 Historial</h2>
+
+        <div class="historial-item" *ngFor="let h of historial">
+
+          <div>
+            <strong>{{ h.destino }}</strong>
+            <p>{{ h.fecha }}</p>
+          </div>
+
+          <strong>${{ h.precio | number }}</strong>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

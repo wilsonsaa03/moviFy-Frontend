@@ -7,7 +7,8 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class UsuarioService {
-  private BASE_URL = `${environment.apiUrl}/auth`;
+
+  private BASE_URL     = `${environment.apiUrl}/auth`;
   private CONDUCTOR_URL = `${environment.apiUrl}/conductor`;
 
   constructor(private http: HttpClient) {}
@@ -30,5 +31,13 @@ export class UsuarioService {
 
   registroConductor(formData: FormData): Observable<any> {
     return this.http.post(`${this.CONDUCTOR_URL}/registro`, formData);
+  }
+
+  olvideClave(correo: string): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/olvide-password`, { correo });
+  }
+
+  restablecerClave(token: string, password: string): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/restablecer-password`, { token, password });
   }
 }
