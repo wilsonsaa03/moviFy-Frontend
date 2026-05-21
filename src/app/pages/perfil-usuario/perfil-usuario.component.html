@@ -1,0 +1,59 @@
+<div class="perfil-wrapper">
+  
+  <button class="btn-regresar" routerLink="/home-usuario">⬅️ Volver al Inicio</button>
+
+  <div class="perfil-container">
+    
+    <div class="perfil-card vista-detalles">
+      <div class="avatar-seccion">
+        <img *ngIf="foto" [src]="foto" class="perfil-avatar" alt="Foto de perfil">
+        <div *ngIf="!foto" class="perfil-avatar-placeholder">
+          {{ nombre.charAt(0).toUpperCase() }}
+        </div>
+        <h2>{{ nombre }}</h2>
+        <span class="badge-rol">✨ Cliente MoviFY</span>
+      </div>
+
+      <div class="info-lista">
+        <div class="info-item">
+          <span>📧 Correo electrónico:</span>
+          <strong>{{ correo }}</strong>
+        </div>
+        <div class="info-item">
+          <span>📱 Teléfono celular:</span>
+          <strong>{{ telefono }}</strong>
+        </div>
+        <div class="info-item">
+          <span>📍 Ciudad:</span>
+          <strong>Buenaventura, Colombia</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="perfil-card formulario-edicion">
+      <h2>✏️ Editar Información Personal</h2>
+      <p class="subtitulo">Mantén tus datos al día para que los conductores puedan contactarte fácilmente.</p>
+
+      <form (ngSubmit)="guardarCambios()">
+        
+        <div class="form-group">
+          <label>Nombre Completo</label>
+          <input type="text" [(ngModel)]="nombre" name="nombre" required>
+        </div>
+
+        <div class="form-group">
+          <label>Teléfono Celular</label>
+          <input type="text" [(ngModel)]="telefono" name="telefono" required>
+        </div>
+
+        <div class="form-group">
+          <label>URL de tu Foto de Perfil (Opcional)</label>
+          <input type="text" [(ngModel)]="foto" name="foto">
+        </div>
+
+        <button type="submit" class="btn-guardar">💾 Guardar Cambios</button>
+      </form>
+    </div>
+
+  </div>
+</div>

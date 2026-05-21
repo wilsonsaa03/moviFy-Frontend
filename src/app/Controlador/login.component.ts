@@ -176,83 +176,85 @@ export class LoginComponent implements OnInit {
 
   loginFacebook(): void {
 
-  // VALIDAR HTTPS
-  if (location.protocol !== 'https:') {
+    // VALIDAR HTTPS
 
-    this.error =
-      'Facebook Login requiere HTTPS. Usa Google o inicia sesión normalmente en localhost.';
+    if (location.protocol !== 'https:') {
 
-    return;
+      this.error =
+        'Facebook Login requiere HTTPS. Usa Google o inicia sesión normalmente en localhost.';
+
+      return;
     }
 
-  // VALIDAR SDK
-  if (typeof FB === 'undefined') {
+    // VALIDAR SDK
 
-    this.error =
-      'El servicio de Facebook no está disponible.';
+    if (typeof FB === 'undefined') {
 
-    return;
+      this.error =
+        'El servicio de Facebook no está disponible.';
+
+      return;
     }
 
-  FB.login(
+    FB.login(
 
-    (loginResponse: any) => {
+      (loginResponse: any) => {
 
-      if (loginResponse.authResponse) {
+        if (loginResponse.authResponse) {
 
-        FB.api(
+          FB.api(
 
-          '/me',
+            '/me',
 
-          {
-            fields: 'name,email,picture'
-          },
+            {
+              fields: 'name,email,picture'
+            },
 
-          (userData: any) => {
+            (userData: any) => {
 
-            this.usuarioService.loginFacebook({
+              this.usuarioService.loginFacebook({
 
-              nombre: userData.name,
+                nombre: userData.name,
 
-              correo: userData.email || '',
+                correo: userData.email || '',
 
-              facebookId: userData.id,
+                facebookId: userData.id,
 
-              foto:
-                userData.picture?.data?.url || ''
+                foto:
+                  userData.picture?.data?.url || ''
 
-            }).subscribe({
+              }).subscribe({
 
-              next: (res: any) => {
+                next: (res: any) => {
 
-                this.handleLoginExitoso(res);
+                  this.handleLoginExitoso(res);
 
-              },
+                },
 
-              error: () => {
+                error: () => {
 
-                this.error =
-                  'Error al iniciar sesión con Facebook';
+                  this.error =
+                    'Error al iniciar sesión con Facebook';
 
-              }
+                }
 
-            });
+              });
 
-          }
+            }
 
-        );
+          );
 
-      } else {
+        } else {
 
-        this.error =
-          'Inicio de sesión con Facebook cancelado';
+          this.error =
+            'Inicio de sesión con Facebook cancelado';
 
-      }
+        }
 
       },
 
       {
-      scope: 'public_profile,email'
+        scope: 'public_profile,email'
       }
 
     );
@@ -321,7 +323,7 @@ export class LoginComponent implements OnInit {
 
         },
 
-        error: (err) => {
+        error: (err: any) => {
 
           const msg =
             err.error?.error || '';
@@ -354,10 +356,37 @@ export class LoginComponent implements OnInit {
 
   private handleLoginExitoso(res: any): void {
 
-    localStorage.setItem('token',  res.token);
-    localStorage.setItem('rol',    res.rol);
-    localStorage.setItem('nombre', res.nombre);
-    localStorage.setItem('foto',   res.foto || '');
+    // GUARDAR DATOS
+
+    localStorage.setItem(
+      'token',
+      res.token
+    );
+
+    localStorage.setItem(
+      'rol',
+      res.rol
+    );
+
+    localStorage.setItem(
+      'nombre',
+      res.nombre
+    );
+
+    localStorage.setItem(
+      'foto',
+      res.foto || ''
+    );
+
+    // AGREGAR ESTO
+    // GUARDAR CORREO
+
+    localStorage.setItem(
+      'correo',
+      res.correo || this.usuario.correo
+    );
+
+    // REDIRECCION
 
     if (res.rol === 'admin') {
 

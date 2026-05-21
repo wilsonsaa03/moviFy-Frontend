@@ -1,141 +1,176 @@
-<div class="conductor-wrapper">
+<div class="conductor-layout" [class.sidebar-colapsado]="sidebarColapsado">
+  
+  <aside class="sidebar" [class.sidebar-visible]="menuNavAbierto">
+    
+    <div class="sidebar-menu">
+      <a routerLink="/conductor" class="nav-link activo">
+        <span class="link-icon">🏠</span> 
+        <span class="link-text">Inicio</span>
+      </a>
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
+      <a routerLink="/mis-viajes" class="nav-link">
+        <span class="link-icon">🛵</span> 
+        <span class="link-text">Mis viajes</span>
+      </a>
 
-    <div class="navbar-left">
-      <img src="/assets/movify.jpg" class="nav-logo">
-      <span class="nav-brand">MoviFY</span>
-      <span class="nav-rol">· Conductor</span>
+      <a routerLink="/ganancias" class="nav-link">
+        <span class="link-icon">💰</span> 
+        <span class="link-text">Ganancias</span>
+      </a>
+
+      <a routerLink="/perfil-conductor" class="nav-link">
+        <span class="link-icon">👤</span> 
+        <span class="link-text">Ver mi perfil</span>
+      </a>
+
+      <a routerLink="/soporte" class="nav-link">
+        <span class="link-icon">🎧</span> 
+        <span class="link-text">Soporte</span>
+      </a>
     </div>
 
-    <div class="navbar-right">
-
-      <div class="nav-perfil">
-        <img *ngIf="foto" [src]="foto" class="nav-avatar">
-
-        <div *ngIf="!foto" class="nav-avatar-placeholder">
-          {{ nombre.charAt(0).toUpperCase() }}
-        </div>
-
-        <div class="nav-info">
-          <span class="nav-nombre">{{ nombre }}</span>
-          <span class="nav-sub">Ver perfil</span>
-        </div>
-      </div>
-
-      <button class="btn-cerrar" (click)="cerrarSesion()">
-        Cerrar sesión
+    <div class="sidebar-footer">
+      <button class="btn-cerrar-lateral" (click)="cerrarSesion()">
+        <span class="btn-icon">🚪</span>
+        <span class="link-text">Cerrar sesión</span>
       </button>
-
     </div>
+  </aside>
 
-  </nav>
-
-  <!-- HERO -->
-  <div class="hero">
-    <h1>¿A dónde vamos hoy, {{ nombre }}?</h1>
-    <p>Selecciona el servicio que necesitas</p>
-  </div>
-
-  <!-- CONTENIDO -->
-  <div class="main-content">
-
-    <!-- IZQUIERDA -->
-    <div class="left-column">
-
-      <div class="card">
-        <h2>📊 Resumen</h2>
-
-        <div class="stats-grid">
-
-          <div class="stat-box">
-            <h2>${{ gananciasHoy | number }}</h2>
-            <p>Ganancias hoy</p>
-          </div>
-
-          <div class="stat-box">
-            <h2>{{ viajesHoy }}</h2>
-            <p>Viajes hoy</p>
-          </div>
-
-          <div class="stat-box">
-            <h2>${{ gananciasSemana | number }}</h2>
-            <p>Semana</p>
-          </div>
-
-          <div class="stat-box">
-            <h2>{{ viajesTotal }}</h2>
-            <p>Total viajes</p>
-          </div>
-
-        </div>
+  <div class="main-container-wrapper">
+    
+    <nav class="navbar">
+      
+      <div class="navbar-left">
+        <button class="menu-toggle" (click)="toggleSidebar()">☰</button>
+        <img src="/assets/movify.jpg" class="nav-logo" alt="MoviFY Logo">
+        <span class="nav-brand">MoviFY</span>
+        <span class="nav-rol">· Conductor</span>
       </div>
 
-      <!-- SOLICITUDES -->
-      <div class="card">
+      <div class="navbar-right">
+        
+        <button class="btn-estado" [class.en-linea]="enLinea" (click)="toggleMapaActivo()">
+          {{ enLinea ? '🟢 Mapa activo' : '🔴 Activar mapa' }}
+        </button>
 
-        <h2>📲 Solicitudes disponibles</h2>
-
-        <div class="solicitud-item" *ngFor="let s of solicitudes">
-
-          <div>
-            <strong>{{ s.tipo }}</strong>
-            <p>{{ s.destino }}</p>
+        <div class="nav-perfil" (click)="toggleMenu()">
+          <img *ngIf="foto" [src]="foto" class="nav-avatar">
+          <div *ngIf="!foto" class="nav-avatar-placeholder">
+            {{ nombre.charAt(0).toUpperCase() }}
           </div>
 
-          <div class="solicitud-right">
-            <span>${{ s.precio | number }}</span>
+          <div class="nav-info">
+            <span class="nav-nombre">{{ nombre }}</span>
+            <span class="nav-sub">Ver perfil ▾</span>
+          </div>
 
-            <button class="btn-aceptar">
-              Aceptar
+          <div class="menu-perfil" *ngIf="menuAbierto" (click)="$event.stopPropagation()">
+            <div class="menu-header">
+              <div class="menu-avatar">
+                {{ nombre.charAt(0).toUpperCase() }}
+              </div>
+              <div class="menu-user">
+                <h3>{{ nombre }}</h3>
+                <p>Conductor MoviFY</p>
+              </div>
+            </div>
+
+            <button class="menu-item" (click)="verPerfil()">
+              <span class="menu-icon">👤</span> Ver perfil
+            </button>
+            <button class="menu-item" (click)="editarPerfil()">
+              <span class="menu-icon">✏️</span> Editar perfil
+            </button>
+            <button class="menu-item">
+              <span class="menu-icon">⭐</span> Favoritos
+            </button>
+            <button class="menu-item" (click)="configuracion()">
+              <span class="menu-icon">⚙️</span> Configuración
+            </button>
+            <button class="menu-item" (click)="cerrarSesion()">
+              <span class="menu-icon">🚪</span> Cerrar sesión
             </button>
           </div>
-
         </div>
 
       </div>
+    </nav>
 
-    </div>
-
-    <!-- DERECHA -->
-    <div class="right-column">
-
-      <div class="card">
-
-        <h2>🏍️ Mi vehículo</h2>
-
-        <div class="vehiculo-item">
-          <span>Placa:</span>
-          <strong>{{ placa }}</strong>
-        </div>
-
-        <div class="vehiculo-item">
-          <span>Modelo:</span>
-          <strong>{{ modelo }}</strong>
-        </div>
-
+    <main class="content-body">
+      
+      <div class="hero">
+        <h1>¿A dónde vamos hoy, {{ nombre }}?</h1>
+        <p>Selecciona el servicio que necesitas desde tu panel de control</p>
+        <button class="btn-mapa" (click)="toggleMapa()">
+          {{ mostrarMapa ? '❌ Ocultar mapa' : '🗺️ Mostrar mapa' }}
+        </button>
       </div>
 
-      <div class="card">
+      <div class="mapa-container" *ngIf="mostrarMapa">
+        <div class="mapa-header">
+          <h2>📍 Mapa en tiempo real</h2>
+          <span class="estado-mapa">
+            {{ enLinea ? '🟢 En línea' : '🔴 Desconectado' }}
+          </span>
+        </div>
+        <iframe class="mapa" src="https://www.google.com/maps?q=Cali,Colombia&output=embed" loading="lazy"></iframe>
+      </div>
 
-        <h2>📋 Historial</h2>
+      <div class="main-content">
+        
+        <div class="left-column">
+          <div class="card">
+            <h2>📊 Resumen de Actividad</h2>
+            <div class="stats-grid">
+              <div class="stat-box">
+                <h2>${{ gananciasHoy | number }}</h2>
+                <p>Ganancias hoy</p>
+              </div>
+              <div class="stat-box">
+                <h2>{{ viajesHoy }}</h2>
+                <p>Viajes hoy</p>
+              </div>
+              <div class="stat-box">
+                <h2>${{ gananciasSemana | number }}</h2>
+                <p>Semana</p>
+              </div>
+              <div class="stat-box">
+                <h2>{{ viajesTotal }}</h2>
+                <p>Total viajes</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div class="historial-item" *ngFor="let h of historial">
-
-          <div>
-            <strong>{{ h.destino }}</strong>
-            <p>{{ h.fecha }}</p>
+        <div class="right-column">
+          <div class="card">
+            <h2>🏍️ Mi vehículo</h2>
+            <div class="vehiculo-item">
+              <span>Placa:</span>
+              <strong>{{ placa }}</strong>
+            </div>
+            <div class="vehiculo-item">
+              <span>Modelo:</span>
+              <strong>{{ modelo }}</strong>
+            </div>
           </div>
 
-          <strong>${{ h.precio | number }}</strong>
-
+          <div class="card">
+            <h2>📋 Historial</h2>
+            <div class="historial-item" *ngFor="let h of historial">
+              <div>
+                <strong>{{ h.destino }}</strong>
+                <p>{{ h.fecha }}</p>
+              </div>
+              <strong>${{ h.precio | number }}</strong>
+            </div>
+            <p *ngIf="historial.length === 0" class="no-data">No registras viajes previos hoy.</p>
+          </div>
         </div>
 
       </div>
-
-    </div>
+    </main>
 
   </div>
-
 </div>
