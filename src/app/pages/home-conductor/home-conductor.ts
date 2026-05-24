@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ConductorService } from '../../Base_de_datos/conductor.service';
+import * as L from 'leaflet';
 
 @Component({
   selector: 'app-home-conductor',
@@ -11,45 +12,55 @@ import { ConductorService } from '../../Base_de_datos/conductor.service';
   templateUrl: './home-conductor.html',
   styleUrls: ['./home-conductor.css']
 })
-export class HomeConductorComponent implements OnInit {
+export class HomeConductorComponent implements OnInit, OnDestroy {
 
   // =========================
   // DATOS DEL CONDUCTOR
   // =========================
-  nombre       = '';
-  foto         = '';
-  placa        = '';
-  modelo       = '';
-  telefono     = '';
-  correo       = '';
-  estadoCuenta = 'pendiente';
-  calificacion = 4.8;
-  enLinea      = false;
-  notificaciones = 0;
+  nombre: string = 'Conductor';
+  foto: string = '';
+  placa: string = 'Cargando...'; // Valor inicial para el usuario
+  modelo: string = 'Cargando...';
+  telefono: string = '';
+  correo: string = '';
+  estadoCuenta: string = 'pendiente';
+  calificacion: number = 4.8;
+  enLinea: boolean = false;
+  notificaciones: number = 0;
 
-  // =========================
-  // MAPA Y ALERTAS
-  // =========================
-  mostrarMapa   = false;
-  mostrarAlerta = false;
-  mensajeAlerta = '';
+  // ==========================================
+  // MAPA, RASTREO Y ALERTAS
+  // ==========================================
+  mostrarMapa: boolean = false;
+  mostrarAlerta: boolean = false;
+  mensajeAlerta: string = '';
+  mapa: any;
+  
+  watchId: any;           
+  markerUsuario: L.Marker | undefined; 
+  
+  iconoMoto = L.icon({
+    iconUrl: 'assets/moto-icon.png',
+    iconSize: [60, 60],
+    iconAnchor: [30, 60],
+    popupAnchor: [0, -60]
+  });
 
   // =========================
   // MENUS INTERACTIVOS
   // =========================
-  menuAbierto      = false; // Dropdown de perfil superior derecho
-  menuNavAbierto   = false; // Menú móvil desplegable
-  sidebarColapsado = false; // Nueva variable: controla si se encoge la barra lateral izquierda
+  menuAbierto: boolean = false;
+  menuNavAbierto: boolean = false;
+  sidebarColapsado: boolean = false;
 
   // =========================
   // ESTADISTICAS
   // =========================
-  gananciasHoy    = 0;
-  gananciasSemana = 0;
-  viajesHoy       = 0;
-  viajesTotal     = 0;
+  gananciasHoy: number = 0;
+  gananciasSemana: number = 0;
+  viajesHoy: number = 0;
+  viajesTotal: number = 0;
 
-  servicioActivo: any = null;
   solicitudes: any[] = [];
   historial: any[] = [];
 
@@ -59,79 +70,152 @@ export class HomeConductorComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const correo = localStorage.getItem('correo');
-    if (!correo) {
-      console.log('No hay correo guardado');
+    const correoSession = localStorage.getItem('correo');
+    
+    // Redirigir al login si no hay sesión
+    if (!correoSession) {
+      this.router.navigate(['/login']);
       return;
     }
 
-    this.conductorService.obtenerPerfil(correo).subscribe({
+    // CARGAR PERFIL DESDE EL SERVICIO
+    this.conductorService.obtenerPerfil(correoSession).subscribe({
       next: (data: any) => {
-        this.nombre   = data.nombre || '';
+        console.log("Datos recibidos:", data); // Para depuración
+        
+        // Mapeo de datos con operadores OR para asegurar que nada quede vacío
+        this.nombre   = data.nombre || 'Nombre no disponible';
         this.foto     = data.foto || '';
-        this.correo   = data.correo || '';
-        this.telefono = data.telefono || '';
-        this.placa    = data.placa || '';
-        this.modelo   = data.modelo || '';
+        this.correo   = data.correo || correoSession;
+        this.telefono = data.telefono || 'N/A';
+        
+        // CORRECCIÓN: Nombres de campos comunes en DB
+        this.placa    = data.placa || data.placa_vehiculo || 'No registrada';
+        this.modelo   = data.modelo || data.modelo_vehiculo || 'No registrado';
+        
         this.estadoCuenta = data.estado || 'pendiente';
-
-        this.gananciasHoy = data.gananciasHoy || 0;
-        this.gananciasSemana = data.gananciasSemana || 0;
-        this.viajesHoy = data.viajesHoy || 0;
-        this.viajesTotal = data.viajesTotal || 0;
-
-        this.solicitudes = data.solicitudes || [];
+        this.gananciasHoy = Number(data.gananciasHoy) || 0;
+        this.gananciasSemana = Number(data.gananciasSemana) || 0;
+        this.viajesHoy = Number(data.viajesHoy) || 0;
+        this.viajesTotal = Number(data.viajesTotal) || 0;
         this.historial = data.historial || [];
       },
-      error: (err: any) => { console.log(err); }
+      error: (err: any) => { 
+        console.error("Error al cargar perfil:", err);
+        this.placa = "Error de conexión";
+        this.modelo = "Intente más tarde";
+      }
     });
   }
 
-  // MÉTODO NUEVO: Controla la visibilidad y colapso de la barra lateral izquierda
+  ngOnDestroy(): void {
+    this.pararRastreo();
+    // Limpiar el mapa de la memoria si existe
+    if (this.mapa) {
+      this.mapa.remove();
+    }
+  }
+
+  // =========================
+  // LOGICA DE INTERFAZ
+  // =========================
   toggleSidebar(): void {
     if (window.innerWidth <= 992) {
-      // En dispositivos móviles actúa abriendo/cerrando el menú flotante
       this.menuNavAbierto = !this.menuNavAbierto;
     } else {
-      // En computadoras colapsa el texto dejando visibles solo los iconos
       this.sidebarColapsado = !this.sidebarColapsado;
     }
   }
 
   toggleMapa(): void {
     this.mostrarMapa = !this.mostrarMapa;
+    if (this.mostrarMapa) {
+      // Pequeño delay para asegurar que el div #map exista en el DOM
+      setTimeout(() => this.iniciarMapaBase(), 150);
+    } else {
+      this.pararRastreo();
+    }
+  }
+
+  iniciarMapaBase(): void {
+    // Si ya hay una instancia, invalidar tamaño para corregir tiles grises
+    if (this.mapa) {
+      this.mapa.invalidateSize();
+      return;
+    }
+
+    try {
+      this.mapa = L.map('map').setView([3.8821, -77.0253], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(this.mapa);
+      
+      if (this.enLinea) this.iniciarRastreoRealTime();
+    } catch (e) {
+      console.error("Error inicializando Leaflet:", e);
+    }
   }
 
   toggleMapaActivo(): void {
     this.enLinea = !this.enLinea;
     this.mostrarAlerta = true;
-    this.mensajeAlerta = this.enLinea 
-      ? '🟢 Ahora estás disponible y visible para los usuarios' 
-      : '🔴 Mapa desactivado. Ya no apareces disponible';
+    
+    if (this.enLinea) {
+      this.mensajeAlerta = '🟢 Ahora estás disponible para recibir servicios';
+      if (this.mapa) this.iniciarRastreoRealTime();
+    } else {
+      this.mensajeAlerta = '🔴 Has dejado de estar disponible. Rastreo apagado';
+      this.pararRastreo();
+    }
 
-    setTimeout(() => { this.mostrarAlerta = false; }, 4000);
+    setTimeout(() => this.mostrarAlerta = false, 3000);
   }
 
-  toggleMenu(): void {
-    this.menuAbierto = !this.menuAbierto;
+  iniciarRastreoRealTime() {
+    if (!navigator.geolocation || !this.mapa) return;
+
+    this.pararRastreo(); // Limpiar rastreos previos
+
+    this.watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        this.mapa.panTo([lat, lon]);
+
+        if (this.markerUsuario) {
+          this.markerUsuario.setLatLng([lat, lon]);
+        } else {
+          this.markerUsuario = L.marker([lat, lon], { icon: this.iconoMoto })
+            .addTo(this.mapa)
+            .bindPopup('<b>Tu ubicación</b>')
+            .openPopup();
+        }
+      },
+      (err) => console.warn("Error GPS:", err),
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
   }
 
-  verPerfil(): void {
-    this.menuAbierto = false;
-    this.router.navigate(['/perfil-conductor']);
+  pararRastreo() {
+    if (this.watchId) {
+      navigator.geolocation.clearWatch(this.watchId);
+      this.watchId = null;
+    }
+    if (this.markerUsuario && this.mapa) {
+      this.mapa.removeLayer(this.markerUsuario);
+      this.markerUsuario = undefined;
+    }
   }
 
-  editarPerfil(): void {
-    this.menuAbierto = false;
-    this.router.navigate(['/editar-perfil']);
-  }
-
-  configuracion(): void {
-    this.menuAbierto = false;
-    this.router.navigate(['/configuracion']);
-  }
+  // =========================
+  // NAVEGACIÓN Y SESIÓN
+  // =========================
+  toggleMenu(): void { this.menuAbierto = !this.menuAbierto; }
+  verPerfil(): void { this.menuAbierto = false; this.router.navigate(['/perfil-conductor']); }
+  editarPerfil(): void { this.menuAbierto = false; this.router.navigate(['/editar-perfil']); }
+  configuracion(): void { this.menuAbierto = false; this.router.navigate(['/configuracion']); }
 
   cerrarSesion(): void {
+    this.pararRastreo();
     localStorage.clear();
     this.router.navigate(['/login']);
   }

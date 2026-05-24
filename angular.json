@@ -27,6 +27,7 @@
               }
             ],
             "styles": [
+              "leaflet/dist/leaflet.css",
               "src/styles.css"
             ],
             "index": "src/index.html",
