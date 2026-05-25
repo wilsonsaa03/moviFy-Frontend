@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+// IMPORTACIONES DE PÁGINAS
 import { LandingComponent } from './pages/landing/landing';
 import { LoginComponent } from './Controlador/login.component';
 
@@ -17,32 +18,32 @@ import { RestablecerPasswordComponent } from './pages/restablecer-password/resta
 
 import { PerfilUsuarioComponent } from './pages/perfil-usuario/perfil-usuario.component';
 
+// IMPORTACIÓN DE SOLICITAR TRANSPORTE
+// Nota: Asegúrate que el nombre del archivo en la carpeta sea 'solicitar-transporte.ts'
+import { SolicitarTransporte } from './pages/solicitar-transporte/solicitar-transporte';
+
 export const routes: Routes = [
-
+  // Inicio y Auth
   { path: '', component: LandingComponent },
-
   { path: 'login', component: LoginComponent },
-
   { path: 'olvide-password', component: OlvidePasswordComponent },
-
   { path: 'restablecer-password', component: RestablecerPasswordComponent },
 
+  // Registros
   { path: 'registro', component: Registro },
-
   { path: 'registro/usuario', component: RegistroUsuario },
-
   { path: 'registro/conductor', component: RegistroConductor },
-
   { path: 'registro/admin', component: RegistroAdmin },
 
+  // Dashboards (Home)
   { path: 'home-usuario', component: HomeUsuarioComponent },
-
   { path: 'conductor', component: HomeConductorComponent },
-
   { path: 'admin', component: HomeAdminComponent },
 
+  // Perfil y Acciones de Usuario
   { path: 'perfil-usuario', component: PerfilUsuarioComponent },
+  { path: 'solicitar-transporte', component: SolicitarTransporte },
 
+  // Manejo de rutas no encontradas (SIEMPRE AL FINAL)
   { path: '**', redirectTo: '' }
-
 ];

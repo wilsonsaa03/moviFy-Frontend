@@ -13,8 +13,6 @@ export class HomeUsuarioComponent implements OnInit {
 
   nombre = '';
   foto = '';
-
-  // MENU DESPLEGABLE
   menuAbierto = false;
 
   historial = [
@@ -44,53 +42,41 @@ export class HomeUsuarioComponent implements OnInit {
   constructor(private router: Router) {}
 
   ngOnInit(): void {
-
     this.nombre = localStorage.getItem('nombre') || 'Usuario';
-
     this.foto = localStorage.getItem('foto') || '';
-
   }
 
-  // ABRIR / CERRAR MENU
   toggleMenu(): void {
-
     this.menuAbierto = !this.menuAbierto;
-
   }
 
-  // IR A PERFIL
   verPerfil(): void {
-
-    this.router.navigate(['/perfil']);
-
+    this.router.navigate(['/perfil-usuario']); // Ajustado a tu ruta de app.routes.ts
   }
 
-  // EDITAR PERFIL
   editarPerfil(): void {
-
     this.router.navigate(['/editar-perfil']);
-
   }
 
-  // CONFIGURACION
   configuracion(): void {
-
     this.router.navigate(['/configuracion']);
-
   }
 
+  // ==========================================
+  // FUNCIÓN ACTUALIZADA
+  // ==========================================
   solicitarServicio(tipo: string): void {
-
-    this.router.navigate(['/solicitar', tipo]);
-
+    if (tipo === 'transporte') {
+      // Navega a la ruta exacta que pusimos en app.routes.ts
+      this.router.navigate(['/solicitar-transporte']);
+    } else {
+      // Por ahora, los otros siguen igual o puedes crearles sus rutas luego
+      this.router.navigate(['/solicitar', tipo]);
+    }
   }
 
   cerrarSesion(): void {
-
     localStorage.clear();
-
     this.router.navigate(['/login']);
-
   }
-
 }

@@ -1,0 +1,93 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+<div class="solicitar-wrapper">
+  
+  <nav class="navbar">
+    <button class="btn-volver" (click)="volver()">
+      <span class="icon-back">←</span> Volver
+    </button>
+    <span class="nav-brand">Movi<span class="text-neon">FY</span></span>
+  </nav>
+
+  <div class="content-grid">
+    
+    <div class="form-panel">
+      
+      <div class="form-header">
+        <h2>Solicitar Transporte 🏍️</h2>
+        <p>Ingresa tu ruta para conectarte con un conductor disponible al instante.</p>
+      </div>
+
+      <div class="input-group">
+        <label>Punto de recogida</label>
+        <div class="input-wrapper">
+          <span class="input-icon">📍</span>
+          <input 
+            type="text" 
+            placeholder="Esperando GPS..." 
+            [(ngModel)]="origen"
+            readonly
+            [class.loading-text]="origen === 'Buscando tu ubicación...'"
+          >
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Punto de destino</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🏁</span>
+          <input 
+            type="text" 
+            placeholder="Escribe una dirección y presiona Enter..." 
+            [(ngModel)]="destino"
+            (keyup.enter)="buscarDireccionManual()"
+            (blur)="buscarDireccionManual()"
+          >
+        </div>
+        <small class="hint-text">
+          ✨ También puedes dar clic directamente sobre el mapa
+        </small>
+      </div>
+
+      <div class="tarifa-box slide-up" *ngIf="tarifaEstimada > 0 && !buscandoConductor">
+        <div class="tarifa-item">
+          <span class="label">💰 Tarifa estimada</span>
+          <strong class="value highlight-text">${{ tarifaEstimada | number }}</strong>
+        </div>
+        <div class="divider"></div>
+        <div class="tarifa-item">
+          <span class="label">📏 Distancia</span>
+          <strong class="value">{{ distanciaViaje.toFixed(2) }} km</strong>
+        </div>
+      </div>
+
+      <div class="info-mapa" *ngIf="tarifaEstimada === 0 && !buscandoConductor">
+        🗺️ Selecciona el destino en el mapa o escríbelo arriba
+      </div>
+
+      <button 
+        class="btn-solicitar" 
+        [class.is-loading]="buscandoConductor"
+        [disabled]="distanciaViaje === 0 || buscandoConductor"
+        (click)="solicitarViaje()"
+      >
+        <span *ngIf="!buscandoConductor" class="btn-content">
+          🏍️ Solicitar Moto
+        </span>
+        <span *ngIf="buscandoConductor" class="btn-content">
+          <div class="spinner"></div> Buscando conductor...
+        </span>
+      </button>
+
+    </div>
+
+    <div class="map-panel">
+      <div id="map"></div>
+      <div class="map-overlay" *ngIf="buscandoConductor">
+        <div class="radar"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
