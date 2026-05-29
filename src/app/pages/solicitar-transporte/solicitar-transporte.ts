@@ -644,16 +644,38 @@ export class SolicitarTransporte
   }
 
   private procesarEstadoServicio(s: any): void {
-    if (s.estado === 'ACEPTADO') {
+    // Caso: El conductor aceptó y está yendo al origen o ya está en viaje
+    if (['ACEPTADO', 'EN_CAMINO', 'EN_VIAJE'].includes(s.estado)) {
       this.buscandoConductor = false;
       this.actualizarPosicionConductor(s);
-      // Dibujar ruta Driver -> Usuario
-      this.routingControl.setWaypoints([
-        L.latLng(s.latitud, s.longitud),
-        L.latLng(this.userLat, this.userLng)
-      ]);
+
+      if (s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO') {
+        this.origen = `🛵 Conductor en camino (Estado: ${s.estado})`;
+        // Trazar línea: Conductor -> Usuario
+        this.routingControl.setWaypoints([
+          L.latLng(s.latitud, s.longitud),
+          L.latLng(this.userLat, this.userLng)
+        ]);
+      } 
+      
+      if (s.estado === 'EN_VIAJE') {
+        this.origen = '🛣️ En viaje al destino...';
+        const dest = this.destinoMarker?.getLatLng();
+        if (dest) {
+          // Trazar línea: Conductor (Posición actual) -> Destino final
+          this.routingControl.setWaypoints([
+            L.latLng(s.latitud, s.longitud),
+            L.latLng(dest.lat, dest.lng)
+          ]);
+        }
+      }
     } 
-    
+
+    if (s.estado === 'LLEGÓ_RECOGIDA') {
+      this.origen = '✅ ¡Tu conductor ha llegado!';
+      alert("🔔 El conductor está afuera. Por favor, aborda el vehículo.");
+    }
+
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
       alert("🎉 ¡Has llegado a tu destino!");

@@ -189,6 +189,9 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
 
   iniciarPollingNotificaciones() {
     this.pollingNotificaciones = setInterval(() => {
+      // Registro temporal para confirmar que el ID y el estado son correctos durante el polling
+      console.log("🔄 Polling activo | conductorId:", this.conductorId, "| enLinea:", this.enLinea);
+
       if (!this.conductorId || !this.enLinea) return;
 
       fetch(`http://localhost:8080/api/transporte/solicitudes-pendientes/${this.conductorId}`)
@@ -203,7 +206,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
           }
         })
         .catch(err => console.error("Error consultando viajes:", err));
-    }, 4000); // Consulta cada 4 segundos
+    }, 2000); // Consulta cada 2 segundos para reaccionar a la simulación de 10s
   }
 
   responderASolicitud(servicioId: number, nuevoEstado: string) {

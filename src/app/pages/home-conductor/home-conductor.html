@@ -192,3 +192,46 @@
 
   </div>
 </div>
+
+<!-- OVERLAY PANTALLA COMPLETA - SOLICITUD ENTRANTE -->
+<div class="solicitud-overlay" *ngIf="solicitudes.length > 0 && enLinea">
+  <div class="solicitud-fullscreen" *ngFor="let s of solicitudes; let i = index" [style.display]="i === 0 ? 'flex' : 'none'">
+    
+    <div class="sol-header">
+      <div class="sol-ping"></div>
+      <span class="sol-badge">Nueva solicitud</span>
+    </div>
+
+    <div class="sol-icon">🏍️</div>
+
+    <h1 class="sol-titulo">¡Viaje disponible!</h1>
+
+    <div class="sol-datos">
+      <div class="sol-fila">
+        <span class="sol-label">👤 Pasajero</span>
+        <strong class="sol-valor">{{ s.usuario_nombre }}</strong>
+      </div>
+      <div class="sol-fila">
+        <span class="sol-label">📏 Distancia</span>
+        <strong class="sol-valor">{{ s.distancia_km | number:'1.1-2' }} km</strong>
+      </div>
+      <div class="sol-fila sol-fila-highlight">
+        <span class="sol-label">💰 Tarifa</span>
+        <strong class="sol-valor sol-tarifa">${{ s.tarifa | number }}</strong>
+      </div>
+    </div>
+
+    <div class="sol-botones">
+      <button class="sol-btn sol-rechazar" (click)="responderASolicitud(s.servicio_id, 'RECHAZADO')">
+        ✕ Rechazar
+      </button>
+      <button class="sol-btn sol-aceptar" (click)="responderASolicitud(s.servicio_id, 'ACEPTADO')">
+        ✓ Aceptar viaje
+      </button>
+    </div>
+
+    <p class="sol-contador" *ngIf="solicitudes.length > 1">
+      +{{ solicitudes.length - 1 }} solicitud(es) más en espera
+    </p>
+  </div>
+</div>
