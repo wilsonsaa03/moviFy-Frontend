@@ -644,41 +644,58 @@ export class SolicitarTransporte
   }
 
   private procesarEstadoServicio(s: any): void {
-    // Caso: El conductor aceptó y está yendo al origen o ya está en viaje
-    if (['ACEPTADO', 'EN_CAMINO', 'EN_VIAJE'].includes(s.estado)) {
-      this.buscandoConductor = false;
-      this.actualizarPosicionConductor(s);
+    const W = (window as any).L;
 
-      if (s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO') {
-        this.origen = `🛵 Conductor en camino (Estado: ${s.estado})`;
-        // Trazar línea: Conductor -> Usuario
-        this.routingControl.setWaypoints([
-          L.latLng(s.latitud, s.longitud),
-          L.latLng(this.userLat, this.userLng)
-        ]);
-      } 
-      
-      if (s.estado === 'EN_VIAJE') {
-        this.origen = '🛣️ En viaje al destino...';
-        const dest = this.destinoMarker?.getLatLng();
-        if (dest) {
-          // Trazar línea: Conductor (Posición actual) -> Destino final
+    // ACEPTADO → dibujar ruta conductor hacia el usuario
+    if (s.estado === 'ACEPTADO') {
+      this.buscandoConductor = false;
+
+      const condLat = s.conductor_lat ?? s.latitud;
+      const condLng = s.conductor_lng ?? s.longitud;
+
+      if (condLat && condLng) {
+        // Actualizar marcador del conductor
+        this.actualizarPosicionConductor(s);
+
+        // Ruta: conductor → usuario (línea amarilla)
+        if (this.routingControl && W?.Routing) {
           this.routingControl.setWaypoints([
-            L.latLng(s.latitud, s.longitud),
-            L.latLng(dest.lat, dest.lng)
+            W.latLng(condLat, condLng),
+            W.latLng(this.userLat, this.userLng)
           ]);
+          // Cambiar color a amarillo
+          if (this.routingControl.options?.lineOptions) {
+            this.routingControl.options.lineOptions.styles =
+              [{ color: '#f59e0b', weight: 6, opacity: 0.9 }];
+          }
         }
       }
-    } 
-
-    if (s.estado === 'LLEGÓ_RECOGIDA') {
-      this.origen = '✅ ¡Tu conductor ha llegado!';
-      alert("🔔 El conductor está afuera. Por favor, aborda el vehículo.");
     }
 
+    // EN_CAMINO → conductor recogió al usuario, ruta hacia destino
+    if (s.estado === 'EN_CAMINO') {
+      const condLat = s.conductor_lat ?? s.latitud;
+      const condLng = s.conductor_lng ?? s.longitud;
+      const dest = this.destinoMarker?.getLatLng();
+
+      if (this.routingControl && dest && W?.Routing) {
+        this.routingControl.setWaypoints([
+          W.latLng(condLat ?? this.userLat, condLng ?? this.userLng),
+          W.latLng(dest.lat, dest.lng)
+        ]);
+        // Ruta verde hacia destino
+        if (this.routingControl.options?.lineOptions) {
+          this.routingControl.options.lineOptions.styles =
+            [{ color: '#16a34a', weight: 6, opacity: 0.9 }];
+        }
+      }
+      this.actualizarPosicionConductor(s);
+    }
+
+    // FINALIZADO
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
-      alert("🎉 ¡Has llegado a tu destino!");
+      alert('🎉 ¡Has llegado a tu destino! Gracias por usar MoviFY');
       this.router.navigate(['/home-usuario']);
     }
   }

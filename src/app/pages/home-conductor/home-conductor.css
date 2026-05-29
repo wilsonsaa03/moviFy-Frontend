@@ -547,3 +547,75 @@ body {
     padding: 20px 15px;
   }
 }
+
+/* PANEL VIAJE ACTIVO */
+.viaje-activo-panel {
+  background: rgba(255,255,255,0.95);
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 25px;
+  border: 2px solid #16a34a;
+  box-shadow: 0 10px 35px rgba(22,163,74,0.15);
+  animation: fadeInOverlay 0.3s ease; /* Reutilizamos la animación */
+}
+
+.viaje-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.viaje-badge {
+  background: #dcfce7;
+  color: #166534;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.viaje-estado {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.viaje-datos {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+
+.viaje-fila {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 15px;
+}
+
+.viaje-fila:last-child { border-bottom: none; }
+
+.viaje-botones { display: flex; gap: 12px; }
+
+.btn-llegue, .btn-finalizar {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-llegue { background: #f59e0b; color: white; }
+.btn-llegue:hover { background: #d97706; }
+
+.btn-finalizar { background: #16a34a; color: white; }
+.btn-finalizar:hover { background: #15803d; }

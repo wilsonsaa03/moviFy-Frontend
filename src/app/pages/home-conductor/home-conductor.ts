@@ -66,6 +66,14 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   solicitudes: any[] = [];
   historial: any[] = [];
 
+  // =========================
+  // VARIABLES NUEVAS — agregar junto a las demás
+  // =========================
+  viajeActivo: any = null;
+  viajeId: number | null = null;
+  routingControl: any = null; // Routing control para el conductor
+  pollingViajeActivo: any = null;
+
   constructor(
     private router: Router,
     private conductorService: ConductorService
@@ -116,6 +124,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     this.pararRastreo();
     // Limpiar el mapa de la memoria si existe
     if (this.mapa) {
+      if (this.pollingViajeActivo) clearInterval(this.pollingViajeActivo); // Limpiar polling de viaje
       this.mapa.remove();
     }
   }
@@ -213,21 +222,165 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}/estado`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        estado: nuevoEstado, 
-        conductor_id: this.conductorId 
-      })
+      body: JSON.stringify({ estado: nuevoEstado, conductor_id: this.conductorId })
     })
     .then(res => res.json())
-    .then(data => {
-      this.mensajeAlerta = nuevoEstado === 'ACEPTADO' ? '✅ Has aceptado el viaje' : '❌ Viaje rechazado';
-      this.mostrarAlerta = true;
+    .then(() => {
       if (nuevoEstado === 'ACEPTADO') {
-        // Aquí podrías añadir lógica para centrar el mapa en el origen del usuario
+        this.viajeId = servicioId;
+        this.solicitudes = [];
+        this.notificaciones = 0;
+        this.mensajeAlerta = '✅ Viaje aceptado — cargando ruta...';
+        this.mostrarAlerta = true;
+        setTimeout(() => this.mostrarAlerta = false, 3000);
+
+        // Asegurar que el mapa esté visible
+        if (!this.mostrarMapa) {
+          this.mostrarMapa = true;
+          setTimeout(() => {
+            this.iniciarMapaBase();
+            this.iniciarRutaViaje(servicioId);
+          }, 300);
+        } else {
+          this.iniciarRutaViaje(servicioId);
+        }
+      } else {
+        this.solicitudes = this.solicitudes.filter(s => s.servicio_id !== servicioId);
+        this.notificaciones = this.solicitudes.length;
       }
-      setTimeout(() => this.mostrarAlerta = false, 3000);
     })
-    .catch(err => console.error("Error al responder solicitud:", err));
+    .catch(err => console.error('Error respondiendo solicitud:', err));
+  }
+
+  iniciarRutaViaje(servicioId: number) {
+    this.cargarLRM().then(() => {
+      fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}`)
+        .then(res => res.json())
+        .then(servicio => {
+          this.viajeActivo = servicio;
+          this.dibujarRutaConductorAUsuario(servicio);
+          this.iniciarPollingViaje(servicioId);
+        });
+    });
+  }
+
+  cargarLRM(): Promise<void> {
+    return new Promise(resolve => {
+      if ((window as any).L?.Routing) { resolve(); return; }
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css';
+      document.head.appendChild(link);
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js';
+      script.onload = () => resolve();
+      script.onerror = () => resolve();
+      document.head.appendChild(script);
+    });
+  }
+
+  dibujarRutaConductorAUsuario(servicio: any) {
+    if (!this.mapa) return;
+    const W = (window as any).L;
+    if (!W?.Routing) return;
+
+    navigator.geolocation.getCurrentPosition(pos => {
+      const condLat = pos.coords.latitude;
+      const condLng = pos.coords.longitude;
+
+      if (this.routingControl) {
+        this.mapa.removeControl(this.routingControl);
+      }
+
+      this.routingControl = W.Routing.control({
+        waypoints: [
+          W.latLng(condLat, condLng),
+          W.latLng(servicio.origen_lat, servicio.origen_lng)
+        ],
+        router: W.Routing.osrmv1({ language: 'es', profile: 'driving' }),
+        lineOptions: { styles: [{ color: '#f59e0b', weight: 6, opacity: 0.9 }] },
+        addWaypoints: false,
+        draggableWaypoints: false,
+        fitSelectedRoutes: true,
+        show: false,
+        createMarker: () => null
+      }).addTo(this.mapa);
+
+      const iconUsuario = L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+        iconSize: [38, 38], iconAnchor: [19, 38]
+      });
+      L.marker([servicio.origen_lat, servicio.origen_lng], { icon: iconUsuario })
+        .addTo(this.mapa)
+        .bindPopup('📍 Recoger aquí')
+        .openPopup();
+    });
+  }
+
+  iniciarPollingViaje(servicioId: number) {
+    this.pollingViajeActivo = setInterval(() => {
+      fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}`)
+        .then(res => res.json())
+        .then(servicio => {
+          this.viajeActivo = servicio;
+          if (servicio.estado === 'EN_CAMINO' && this.routingControl) {
+            const W = (window as any).L;
+            this.routingControl.setWaypoints([
+              W.latLng(servicio.conductor_lat ?? servicio.latitud, servicio.conductor_lng ?? servicio.longitud),
+              W.latLng(servicio.destino_lat, servicio.destino_lng)
+            ]);
+            this.routingControl.options.lineOptions.styles = [{ color: '#16a34a', weight: 6, opacity: 0.9 }];
+          }
+          if (servicio.estado === 'FINALIZADO') {
+            clearInterval(this.pollingViajeActivo);
+            this.viajeActivo = null;
+            this.viajeId = null;
+            if (this.routingControl) {
+              this.mapa.removeControl(this.routingControl);
+              this.routingControl = null;
+            }
+          }
+        });
+    }, 3000);
+  }
+
+  finalizarViaje() {
+    if (!this.viajeId) return;
+    fetch(`http://localhost:8080/api/transporte/servicio/${this.viajeId}/estado`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado: 'FINALIZADO', conductor_id: this.conductorId })
+    }).then(() => {
+      clearInterval(this.pollingViajeActivo);
+      this.viajeActivo = null;
+      this.viajeId = null;
+      if (this.routingControl) {
+        this.mapa.removeControl(this.routingControl);
+        this.routingControl = null;
+      }
+      this.mensajeAlerta = '✅ Viaje finalizado correctamente';
+      this.mostrarAlerta = true;
+      setTimeout(() => this.mostrarAlerta = false, 4000);
+    });
+  }
+
+  llegueAlUsuario() {
+    if (!this.viajeId) return;
+    fetch(`http://localhost:8080/api/transporte/servicio/${this.viajeId}/estado`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado: 'EN_CAMINO', conductor_id: this.conductorId })
+    }).then(() => {
+      const W = (window as any).L;
+      if (this.routingControl && this.viajeActivo) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          this.routingControl.setWaypoints([
+            W.latLng(pos.coords.latitude, pos.coords.longitude),
+            W.latLng(this.viajeActivo.destino_lat, this.viajeActivo.destino_lng)
+          ]);
+        });
+      }
+    });
   }
 
   pararPollingNotificaciones() {
@@ -286,6 +439,11 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     if (this.markerUsuario && this.mapa) {
       this.mapa.removeLayer(this.markerUsuario);
       this.markerUsuario = undefined;
+    }
+    // Limpiar routing control si existe
+    if (this.routingControl && this.mapa) {
+      this.mapa.removeControl(this.routingControl);
+      this.routingControl = null;
     }
   }
 
