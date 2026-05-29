@@ -219,6 +219,9 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   }
 
   responderASolicitud(servicioId: number, nuevoEstado: string) {
+    // Buscamos los datos locales de la solicitud para mostrar el panel de inmediato
+    const solicitudLocal = this.solicitudes.find(s => s.servicio_id === servicioId);
+
     fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}/estado`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -228,11 +231,10 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     .then(() => {
       if (nuevoEstado === 'ACEPTADO') {
         this.viajeId = servicioId;
+        // Inicializamos viajeActivo con datos locales para que el panel aparezca YA
+        this.viajeActivo = { ...solicitudLocal, estado: 'ACEPTADO' };
         this.solicitudes = [];
         this.notificaciones = 0;
-        this.mensajeAlerta = '✅ Viaje aceptado — cargando ruta...';
-        this.mostrarAlerta = true;
-        setTimeout(() => this.mostrarAlerta = false, 3000);
 
         // Asegurar que el mapa esté visible
         if (!this.mostrarMapa) {

@@ -648,10 +648,27 @@ export class SolicitarTransporte
 
     // ACEPTADO → dibujar ruta conductor hacia el usuario
     if (s.estado === 'ACEPTADO') {
-      this.buscandoConductor = false;
-
       const condLat = s.conductor_lat ?? s.latitud;
       const condLng = s.conductor_lng ?? s.longitud;
+
+      // Si el radar sigue activo, es la primera vez que recibimos el estado ACEPTADO
+      if (this.buscandoConductor && condLat && condLng) {
+        const points: any[] = [
+          [condLat, condLng],
+          [this.userLat, this.userLng]
+        ];
+
+        // Si el destino ya está marcado, lo incluimos en el ajuste del zoom
+        if (this.destinoMarker) {
+          points.push(this.destinoMarker.getLatLng());
+        }
+
+        const bounds = L.latLngBounds(points);
+        // Ajustamos el mapa para mostrar ambos con un margen (padding) de 50px
+        this.map.fitBounds(bounds, { padding: [50, 50] });
+      }
+
+      this.buscandoConductor = false;
 
       if (condLat && condLng) {
         // Actualizar marcador del conductor
@@ -674,6 +691,7 @@ export class SolicitarTransporte
 
     // EN_CAMINO → conductor recogió al usuario, ruta hacia destino
     if (s.estado === 'EN_CAMINO') {
+      this.buscandoConductor = false;
       const condLat = s.conductor_lat ?? s.latitud;
       const condLng = s.conductor_lng ?? s.longitud;
       const dest = this.destinoMarker?.getLatLng();
