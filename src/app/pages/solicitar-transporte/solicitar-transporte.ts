@@ -35,7 +35,11 @@ export class SolicitarTransporte
 
   distanciaViaje: number = 0;
 
+  duracionViaje: number = 0;
+
   buscandoConductor: boolean = false;
+
+  totalConductoresActivos: number = 0;
 
   private map!: L.Map;
 
@@ -43,13 +47,21 @@ export class SolicitarTransporte
 
   private destinoMarker?: L.Marker;
 
-  private userLat: number = 0;
+  private conductorMarker?: L.Marker;
+
+  userLat: number = 0;
 
   private userLng: number = 0;
 
   private ubicacionEncontrada: boolean = false;
 
   private routingControl: any;
+
+  private conductoresMarkers: Map<number, L.Marker> = new Map();
+
+  private pollingServicio: any;
+
+  private apiBase = 'http://localhost:8080/api/transporte';
 
   constructor(private router: Router) {}
 
@@ -167,9 +179,9 @@ export class SolicitarTransporte
           lineOptions: {
             styles: [
               {
-                color: '#4ade80',
+                color: '#7c4dff',
                 weight: 6,
-                opacity: 0.8
+                opacity: 0.9
               }
             ]
           },
@@ -196,6 +208,9 @@ export class SolicitarTransporte
 
           this.distanciaViaje =
             summary.totalDistance / 1000;
+
+          this.duracionViaje =
+            summary.totalTime / 60;
 
           this.calcularTarifaReal();
         }
@@ -315,10 +330,15 @@ export class SolicitarTransporte
           .bindPopup('📍 Tú estás aquí')
           .openPopup();
 
-        this.cargarConductoresCercanos(
-          this.userLat,
-          this.userLng
-        );
+        // Añadir círculo estético en tu ubicación
+        L.circleMarker(miUbicacion, { color: '#7c4dff', radius: 10, fillOpacity: 0.5 }).addTo(this.map);
+
+        this.obtenerConductoresReales();
+
+        // Refrescar conductores cercanos cada 8 segundos para ver movimiento real
+        setInterval(() => {
+          if (!this.buscandoConductor) this.obtenerConductoresReales();
+        }, 8000);
       },
 
       // ERROR
@@ -434,17 +454,37 @@ export class SolicitarTransporte
   private calcularTarifaReal(): void {
 
     if (!this.distanciaViaje) return;
+    
+    // PARÁMETROS DE COSTO BASE
+    const cargoBasico = 2500;
+    const precioPorKm = 1200;
+    const precioPorMinuto = 150;
 
-    const precioPorKilometro = 4000;
+    let calculo = cargoBasico + 
+                  (this.distanciaViaje * precioPorKm) + 
+                  (this.duracionViaje * precioPorMinuto);
 
-    let calculo =
-      this.distanciaViaje * precioPorKilometro;
+    // LÓGICA DE TARIFA DINÁMICA (Hora del día)
+    const ahora = new Date();
+    const hora = ahora.getHours();
+    let factorDinamico = 1.0;
 
-    calculo =
-      Math.ceil(calculo / 100) * 100;
+    // Horas Pico (7:00-9:00 y 17:00-19:00) -> +40%
+    if ((hora >= 7 && hora <= 9) || (hora >= 17 && hora <= 19)) {
+      factorDinamico = 1.4;
+    } 
+    // Horario Nocturno (22:00-05:00) -> +20%
+    else if (hora >= 22 || hora <= 5) {
+      factorDinamico = 1.2;
+    }
 
-    this.tarifaEstimada =
-      calculo < 4000 ? 4000 : calculo;
+    calculo *= factorDinamico;
+
+    // Redondeo a la centena superior
+    calculo = Math.ceil(calculo / 100) * 100;
+
+    // Tarifa mínima de 4.500
+    this.tarifaEstimada = calculo < 4500 ? 4500 : calculo;
   }
 
   /* =========================
@@ -502,54 +542,41 @@ export class SolicitarTransporte
   }
 
   /* =========================
-     CONDUCTORES CERCANOS
+     API: CONDUCTORES REALES
   ========================= */
 
-  private cargarConductoresCercanos(
-    lat: number,
-    lng: number
-  ): void {
+  private async obtenerConductoresReales(): Promise<void> {
+    try {
+      const resp = await fetch(`${this.apiBase}/conductores-activos`);
+      const conductores = await resp.json();
+      this.totalConductoresActivos = conductores.length;
+      this.dibujarConductoresEnMapa(conductores);
+    } catch (e) {
+      console.error("Error cargando conductores:", e);
+    }
+  }
 
+  private dibujarConductoresEnMapa(conductores: any[]): void {
     const motoIcon = L.icon({
-      iconUrl:
-        'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
-      iconSize: [38, 38],
-      iconAnchor: [19, 38],
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
+      iconSize: [35, 35],
+      iconAnchor: [17, 35],
       popupAnchor: [0, -30]
     });
 
-    const nombres = [
-      'Carlos',
-      'Andrés',
-      'Laura',
-      'Santiago',
-      'Camila'
-    ];
-
-    for (let i = 0; i < 5; i++) {
-
-      const offsetLat =
-        (Math.random() - 0.5) * 0.015;
-
-      const offsetLng =
-        (Math.random() - 0.5) * 0.015;
-
-      const distancia =
-        (Math.random() * 2 + 0.5).toFixed(1);
-
-      L.marker(
-        [lat + offsetLat, lng + offsetLng],
-        { icon: motoIcon }
-      )
-        .addTo(this.map)
-        .bindPopup(`
-          <div style="text-align:center;">
-            <strong>🏍️ ${nombres[i]}</strong>
-            <br>Disponible ahora
-            <br>A ${distancia} km de ti
-          </div>
-        `);
-    }
+    conductores.forEach(c => {
+      const id = c.conductor_id || c.id;
+      if (this.conductoresMarkers.has(id)) {
+          // Si ya existe, solo actualizamos su posición suavemente
+          this.conductoresMarkers.get(id)!.setLatLng([c.latitud, c.longitud]);
+      } else {
+          // Si es nuevo, lo creamos
+          const m = L.marker([c.latitud, c.longitud], { icon: motoIcon })
+            .addTo(this.map)
+            .bindPopup(`<b>🏍️ ${c.nombre}</b><br>Disponible`);
+          this.conductoresMarkers.set(id, m);
+      }
+    });
   }
 
   /* =========================
@@ -565,8 +592,7 @@ export class SolicitarTransporte
      SOLICITAR VIAJE
   ========================= */
 
-  solicitarViaje(): void {
-
+  async solicitarViaje(): Promise<void> {
     if (
       !this.origen ||
       !this.destino ||
@@ -575,21 +601,92 @@ export class SolicitarTransporte
     ) return;
 
     this.buscandoConductor = true;
+    const idUsuario = localStorage.getItem('id') || '1'; // Intenta obtener el ID real
+    
+    const body = {
+      usuario_id: parseInt(idUsuario), 
+      origen_lat: this.userLat,
+      origen_lng: this.userLng,
+      destino_lat: this.destinoMarker?.getLatLng().lat,
+      destino_lng: this.destinoMarker?.getLatLng().lng,
+      distancia_km: this.distanciaViaje,
+      tarifa: this.tarifaEstimada,
+      tipo: 'TRANSPORTE'
+    };
 
-    setTimeout(() => {
+    try {
+      const resp = await fetch(`${this.apiBase}/solicitar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      
+      if (!resp.ok) {
+        const errorText = await resp.text();
+        throw new Error(errorText);
+      }
 
-      alert(
-`🏍️ Conductor encontrado
-
-📍 Distancia:
-${this.distanciaViaje.toFixed(2)} km
-
-💰 Tarifa:
-$${this.tarifaEstimada.toLocaleString()}`
-      );
-
+      const data = await resp.json();
+      this.comenzarPollingServicio(data.id);
+    } catch (e) {
+      console.error("Error al solicitar viaje:", e);
       this.buscandoConductor = false;
+      alert("Error: " + (e instanceof Error ? e.message : "No se pudo contactar con el servidor"));
+    }
+  }
 
-    }, 4000);
+  private comenzarPollingServicio(id: number): void {
+    this.pollingServicio = setInterval(async () => {
+      const resp = await fetch(`${this.apiBase}/servicio/${id}`);
+      const servicio = await resp.json();
+      this.procesarEstadoServicio(servicio);
+    }, 2000);
+  }
+
+  private procesarEstadoServicio(s: any): void {
+    if (s.estado === 'ACEPTADO') {
+      this.buscandoConductor = false;
+      this.actualizarPosicionConductor(s);
+      // Dibujar ruta Driver -> Usuario
+      this.routingControl.setWaypoints([
+        L.latLng(s.latitud, s.longitud),
+        L.latLng(this.userLat, this.userLng)
+      ]);
+    } 
+    
+    if (s.estado === 'FINALIZADO') {
+      clearInterval(this.pollingServicio);
+      alert("🎉 ¡Has llegado a tu destino!");
+      this.router.navigate(['/home-usuario']);
+    }
+  }
+
+  private actualizarPosicionConductor(s: any): void {
+    const motoIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
+      iconSize: [45, 45],
+      iconAnchor: [22, 45]
+    });
+
+    if (this.conductorMarker) {
+      this.conductorMarker.setLatLng([s.latitud, s.longitud]);
+    } else {
+      this.conductorMarker = L.marker([s.latitud, s.longitud], { icon: motoIcon })
+        .addTo(this.map)
+        .bindPopup(`<b>Tu conductor: ${s.conductor_nombre}</b>`)
+        .openPopup();
+    }
+
+    // Si el conductor ya está muy cerca del usuario, cambiar ruta hacia el destino
+    const distAlUsuario = this.map.distance([s.latitud, s.longitud], [this.userLat, this.userLng]);
+    if (distAlUsuario < 50) { // 50 metros
+        const dest = this.destinoMarker?.getLatLng();
+        if (dest) {
+          this.routingControl.setWaypoints([
+            L.latLng(this.userLat, this.userLng),
+            L.latLng(dest.lat, dest.lng)
+          ]);
+        }
+    }
   }
 }

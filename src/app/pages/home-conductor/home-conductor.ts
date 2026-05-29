@@ -19,6 +19,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   // =========================
   nombre: string = 'Conductor';
   foto: string = '';
+  conductorId: any = null;
   placa: string = 'Cargando...'; // Valor inicial para el usuario
   modelo: string = 'Cargando...';
   telefono: string = '';
@@ -54,6 +55,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   sidebarColapsado: boolean = false;
 
   // =========================
+  pollingNotificaciones: any;
   // ESTADISTICAS
   // =========================
   gananciasHoy: number = 0;
@@ -87,6 +89,8 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
         this.nombre   = data.nombre || 'Nombre no disponible';
         this.foto     = data.foto || '';
         this.correo   = data.correo || correoSession;
+        this.conductorId = data.conductor_id || data.id;
+        console.log("✅ Conductor cargado con ID:", this.conductorId);
         this.telefono = data.telefono || 'N/A';
         
         // CORRECCIÓN: Nombres de campos comunes en DB
@@ -162,24 +166,100 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     
     if (this.enLinea) {
       this.mensajeAlerta = '🟢 Ahora estás disponible para recibir servicios';
-      if (this.mapa) this.iniciarRastreoRealTime();
+      this.iniciarPollingNotificaciones();
+      this.iniciarRastreoRealTime();
+
+      // Notificar al backend que el conductor está en línea
+      if (this.conductorId) {
+        fetch('http://localhost:8080/api/transporte/activar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conductor_id: this.conductorId })
+        }).catch(err => console.error("Error al activar disponibilidad:", err));
+      }
+
     } else {
       this.mensajeAlerta = '🔴 Has dejado de estar disponible. Rastreo apagado';
+      this.pararPollingNotificaciones();
       this.pararRastreo();
     }
 
     setTimeout(() => this.mostrarAlerta = false, 3000);
   }
 
+  iniciarPollingNotificaciones() {
+    this.pollingNotificaciones = setInterval(() => {
+      if (!this.conductorId || !this.enLinea) return;
+
+      fetch(`http://localhost:8080/api/transporte/solicitudes-pendientes/${this.conductorId}`)
+        .then(res => res.json())
+        .then(solicitudes => {
+          if (solicitudes) {
+            if (solicitudes.length > 0) {
+              console.log("📩 Notificaciones actualizadas:", solicitudes);
+            }
+            this.solicitudes = solicitudes;
+            this.notificaciones = this.solicitudes.length;
+          }
+        })
+        .catch(err => console.error("Error consultando viajes:", err));
+    }, 4000); // Consulta cada 4 segundos
+  }
+
+  responderASolicitud(servicioId: number, nuevoEstado: string) {
+    fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}/estado`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        estado: nuevoEstado, 
+        conductor_id: this.conductorId 
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      this.mensajeAlerta = nuevoEstado === 'ACEPTADO' ? '✅ Has aceptado el viaje' : '❌ Viaje rechazado';
+      this.mostrarAlerta = true;
+      if (nuevoEstado === 'ACEPTADO') {
+        // Aquí podrías añadir lógica para centrar el mapa en el origen del usuario
+      }
+      setTimeout(() => this.mostrarAlerta = false, 3000);
+    })
+    .catch(err => console.error("Error al responder solicitud:", err));
+  }
+
+  pararPollingNotificaciones() {
+    if (this.pollingNotificaciones) clearInterval(this.pollingNotificaciones);
+    this.solicitudes = [];
+  }
+
   iniciarRastreoRealTime() {
-    if (!navigator.geolocation || !this.mapa) return;
+    if (!navigator.geolocation) return;
 
     this.pararRastreo(); // Limpiar rastreos previos
+
+    // ENVIAR UBICACIÓN INMEDIATA PARA SER ENCONTRADO POR EL BACKEND
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      fetch('http://localhost:8080/api/transporte/ubicacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conductor_id: this.conductorId, lat, lng: lon })
+      }).then(() => console.log("📍 Ubicación inicial enviada"));
+    });
 
     this.watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude: lat, longitude: lon } = pos.coords;
-        this.mapa.panTo([lat, lon]);
+        if (this.mapa) this.mapa.panTo([lat, lon]);
+
+        // Sincronizar ubicación real con la base de datos
+        if (this.conductorId && this.enLinea) {
+          fetch('http://localhost:8080/api/transporte/ubicacion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ conductor_id: this.conductorId, lat: lat, lng: lon })
+          }).catch(err => console.warn("Error guardando ubicación en DB:", err));
+        }
 
         if (this.markerUsuario) {
           this.markerUsuario.setLatLng([lat, lon]);

@@ -364,6 +364,11 @@ export class LoginComponent implements OnInit {
     );
 
     localStorage.setItem(
+      'id',
+      res.id?.toString() || res.user?.id?.toString() || ''
+    );
+
+    localStorage.setItem(
       'rol',
       res.rol
     );

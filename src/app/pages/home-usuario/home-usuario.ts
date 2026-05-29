@@ -17,25 +17,28 @@ export class HomeUsuarioComponent implements OnInit {
 
   historial = [
     {
-      icono: '🏍️',
-      destino: 'Centro Comercial Unicentro',
-      fecha: '20 may, 8:30 AM',
-      tipo: 'Transporte',
-      precio: '$8.500'
-    },
-    {
       icono: '🛵',
-      destino: 'Restaurante El Punto',
-      fecha: '18 may, 1:15 PM',
-      tipo: 'Domicilio',
-      precio: '$6.200'
+      destino: 'Viaje a Centro Comercial',
+      fecha: '12 May, 2024',
+      hora: '10:30 AM',
+      estado: 'Completado',
+      statusClass: 'completado'
     },
     {
       icono: '📦',
-      destino: 'Universidad Nacional',
-      fecha: '16 may, 10:20 AM',
-      tipo: 'Encomienda',
-      precio: '$7.800'
+      destino: 'Encomienda #12345',
+      fecha: '11 May, 2024',
+      hora: '04:15 PM',
+      estado: 'En camino',
+      statusClass: 'en-camino'
+    },
+    {
+      icono: '🛵',
+      destino: 'Domicilio a Casa',
+      fecha: '10 May, 2024',
+      hora: '08:45 PM',
+      estado: 'Cancelado',
+      statusClass: 'cancelado'
     }
   ];
 

@@ -13,7 +13,7 @@
       <!-- PERFIL -->
       <div
         class="nav-perfil"
-        (click)="menuAbierto = !menuAbierto"
+        (click)="toggleMenu()"
       >
 
         <img
@@ -203,13 +203,13 @@
             <h4>{{ item.destino }}</h4>
 
             <p>
-              {{ item.fecha }} · {{ item.tipo }}
+                {{ item.fecha }} • {{ item.hora }}
             </p>
           </div>
 
-          <strong class="historial-precio">
-            {{ item.precio }}
-          </strong>
+            <span class="status-badge" [ngClass]="item.statusClass">
+              {{ item.estado }}
+            </span>
 
         </div>
 

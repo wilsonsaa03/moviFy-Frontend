@@ -119,6 +119,24 @@
 
       <div class="main-content">
         
+        <!-- NUEVA SECCIÓN: LISTA DE SOLICITUDES -->
+        <div class="full-width-column" *ngIf="solicitudes.length > 0">
+          <div class="card solicitudes-card">
+            <h2>📩 Solicitudes de Viaje Pendientes ({{ notificaciones }})</h2>
+            <div class="solicitud-item-lista" *ngFor="let s of solicitudes">
+              <div class="solicitud-info">
+                <span class="user-name">👤 {{ s.usuario_nombre }}</span>
+                <span class="tarifa">💰 ${{ s.tarifa | number }}</span>
+                <span class="distancia">📍 {{ s.distancia_km | number:'1.1-2' }} km</span>
+              </div>
+              <div class="solicitud-acciones">
+                <button class="btn-aceptar" (click)="responderASolicitud(s.servicio_id, 'ACEPTADO')">Aceptar</button>
+                <button class="btn-rechazar" (click)="responderASolicitud(s.servicio_id, 'RECHAZADO')">Rechazar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="left-column">
           <div class="card">
             <h2>📊 Resumen de Actividad</h2>
