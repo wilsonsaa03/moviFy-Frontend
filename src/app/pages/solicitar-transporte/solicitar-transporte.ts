@@ -39,6 +39,10 @@ export class SolicitarTransporte
 
   buscandoConductor: boolean = false;
 
+  mensajeEstado: string = 'Iniciando búsqueda...';
+
+  conductorInfo: any = null;
+
   totalConductoresActivos: number = 0;
 
   private map!: L.Map;
@@ -52,6 +56,8 @@ export class SolicitarTransporte
   userLat: number = 0;
 
   private userLng: number = 0;
+
+  private transicionFinalizada: boolean = false;
 
   private ubicacionEncontrada: boolean = false;
 
@@ -601,6 +607,8 @@ export class SolicitarTransporte
     ) return;
 
     this.buscandoConductor = true;
+    this.transicionFinalizada = false; // Resetear el flag para permitir que el radar se cierre
+    this.mensajeEstado = 'Estamos buscando conductores cerca de ti...';
     const idUsuario = localStorage.getItem('id') || '1'; // Intenta obtener el ID real
     
     const body = {
@@ -637,13 +645,25 @@ export class SolicitarTransporte
 
   private comenzarPollingServicio(id: number): void {
     this.pollingServicio = setInterval(async () => {
-      const resp = await fetch(`${this.apiBase}/servicio/${id}`);
-      const servicio = await resp.json();
-      this.procesarEstadoServicio(servicio);
-    }, 2000);
+      try {
+        const resp = await fetch(`${this.apiBase}/servicio/${id}`);
+        if (!resp.ok) {
+          console.warn(`Polling pausado: servidor respondió ${resp.status}`);
+          return; // ✅ No lanzar error, simplemente esperar el siguiente ciclo
+        }
+        const servicio = await resp.json();
+        this.conductorInfo = servicio;
+        console.log("🔄 Estado recibido:", servicio.estado);
+        this.procesarEstadoServicio(servicio);
+      } catch(e) {
+        console.warn('Error de red en polling, reintentando...');
+        // ✅ No hace nada, el setInterval reintenta solo
+      }
+    }, 3000); // ✅ Subir de 2000 a 3000ms para reducir colisiones con el backend
   }
 
   private procesarEstadoServicio(s: any): void {
+    console.log("⚙️ Procesando estado del servicio:", s.estado); // Log para depuración
     const W = (window as any).L;
 
     // ACEPTADO → dibujar ruta conductor hacia el usuario
@@ -651,47 +671,70 @@ export class SolicitarTransporte
       const condLat = s.conductor_lat ?? s.latitud;
       const condLng = s.conductor_lng ?? s.longitud;
 
-      // Si el radar sigue activo, es la primera vez que recibimos el estado ACEPTADO
-      if (this.buscandoConductor && condLat && condLng) {
-        const points: any[] = [
-          [condLat, condLng],
-          [this.userLat, this.userLng]
-        ];
+      // Cerrar el radar SIEMPRE que llegue estado ACEPTADO
+      if (this.buscandoConductor && !this.transicionFinalizada) {
+        this.transicionFinalizada = true;
+        this.mensajeEstado = '¡Conductor encontrado! Ya viene en camino.';
+        this.buscandoConductor = false; // ✅ Sin setTimeout, cierre inmediato
 
-        // Si el destino ya está marcado, lo incluimos en el ajuste del zoom
-        if (this.destinoMarker) {
-          points.push(this.destinoMarker.getLatLng());
+        if (condLat && condLng) {
+          const points: any[] = [
+            [condLat, condLng],
+            [this.userLat, this.userLng]
+          ];
+
+          if (this.destinoMarker) {
+            points.push(this.destinoMarker.getLatLng());
+          }
+
+          const bounds = L.latLngBounds(points);
+          this.map.fitBounds(bounds, { padding: [50, 50] });
         }
-
-        const bounds = L.latLngBounds(points);
-        // Ajustamos el mapa para mostrar ambos con un margen (padding) de 50px
-        this.map.fitBounds(bounds, { padding: [50, 50] });
       }
 
-      this.buscandoConductor = false;
-
+      // Solo dibujar ruta si las coordenadas son válidas
       if (condLat && condLng) {
         // Actualizar marcador del conductor
         this.actualizarPosicionConductor(s);
+        
+        // Mejora UX: Auto-ajustar el mapa para ver a ambos
+        const bounds = L.latLngBounds([
+          [this.userLat, this.userLng],
+          [condLat, condLng]
+        ]);
+        
+        // Solo ajustar si la transición inicial terminó y no estamos en zoom manual
+        if (this.transicionFinalizada) {
+          this.map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16 });
+        }
 
-        // Ruta: conductor → usuario (línea amarilla)
         if (this.routingControl && W?.Routing) {
-          this.routingControl.setWaypoints([
-            W.latLng(condLat, condLng),
-            W.latLng(this.userLat, this.userLng)
-          ]);
-          // Cambiar color a amarillo
-          if (this.routingControl.options?.lineOptions) {
-            this.routingControl.options.lineOptions.styles =
-              [{ color: '#f59e0b', weight: 6, opacity: 0.9 }];
+          try { // ✅ try/catch para que un fallo aquí no rompa el polling
+            this.routingControl.setWaypoints([
+              W.latLng(condLat, condLng),
+              W.latLng(this.userLat, this.userLng)
+            ]);
+            if (this.routingControl.options?.lineOptions) {
+              this.routingControl.options.lineOptions.styles =
+                [{ color: '#f59e0b', weight: 6, opacity: 0.9 }];
+            }
+          } catch(e) {
+            console.warn('Error dibujando ruta conductor→usuario:', e);
           }
         }
       }
     }
 
-    // EN_CAMINO → conductor recogió al usuario, ruta hacia destino
-    if (s.estado === 'EN_CAMINO') {
+    // ETAPA 2: El conductor llegó al punto
+    if (s.estado === 'LLEGO_AL_ORIGEN') {
+      this.mensajeEstado = '📍 ¡Tu conductor ha llegado!';
+    }
+
+    // ETAPA 3: Viaje en curso al destino
+    if (s.estado === 'EN_VIAJE') {
+      this.mensajeEstado = '🛣️ Viajando al destino...';
       this.buscandoConductor = false;
+      this.transicionFinalizada = true;
       const condLat = s.conductor_lat ?? s.latitud;
       const condLng = s.conductor_lng ?? s.longitud;
       const dest = this.destinoMarker?.getLatLng();
@@ -726,12 +769,20 @@ export class SolicitarTransporte
     });
 
     if (this.conductorMarker) {
-      this.conductorMarker.setLatLng([s.latitud, s.longitud]);
+      this.conductorMarker.setLatLng([s.conductor_lat ?? s.latitud, s.conductor_lng ?? s.longitud]);
     } else {
-      this.conductorMarker = L.marker([s.latitud, s.longitud], { icon: motoIcon })
+      this.conductorMarker = L.marker([s.conductor_lat ?? s.latitud, s.conductor_lng ?? s.longitud], { icon: motoIcon })
         .addTo(this.map)
         .bindPopup(`<b>Tu conductor: ${s.conductor_nombre}</b>`)
         .openPopup();
+    }
+
+    // Mejora UX: Mostrar ETA en el mensaje de estado si hay ruta calculada
+    if (this.duracionViaje > 0 && s.estado === 'ACEPTADO') {
+      const minutos = Math.round(this.duracionViaje);
+      this.mensajeEstado = minutos > 1 
+        ? `¡Conductor encontrado! Llega en unos ${minutos} min.` 
+        : '¡Tu conductor está a la vuelta de la esquina!';
     }
 
     // Si el conductor ya está muy cerca del usuario, cambiar ruta hacia el destino
@@ -745,5 +796,68 @@ export class SolicitarTransporte
           ]);
         }
     }
+  }
+
+  /* =========================
+     CANCELAR VIAJE
+  ========================= */
+
+  async cancelarViaje(): Promise<void> {
+
+    if (!this.conductorInfo || !this.conductorInfo.id) return;
+
+    const confirmar = confirm('¿Estás seguro de que deseas cancelar el viaje?');
+
+    if (!confirmar) return;
+
+    try {
+
+      const resp = await fetch(`${this.apiBase}/servicio/${this.conductorInfo.id}/estado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          estado: 'CANCELADO'
+        })
+      });
+
+      if (resp.ok) {
+
+        clearInterval(this.pollingServicio);
+        this.buscandoConductor = false;
+        this.conductorInfo = null;
+        this.transicionFinalizada = false;
+
+        alert('Viaje cancelado correctamente.');
+        this.router.navigate(['/home-usuario']);
+      }
+
+    } catch (e) {
+      console.error("Error al cancelar viaje:", e);
+      alert('No se pudo cancelar el viaje en este momento.');
+    }
+  }
+
+  /* =========================
+     HELPERS DE INTERFAZ
+  ========================= */
+
+  getEstadoColorClass(estado: string): string {
+    switch (estado) {
+      case 'PENDIENTE': return 'text-warning';
+      case 'ACEPTADO':
+      case 'EN_CAMINO_AL_USUARIO':
+      case 'LLEGO_AL_ORIGEN': return 'text-info';
+      case 'EN_CAMINO':
+      case 'EN_VIAJE': return 'text-accent';
+      case 'FINALIZADO': return 'text-success';
+      case 'CANCELADO':
+      case 'RECHAZADO': return 'text-danger';
+      default: return 'text-muted';
+    }
+  }
+
+  getFriendlyEstado(estado: string): string {
+    if (!estado) return 'Procesando...';
+    return estado.charAt(0) + estado.slice(1).toLowerCase().replace(/_/g, ' ');
   }
 }

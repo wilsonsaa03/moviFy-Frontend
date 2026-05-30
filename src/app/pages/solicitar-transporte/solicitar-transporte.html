@@ -90,4 +90,32 @@
     </div>
 
   </div>
+
+  <!-- PANEL DEL CONDUCTOR (Aparece cuando el viaje es aceptado) -->
+  <div class="panel-conductor" *ngIf="conductorInfo && !buscandoConductor">
+    <div class="conductor-header">
+      <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="foto-conductor">
+      
+      <div class="info-texto">
+        <h3>{{ conductorInfo.conductor_nombre }}</h3>
+        <p>Tu conductor MoviFY · ⭐️ 4.9</p>
+      </div>
+
+      <div class="tarifa-tag">
+        ${{ conductorInfo.tarifa | number }}
+      </div>
+    </div>
+    
+    <div class="viaje-footer">
+      <span class="badge-estado">{{ mensajeEstado }}</span>
+      <div class="acciones-viaje">
+        <!-- BOTÓN CANCELAR: Solo visible si el estado es ACEPTADO -->
+        <button class="btn-cancelar" *ngIf="conductorInfo.estado === 'ACEPTADO'" (click)="cancelarViaje()">
+          Cancelar Viaje
+        </button>
+        <button class="btn-accion chat">💬</button>
+        <button class="btn-accion llamar">📞</button>
+      </div>
+    </div>
+  </div>
 </div>

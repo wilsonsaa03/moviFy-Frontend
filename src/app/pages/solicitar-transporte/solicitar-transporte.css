@@ -305,6 +305,29 @@
   z-index: 1;
 }
 
+/* Clases de utilidad para estados */
+.text-warning { color: #f59e0b !important; }
+.text-info    { color: #3b82f6 !important; }
+.text-accent  { color: #7c4dff !important; }
+.text-success { color: var(--neon-green) !important; }
+.text-danger  { color: #ef4444 !important; }
+.text-muted   { color: #64748b !important; }
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+}
+
+/* Transición suave para los iconos del mapa (Movimiento fluido del conductor) */
+.leaflet-marker-icon {
+  transition: transform 2s linear !important;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+}
+
 .leaflet-container {
   font-family: inherit;
 }

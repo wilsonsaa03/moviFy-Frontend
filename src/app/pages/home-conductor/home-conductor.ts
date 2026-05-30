@@ -204,7 +204,10 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
       if (!this.conductorId || !this.enLinea) return;
 
       fetch(`http://localhost:8080/api/transporte/solicitudes-pendientes/${this.conductorId}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error(`Error servidor: ${res.status}`);
+          return res.json();
+        })
         .then(solicitudes => {
           if (solicitudes) {
             if (solicitudes.length > 0) {
@@ -214,11 +217,17 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
             this.notificaciones = this.solicitudes.length;
           }
         })
-        .catch(err => console.error("Error consultando viajes:", err));
+        .catch(err => {
+          console.warn("⚠️ Servidor no disponible temporalmente...");
+          this.notificaciones = 0;
+        });
     }, 2000); // Consulta cada 2 segundos para reaccionar a la simulación de 10s
   }
 
   responderASolicitud(servicioId: number, nuevoEstado: string) {
+    // ✅ DETENER el polling INMEDIATAMENTE para evitar doble envío
+    this.pararPollingNotificaciones();
+
     // Buscamos los datos locales de la solicitud para mostrar el panel de inmediato
     const solicitudLocal = this.solicitudes.find(s => s.servicio_id === servicioId);
 
@@ -227,7 +236,10 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: nuevoEstado, conductor_id: this.conductorId })
     })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error('Error al actualizar estado');
+      return res.json();
+    })
     .then(() => {
       if (nuevoEstado === 'ACEPTADO') {
         this.viajeId = servicioId;
@@ -257,12 +269,16 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   iniciarRutaViaje(servicioId: number) {
     this.cargarLRM().then(() => {
       fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Error al consultar servicio');
+          return res.json();
+        })
         .then(servicio => {
           this.viajeActivo = servicio;
           this.dibujarRutaConductorAUsuario(servicio);
           this.iniciarPollingViaje(servicioId);
-        });
+        })
+        .catch(err => console.warn('No se pudo cargar la ruta del viaje:', err));
     });
   }
 
@@ -322,7 +338,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   iniciarPollingViaje(servicioId: number) {
     this.pollingViajeActivo = setInterval(() => {
       fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}`)
-        .then(res => res.json())
+        .then(res => res.ok ? res.json() : Promise.reject(res))
         .then(servicio => {
           this.viajeActivo = servicio;
           if (servicio.estado === 'EN_CAMINO' && this.routingControl) {
@@ -342,7 +358,8 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
               this.routingControl = null;
             }
           }
-        });
+        })
+        .catch(err => console.warn("Polling de viaje pausado por error del servidor"));
     }, 3000);
   }
 
@@ -352,7 +369,9 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: 'FINALIZADO', conductor_id: this.conductorId })
-    }).then(() => {
+    })
+    .then(res => res.ok ? res.json() : Promise.reject(res))
+    .then(() => {
       clearInterval(this.pollingViajeActivo);
       this.viajeActivo = null;
       this.viajeId = null;
@@ -363,7 +382,8 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
       this.mensajeAlerta = '✅ Viaje finalizado correctamente';
       this.mostrarAlerta = true;
       setTimeout(() => this.mostrarAlerta = false, 4000);
-    });
+    })
+    .catch(err => console.error("Error al finalizar viaje:", err));
   }
 
   llegueAlUsuario() {
@@ -372,7 +392,9 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: 'EN_CAMINO', conductor_id: this.conductorId })
-    }).then(() => {
+    })
+    .then(res => res.ok ? res.json() : Promise.reject(res))
+    .then(() => {
       const W = (window as any).L;
       if (this.routingControl && this.viajeActivo) {
         navigator.geolocation.getCurrentPosition(pos => {
@@ -382,7 +404,8 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
           ]);
         });
       }
-    });
+    })
+    .catch(err => console.error("Error al marcar llegada:", err));
   }
 
   pararPollingNotificaciones() {
@@ -447,6 +470,28 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
       this.mapa.removeControl(this.routingControl);
       this.routingControl = null;
     }
+  }
+
+  // =========================
+  // HELPERS DE ESTADO
+  // =========================
+  getBadgeClass(estado: string): string {
+    const classes: { [key: string]: string } = {
+      'PENDIENTE': 'status-pending',
+      'ACEPTADO': 'status-accepted',
+      'EN_CAMINO_AL_USUARIO': 'status-traveling',
+      'LLEGO_AL_ORIGEN': 'status-arrived',
+      'EN_CAMINO': 'status-active',
+      'EN_VIAJE': 'status-active',
+      'FINALIZADO': 'status-finished',
+      'RECHAZADO': 'status-error',
+      'CANCELADO': 'status-error'
+    };
+    return classes[estado] || 'status-default';
+  }
+
+  getFriendlyEstado(estado: string): string {
+    return estado.replace(/_/g, ' ');
   }
 
   // =========================

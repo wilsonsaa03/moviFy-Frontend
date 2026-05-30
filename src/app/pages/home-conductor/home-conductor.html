@@ -139,12 +139,12 @@
         </div>
         <div class="viaje-botones">
           <button class="btn-llegue" 
-            *ngIf="viajeActivo.estado === 'ACEPTADO'"
+            *ngIf="viajeActivo.estado === 'ACEPTADO' || viajeActivo.estado === 'EN_CAMINO_AL_USUARIO'"
             (click)="llegueAlUsuario()">
             📍 Llegué al usuario
           </button>
           <button class="btn-finalizar"
-            *ngIf="viajeActivo.estado === 'EN_CAMINO'"
+            *ngIf="viajeActivo.estado === 'EN_VIAJE' || viajeActivo.estado === 'LLEGO_AL_ORIGEN'"
             (click)="finalizarViaje()">
             🏁 Finalizar viaje
           </button>
