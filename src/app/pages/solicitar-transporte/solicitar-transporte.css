@@ -1,145 +1,119 @@
 @import "leaflet/dist/leaflet.css";
 
-/* =========================
-   VARIABLES GLOBALES
-========================= */
-:root {
-  --neon-green: #22c55e;
-  --neon-green-glow: rgba(34, 197, 94, 0.4);
-  --dark-bg: #0f172a;
-  --panel-bg: rgba(15, 23, 42, 0.75);
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* =========================
-   CONTENEDOR PRINCIPAL
-========================= */
 .solicitar-wrapper {
   min-height: 100vh;
-  /* Mantenemos tu imagen, pero con un overlay más oscuro y azulado para dar aspecto premium */
   background-image: url('/assets/home.png');
   background-size: cover;
   background-position: center;
+  background-attachment: fixed;
+  font-family: 'Segoe UI', system-ui, sans-serif;
   position: relative;
-  font-family: 'Inter', system-ui, sans-serif;
 }
 
 .solicitar-wrapper::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%);
+  background: rgba(255,255,255,0.58);
+  backdrop-filter: blur(1.5px);
   z-index: 0;
 }
 
-.navbar, .content-grid {
-  position: relative;
-  z-index: 2;
-}
+.navbar, .content-grid { position: relative; z-index: 2; }
 
-/* =========================
-   NAVBAR
-========================= */
+/* NAV */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 16px 40px;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
 }
 
 .btn-volver {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-main);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 10px 20px;
+  background: white;
+  color: #334155;
+  border: 1.5px solid #e2e8f0;
+  padding: 10px 18px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
-
-.btn-volver:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateX(-3px);
-}
+.btn-volver:hover { transform: translateX(-2px); background: #f8fafc; }
 
 .nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 26px;
   font-weight: 900;
-  color: var(--text-main);
+  color: #0f172a;
   letter-spacing: -0.5px;
 }
-
-.text-neon {
-  color: var(--neon-green);
-  text-shadow: 0 0 10px var(--neon-green-glow);
+.nav-logo {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
+.text-neon { color: #16a34a; text-shadow: none; }
 
-/* =========================
-   GRID DE CONTENIDO
-========================= */
+/* GRID */
 .content-grid {
-  max-width: 1300px;
-  margin: 40px auto;
+  max-width: 1280px;
+  margin: 28px auto;
   display: grid;
   grid-template-columns: 400px 1fr;
-  gap: 30px;
-  padding: 0 20px;
+  gap: 24px;
+  padding: 0 24px;
 }
 
-/* =========================
-   PANEL FORMULARIO
-========================= */
+/* FORM PANEL */
 .form-panel {
-  background: var(--panel-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: white;
   border-radius: 24px;
-  padding: 35px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  padding: 28px 26px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+  border: none;
   display: flex;
   flex-direction: column;
 }
 
 .form-header h2 {
-  color: var(--text-main);
-  font-size: 28px;
+  color: #0f172a;
+  font-size: 24px;
   font-weight: 800;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   margin-top: 0;
 }
-
 .form-header p {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  margin-bottom: 30px;
+  color: #64748b;
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin-bottom: 22px;
 }
 
-/* =========================
-   INPUTS MODERNOS
-========================= */
-.input-group {
-  margin-bottom: 24px;
-}
+/* INPUTS */
+.input-group { margin-bottom: 16px; }
 
 .input-group label {
   display: block;
-  color: var(--text-main);
-  margin-bottom: 10px;
-  font-weight: 600;
-  font-size: 0.9rem;
+  color: #16a34a;
+  margin-bottom: 7px;
+  font-weight: 700;
+  font-size: 11.5px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
 }
 
 .input-wrapper {
@@ -150,332 +124,278 @@
 
 .input-icon {
   position: absolute;
-  left: 16px;
-  font-size: 1.2rem;
+  left: 14px;
+  font-size: 1.1rem;
   z-index: 2;
 }
 
 .input-wrapper input {
   width: 100%;
-  padding: 16px 16px 16px 48px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.4);
-  color: var(--text-main);
-  font-size: 16px;
+  padding: 13px 14px 13px 44px;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 14px;
   outline: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
   box-sizing: border-box;
+  font-family: inherit;
 }
-
-.input-wrapper input::placeholder {
+.input-wrapper input::placeholder { color: #94a3b8; }
+.input-wrapper input:focus {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22,163,74,0.1);
+}
+.input-wrapper input[readonly] {
+  background: #f8fafc;
   color: #64748b;
 }
 
-.input-wrapper input:focus {
-  background: rgba(0, 0, 0, 0.6);
-  border-color: var(--neon-green);
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
-}
-
-.input-wrapper input[readonly] {
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-muted);
-}
-
 .hint-text {
-  color: var(--neon-green);
-  font-size: 0.8rem;
-  margin-top: 8px;
+  color: #16a34a;
+  font-size: 11.5px;
+  margin-top: 5px;
   display: block;
-  opacity: 0.9;
 }
 
-/* =========================
-   TARIFA BOX (DISEÑO PREMIUM)
-========================= */
+/* TARIFA */
 .tarifa-box {
-  background: linear-gradient(145deg, rgba(34, 197, 94, 0.15) 0%, rgba(21, 128, 61, 0.05) 100%);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  padding: 20px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1.5px solid #86efac;
+  padding: 16px;
   border-radius: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-  position: relative;
-  overflow: hidden;
+  margin-bottom: 16px;
 }
-
-.tarifa-item {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
+.tarifa-item { display: flex; flex-direction: column; gap: 4px; }
 .tarifa-item .label {
-  font-size: 0.85rem;
-  color: #a7f3d0;
+  font-size: 10.5px;
+  color: #166534;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-weight: 600;
+  font-weight: 700;
 }
-
 .tarifa-item .value {
-  font-size: 24px;
-  color: white;
+  font-size: 22px;
+  color: #15803d;
   font-weight: 800;
 }
+.highlight-text { color: #16a34a !important; text-shadow: none; }
+.divider { width: 1px; height: 36px; background: #86efac; }
 
-.highlight-text {
-  color: var(--neon-green) !important;
-  text-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
-}
-
-.divider {
-  width: 1px;
-  height: 40px;
-  background: rgba(34, 197, 94, 0.3);
-}
-
-/* =========================
-   BOTÓN SOLICITAR
-========================= */
+/* BTN */
 .btn-solicitar {
   width: 100%;
-  padding: 18px;
+  padding: 15px;
   border: none;
   border-radius: 16px;
-  background: var(--neon-green);
-  color: #000;
-  font-weight: 800;
-  font-size: 18px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: auto;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-solicitar:hover:not(:disabled) {
   background: #16a34a;
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.25s;
+  margin-top: auto;
+  box-shadow: 0 4px 18px rgba(22,163,74,0.3);
+}
+.btn-solicitar:hover:not(:disabled) {
+  background: #15803d;
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4);
+  box-shadow: 0 8px 24px rgba(22,163,74,0.35);
 }
-
 .btn-solicitar:disabled {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.3);
+  background: #e2e8f0;
+  color: #94a3b8;
   cursor: not-allowed;
-  transform: none;
   box-shadow: none;
+  transform: none;
 }
-
-/* Botón en estado de carga */
 .btn-solicitar.is-loading {
   background: transparent;
-  border: 2px solid var(--neon-green);
-  color: var(--neon-green);
-  animation: pulse-border 2s infinite;
+  border: 2px solid #16a34a;
+  color: #16a34a;
+  animation: pulse-border 1.8s infinite;
 }
+.btn-content { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-.btn-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-/* =========================
-   MAPA Y SUPERPOSICIONES
-========================= */
+/* MAPA */
 .map-panel {
-  background: rgba(0, 0, 0, 0.2);
+  background: white;
   border-radius: 24px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   position: relative;
-  min-height: 600px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  min-height: 560px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.1);
 }
-
-#map {
-  height: 100%;
-  width: 100%;
-  z-index: 1;
-}
-
-/* Estilos de la Progress Bar */
-.progress-container {
-  width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  margin: 15px 0;
-  overflow: hidden;
-  position: relative;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  background: var(--neon-green);
-  box-shadow: 0 0 15px var(--neon-green-glow);
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.steps-icons {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.step-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex: 1;
-  opacity: 0.3;
-  filter: grayscale(1);
-  transition: all 0.5s ease;
-}
-
-.step-item.active {
-  opacity: 1;
-  filter: grayscale(0);
-}
-
-.step-icon { font-size: 20px; }
-
-.step-item.active .step-icon {
-  text-shadow: 0 0 10px var(--neon-green-glow);
-  transform: scale(1.2);
-}
-
-.step-text {
-  font-size: 9px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  font-weight: 700;
-}
-
-.step-item.active .step-text {
-  color: var(--neon-green);
-}
-
-/* Clases de utilidad para estados */
-.text-warning { color: #f59e0b !important; }
-.text-info    { color: #3b82f6 !important; }
-.text-accent  { color: #7c4dff !important; }
-.text-success { color: var(--neon-green) !important; }
-.text-danger  { color: #ef4444 !important; }
-.text-muted   { color: #64748b !important; }
-
-.status-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  border: 1px solid currentColor;
-}
-
-/* Transición suave para los iconos del mapa (Movimiento fluido del conductor) */
+#map { height: 100%; width: 100%; z-index: 1; }
+.leaflet-container { font-family: inherit; }
 .leaflet-marker-icon {
-  transition: transform 2s linear !important;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+  transition: transform 1.5s linear !important;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.25));
 }
 
-.leaflet-container {
-  font-family: inherit;
-}
-
-/* Efecto visual encima del mapa mientras busca conductor */
 .map-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15,23,42,0.5);
   backdrop-filter: blur(4px);
-  z-index: 400; /* Encima de Leaflet */
+  z-index: 400;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* =========================
-   ANIMACIONES
-========================= */
-@keyframes pulse-border {
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-  70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+/* INFO MAPA */
+.info-mapa {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 14px;
+  margin-bottom: 14px;
+  border: 1.5px dashed #cbd5e1;
 }
 
-.slide-up {
-  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* SPINNER */
 .spinner {
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(34, 197, 94, 0.3);
+  width: 18px; height: 18px;
+  border: 2.5px solid rgba(22,163,74,0.3);
+  border-top-color: #16a34a;
   border-radius: 50%;
-  border-top-color: var(--neon-green);
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 0.8s linear infinite;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Animación de Radar en el mapa */
+/* RADAR */
 .radar {
-  width: 100px;
-  height: 100px;
-  background: rgba(34, 197, 94, 0.2);
+  width: 90px; height: 90px;
+  background: rgba(22,163,74,0.15);
   border-radius: 50%;
-  border: 2px solid var(--neon-green);
-  position: relative;
-  animation: radar-pulse 2s infinite;
+  border: 2px solid #16a34a;
+  animation: radar-pulse 1.8s infinite;
 }
-
 @keyframes radar-pulse {
   0% { transform: scale(0.5); opacity: 1; }
   100% { transform: scale(3); opacity: 0; }
 }
 
-.info-mapa {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 16px;
-  margin-bottom: 20px;
-  border: 1px dashed rgba(255, 255, 255, 0.15);
+/* PROGRESS */
+.progress-container {
+  width: 100%; height: 6px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  margin: 12px 0;
+  overflow: hidden;
 }
+.progress-bar-fill {
+  height: 100%;
+  background: #16a34a;
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+.steps-icons { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.step-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 3px; flex: 1; opacity: 0.3; filter: grayscale(1); transition: all 0.4s;
+}
+.step-item.active { opacity: 1; filter: none; }
+.step-icon { font-size: 18px; }
+.step-text { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+.step-item.active .step-text { color: #16a34a; }
 
-/* =========================
-   RESPONSIVE
-========================= */
+/* PANEL CONDUCTOR */
+.panel-conductor {
+  background: white;
+  border-radius: 20px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  border: 2px solid #dcfce7;
+  box-shadow: 0 4px 24px rgba(22,163,74,0.1);
+  animation: slideUp 0.35s ease forwards;
+}
+.viaje-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+}
+.viaje-badge {
+  background: #dcfce7; color: #166534;
+  padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 13px;
+}
+.viaje-estado {
+  background: #f1f5f9; color: #475569;
+  padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 12px;
+}
+.viaje-datos { background: #f8fafc; border-radius: 14px; padding: 14px; margin-bottom: 16px; }
+.viaje-fila {
+  display: flex; justify-content: space-between;
+  padding: 9px 0; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #0f172a;
+}
+.viaje-fila:last-child { border-bottom: none; }
+.viaje-botones { display: flex; gap: 12px; }
+.btn-llegue, .btn-finalizar {
+  flex: 1; padding: 14px; border: none; border-radius: 14px;
+  font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;
+}
+.btn-llegue { background: #f59e0b; color: white; }
+.btn-llegue:hover { background: #d97706; }
+.btn-finalizar { background: #16a34a; color: white; }
+.btn-finalizar:hover { background: #15803d; }
+
+/* PANEL CONDUCTOR INFO */
+.conductor-header {
+  display: flex; align-items: center; gap: 14px;
+  padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; margin-bottom: 14px;
+}
+.foto-conductor {
+  width: 52px; height: 52px; border-radius: 50%;
+  object-fit: cover; border: 3px solid #dcfce7;
+}
+.info-texto h3 { font-size: 16px; font-weight: 700; color: #0f172a; }
+.info-texto p { font-size: 12px; color: #64748b; }
+.tarifa-tag {
+  margin-left: auto; background: #dcfce7; color: #15803d;
+  font-weight: 800; font-size: 18px; padding: 8px 16px; border-radius: 14px;
+}
+.viaje-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 10px;
+}
+.badge-estado {
+  background: #f0fdf4; border: 1.5px solid #86efac;
+  color: #15803d; padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 13px;
+}
+.acciones-viaje { display: flex; gap: 8px; align-items: center; }
+.btn-cancelar {
+  background: #fef2f2; border: 1.5px solid #fca5a5; color: #dc2626;
+  padding: 10px 16px; border-radius: 12px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s;
+}
+.btn-cancelar:hover { background: #dc2626; color: white; }
+.btn-accion {
+  background: #f8fafc; border: 1.5px solid #e2e8f0;
+  width: 42px; height: 42px; border-radius: 12px; cursor: pointer;
+  font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.btn-accion:hover { background: #f0fdf4; border-color: #16a34a; }
+
+/* ANIMACIONES */
+@keyframes pulse-border {
+  0% { box-shadow: 0 0 0 0 rgba(22,163,74,0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(22,163,74,0); }
+  100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-up { animation: slideUp 0.4s ease forwards; }
+
+/* RESPONSIVE */
 @media(max-width: 960px) {
-  .content-grid {
-    grid-template-columns: 1fr;
-    margin: 20px auto;
-  }
-  
-  .map-panel {
-    min-height: 400px;
-    /* En móvil, el mapa va arriba del formulario generalmente para mejor UX */
-    order: -1; 
-  }
-  
-  .navbar {
-    padding: 15px 20px;
-  }
+  .content-grid { grid-template-columns: 1fr; margin: 16px auto; }
+  .map-panel { min-height: 380px; order: -1; }
+  .navbar { padding: 14px 20px; }
 }

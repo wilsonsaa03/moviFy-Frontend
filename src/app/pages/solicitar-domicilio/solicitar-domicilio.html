@@ -59,6 +59,23 @@
         </div>
       </div>
 
+      <div class="opciones-grid">
+        <div class="opcion-chip" [class.selected]="incluirFoto" (click)="incluirFoto = !incluirFoto">
+          <span class="opcion-icon">📷</span>
+          <div>
+            <strong>Agregar foto</strong>
+            <small>(Opcional)</small>
+          </div>
+        </div>
+        <div class="opcion-chip" [class.selected]="entregaRapida" (click)="toggleEntregaRapida()">
+          <span class="opcion-icon">⚡</span>
+          <div>
+            <strong>Entrega rápida</strong>
+            <small>Prioridad alta</small>
+          </div>
+        </div>
+      </div>
+
       <button
         class="btn-solicitar"
         [class.loading]="buscandoConductor"

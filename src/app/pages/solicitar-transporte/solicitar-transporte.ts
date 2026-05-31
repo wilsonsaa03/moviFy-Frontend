@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import * as L from 'leaflet';
+import { environment } from '../../../environments/environment';
 
 declare let window: any;
 
@@ -67,7 +68,7 @@ export class SolicitarTransporte
 
   private pollingServicio: any;
 
-  private apiBase = 'http://localhost:8080/api/transporte';
+  private apiBase = `${environment.apiUrl}/transporte`;
 
   constructor(private router: Router) {}
 
@@ -771,6 +772,9 @@ export class SolicitarTransporte
     // FINALIZADO
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
+      this.conductorInfo = null; // ✅ Resetear info del conductor
+      this.buscandoConductor = false;
+      this.transicionFinalizada = true;
       alert('🎉 ¡Has llegado a tu destino! Gracias por usar MoviFY');
       this.router.navigate(['/home-usuario']);
     }

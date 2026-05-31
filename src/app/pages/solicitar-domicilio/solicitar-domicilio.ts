@@ -25,6 +25,9 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   buscandoConductor: boolean = false;
   mensajeEstado: string = 'Iniciando búsqueda...';
   conductorInfo: any = null;
+  // ✅ Propiedades para controlar la selección de opciones
+  incluirFoto: boolean = false;
+  entregaRapida: boolean = false;
 
   private map!: L.Map;
   private routingControl: any;
@@ -160,6 +163,15 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
     this.calcularRutaYTarifa(lat, lng);
   }
 
+  // ✅ Método para alternar entrega rápida y actualizar tarifa al instante
+  toggleEntregaRapida() {
+    this.entregaRapida = !this.entregaRapida;
+    if (this.destinoMarker) {
+      const pos = this.destinoMarker.getLatLng();
+      this.calcularRutaYTarifa(pos.lat, pos.lng);
+    }
+  }
+
   private async calcularRutaYTarifa(dLat: number, dLng: number) {
     try {
       const url = `http://router.project-osrm.org/route/v1/driving/${this.userLng},${this.userLat};${dLng},${dLat}?overview=false`;
@@ -173,12 +185,18 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
         
         // Lógica de precio: $3500 base + $1200 por km
         let calculo = 3500 + (this.distanciaViaje * 1200);
+
+        // ✅ RECARGO DEL 20%
+        if (this.entregaRapida) {
+          calculo *= 1.20;
+        }
+
         this.tarifaEstimada = Math.ceil(calculo / 100) * 100; // Redondear a centenas
       }
     } catch (e) {
       console.warn("No se pudo calcular la ruta exacta, usando estimación lineal.");
       this.distanciaViaje = this.map.distance([this.userLat, this.userLng], [dLat, dLng]) / 1000;
-      this.tarifaEstimada = 5000; 
+      this.tarifaEstimada = this.entregaRapida ? 6000 : 5000; 
     }
   }
 
@@ -214,12 +232,15 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
     
     const destCoords = this.destinoMarker.getLatLng();
     const body = {
-      usuario_id: localStorage.getItem('id') || 1,
+      usuario_id: parseInt(localStorage.getItem('id') || '1'),
       origen_lat: this.userLat, origen_lng: this.userLng,
       destino_lat: destCoords.lat, destino_lng: destCoords.lng,
       distancia_km: this.distanciaViaje,
       tarifa: this.tarifaEstimada,
-      tipo: 'DOMICILIO', descripcion: this.descripcionEncargo
+      tipo: 'DOMICILIO', 
+      descripcion: this.descripcionEncargo,
+      incluir_foto: this.incluirFoto, // Enviamos el estado guardado
+      entrega_rapida: this.entregaRapida
     };
 
     const resp = await fetch(`${this.apiBase}/solicitar`, {
@@ -311,6 +332,10 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
 
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
+      this.conductorInfo = null; // ✅ Limpia la info para ocultar el panel
+      this.buscandoConductor = false; // ✅ Cierra estados de búsqueda
+      this.transicionFinalizada = false;
+      this.limpiarEstela(); // ✅ Limpia el mapa
       alert('🎉 ¡Tu entrega ha sido finalizada con éxito!');
       this.router.navigate(['/home-usuario']);
     }
@@ -421,7 +446,16 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getProgresoPorcentaje(estado: string): number {
-    const p: any = { 'PENDIENTE': 10, 'ACEPTADO': 30, 'PAQUETE_RECOGIDO': 70, 'FINALIZADO': 100 };
+    const p: any = { 
+      'PENDIENTE': 10, 
+      'ACEPTADO': 30, 
+      'EN_CAMINO_AL_USUARIO': 40,
+      'LLEGO_AL_ORIGEN': 50,
+      'PAQUETE_RECOGIDO': 70, 
+      'EN_VIAJE': 85,
+      'EN_CAMINO': 85,
+      'FINALIZADO': 100 
+    };
     return p[estado] || 0;
   }
 
