@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import * as L from 'leaflet';
+import { environment } from '../../../environments/environment';
 
 declare let window: any;
 
@@ -39,7 +40,7 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   // ✅ Variables para la estela y rastro
   private estelaMoto: L.Polyline | undefined;
   private puntosEstela: L.LatLng[] = [];
-  private apiBase = 'http://localhost:8080/api/transporte';
+  private apiBase = `${environment.apiUrl}/transporte`;
 
   constructor(private router: Router) {}
 
