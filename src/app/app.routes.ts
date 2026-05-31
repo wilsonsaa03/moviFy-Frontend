@@ -21,6 +21,7 @@ import { PerfilUsuarioComponent } from './pages/perfil-usuario/perfil-usuario.co
 // IMPORTACIÓN DE SOLICITAR TRANSPORTE
 // Nota: Asegúrate que el nombre del archivo en la carpeta sea 'solicitar-transporte.ts'
 import { SolicitarTransporte } from './pages/solicitar-transporte/solicitar-transporte';
+import { SolicitarDomicilio } from './pages/solicitar-domicilio/solicitar-domicilio';
 
 export const routes: Routes = [
   // Inicio y Auth
@@ -43,6 +44,7 @@ export const routes: Routes = [
   // Perfil y Acciones de Usuario
   { path: 'perfil-usuario', component: PerfilUsuarioComponent },
   { path: 'solicitar-transporte', component: SolicitarTransporte },
+  { path: 'solicitar-domicilio', component: SolicitarDomicilio },
 
   // Manejo de rutas no encontradas (SIEMPRE AL FINAL)
   { path: '**', redirectTo: '' }

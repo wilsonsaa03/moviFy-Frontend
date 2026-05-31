@@ -93,6 +93,32 @@
 
   <!-- PANEL DEL CONDUCTOR (Aparece cuando el viaje es aceptado) -->
   <div class="panel-conductor" *ngIf="conductorInfo && !buscandoConductor">
+    
+    <!-- Barra de progreso dinámica -->
+    <div class="progress-section">
+      <div class="steps-icons">
+        <div class="step-item" [class.active]="esPasoActivo('solicitado')">
+          <span class="step-icon">📩</span>
+          <span class="step-text">Pedido</span>
+        </div>
+        <div class="step-item" [class.active]="esPasoActivo('encamino')">
+          <span class="step-icon">🛵</span>
+          <span class="step-text">Camino</span>
+        </div>
+        <div class="step-item" [class.active]="esPasoActivo('enviaje')">
+          <span class="step-icon">🛣️</span>
+          <span class="step-text">Viaje</span>
+        </div>
+        <div class="step-item" [class.active]="esPasoActivo('finalizado')">
+          <span class="step-icon">🏁</span>
+          <span class="step-text">Llegada</span>
+        </div>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar-fill" [style.width.%]="getProgresoPorcentaje(conductorInfo.estado)"></div>
+      </div>
+    </div>
+
     <div class="conductor-header">
       <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="foto-conductor">
       
@@ -113,7 +139,9 @@
         <button class="btn-cancelar" *ngIf="conductorInfo.estado === 'ACEPTADO'" (click)="cancelarViaje()">
           Cancelar Viaje
         </button>
-        <button class="btn-accion chat">💬</button>
+        <button class="btn-accion chat" (click)="enviarMensajeConductor()">
+          💬
+        </button>
         <button class="btn-accion llamar">📞</button>
       </div>
     </div>

@@ -305,6 +305,64 @@
   z-index: 1;
 }
 
+/* Estilos de la Progress Bar */
+.progress-container {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  margin: 15px 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--neon-green);
+  box-shadow: 0 0 15px var(--neon-green-glow);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.steps-icons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  opacity: 0.3;
+  filter: grayscale(1);
+  transition: all 0.5s ease;
+}
+
+.step-item.active {
+  opacity: 1;
+  filter: grayscale(0);
+}
+
+.step-icon { font-size: 20px; }
+
+.step-item.active .step-icon {
+  text-shadow: 0 0 10px var(--neon-green-glow);
+  transform: scale(1.2);
+}
+
+.step-text {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.step-item.active .step-text {
+  color: var(--neon-green);
+}
+
 /* Clases de utilidad para estados */
 .text-warning { color: #f59e0b !important; }
 .text-info    { color: #3b82f6 !important; }

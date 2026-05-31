@@ -105,6 +105,9 @@
         <button class="btn-mapa" (click)="toggleMapa()">
           {{ mostrarMapa ? '❌ Ocultar mapa' : '🗺️ Mostrar mapa' }}
         </button>
+        <button class="btn-mapa" *ngIf="mostrarMapa" (click)="simularUbicacionManual()" style="background: #7c4dff; margin-left: 10px;">
+          🧪 Simular Movimiento
+        </button>
       </div>
 
       <div class="mapa-container" *ngIf="mostrarMapa">
@@ -121,7 +124,9 @@
       <div class="viaje-activo-panel" *ngIf="viajeActivo">
         <div class="viaje-header">
           <span class="viaje-badge">🚦 Viaje en curso</span>
-          <span class="viaje-estado">{{ viajeActivo.estado }}</span>
+        <span class="viaje-estado" [ngClass]="getBadgeClass(viajeActivo.estado)">
+          {{ getFriendlyEstado(viajeActivo.estado) }}
+        </span>
         </div>
         <div class="viaje-datos">
           <div class="viaje-fila">
@@ -143,8 +148,13 @@
             (click)="llegueAlUsuario()">
             📍 Llegué al usuario
           </button>
+          <button class="btn-llegue" style="background: #f59e0b;"
+            *ngIf="viajeActivo.estado === 'LLEGO_AL_ORIGEN' && viajeActivo.tipo === 'DOMICILIO'"
+            (click)="paqueteRecogido()">
+            📦 Paquete recogido
+          </button>
           <button class="btn-finalizar"
-            *ngIf="viajeActivo.estado === 'EN_VIAJE' || viajeActivo.estado === 'LLEGO_AL_ORIGEN'"
+            *ngIf="viajeActivo.estado === 'EN_VIAJE' || viajeActivo.estado === 'PAQUETE_RECOGIDO'"
             (click)="finalizarViaje()">
             🏁 Finalizar viaje
           </button>

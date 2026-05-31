@@ -72,6 +72,8 @@ export class HomeUsuarioComponent implements OnInit {
     if (tipo === 'transporte') {
       // Navega a la ruta exacta que pusimos en app.routes.ts
       this.router.navigate(['/solicitar-transporte']);
+    } else if (tipo === 'domicilio') {
+      this.router.navigate(['/solicitar-domicilio']);
     } else {
       // Por ahora, los otros siguen igual o puedes crearles sus rutas luego
       this.router.navigate(['/solicitar', tipo]);

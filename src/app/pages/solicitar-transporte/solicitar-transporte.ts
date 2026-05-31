@@ -619,7 +619,8 @@ export class SolicitarTransporte
       destino_lng: this.destinoMarker?.getLatLng().lng,
       distancia_km: this.distanciaViaje,
       tarifa: this.tarifaEstimada,
-      tipo: 'TRANSPORTE'
+      tipo: 'TRANSPORTE',
+      descripcion: ''
     };
 
     try {
@@ -644,22 +645,25 @@ export class SolicitarTransporte
   }
 
   private comenzarPollingServicio(id: number): void {
-    this.pollingServicio = setInterval(async () => {
-      try {
-        const resp = await fetch(`${this.apiBase}/servicio/${id}`);
-        if (!resp.ok) {
-          console.warn(`Polling pausado: servidor respondió ${resp.status}`);
-          return; // ✅ No lanzar error, simplemente esperar el siguiente ciclo
+    // ✅ Esperar 3 segundos antes del primer poll para que el backend procese
+    setTimeout(() => {
+      this.pollingServicio = setInterval(async () => {
+        try {
+          const resp = await fetch(`${this.apiBase}/servicio/${id}`);
+          if (!resp.ok) {
+            console.warn(`Polling pausado: servidor respondió ${resp.status}`);
+            return; // ✅ No lanzar error, simplemente esperar el siguiente ciclo
+          }
+          const servicio = await resp.json();
+          this.conductorInfo = servicio;
+          console.log("🔄 Estado recibido:", servicio.estado);
+          this.procesarEstadoServicio(servicio);
+        } catch(e) {
+          console.warn('Error de red en polling, reintentando...');
+          // ✅ No hace nada, el setInterval reintenta solo
         }
-        const servicio = await resp.json();
-        this.conductorInfo = servicio;
-        console.log("🔄 Estado recibido:", servicio.estado);
-        this.procesarEstadoServicio(servicio);
-      } catch(e) {
-        console.warn('Error de red en polling, reintentando...');
-        // ✅ No hace nada, el setInterval reintenta solo
-      }
-    }, 3000); // ✅ Subir de 2000 a 3000ms para reducir colisiones con el backend
+      }, 3000); // ✅ Subir de 2000 a 3000ms para reducir colisiones con el backend
+    }, 3000);
   }
 
   private procesarEstadoServicio(s: any): void {
@@ -667,14 +671,14 @@ export class SolicitarTransporte
     const W = (window as any).L;
 
     // ACEPTADO → dibujar ruta conductor hacia el usuario
-    if (s.estado === 'ACEPTADO') {
+    if (s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO_AL_USUARIO') {
       const condLat = s.conductor_lat ?? s.latitud;
       const condLng = s.conductor_lng ?? s.longitud;
 
       // Cerrar el radar SIEMPRE que llegue estado ACEPTADO
       if (this.buscandoConductor && !this.transicionFinalizada) {
         this.transicionFinalizada = true;
-        this.mensajeEstado = '¡Conductor encontrado! Ya viene en camino.';
+        this.mensajeEstado = '¡Conductor encontrado! En camino hacia ti.';
         this.buscandoConductor = false; // ✅ Sin setTimeout, cierre inmediato
 
         if (condLat && condLng) {
@@ -730,6 +734,10 @@ export class SolicitarTransporte
       this.mensajeEstado = '📍 ¡Tu conductor ha llegado!';
     }
 
+    if (s.estado === 'PAQUETE_RECOGIDO') {
+      this.mensajeEstado = '📦 Paquete recogido. En ruta al destino.';
+    }
+
     // ETAPA 3: Viaje en curso al destino
     if (s.estado === 'EN_VIAJE') {
       this.mensajeEstado = '🛣️ Viajando al destino...';
@@ -753,6 +761,13 @@ export class SolicitarTransporte
       this.actualizarPosicionConductor(s);
     }
 
+    // VIAJE CANCELADO (Detectado mediante polling cuando el conductor cancela)
+    if (s.estado === 'CANCELADO') {
+      clearInterval(this.pollingServicio);
+      alert('🔴 Lo sentimos, el conductor ha cancelado el viaje. Por favor, intenta solicitar uno nuevo.');
+      this.router.navigate(['/home-usuario']);
+    }
+
     // FINALIZADO
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
@@ -762,6 +777,15 @@ export class SolicitarTransporte
   }
 
   private actualizarPosicionConductor(s: any): void {
+    // ✅ Validar que existan coordenadas antes de continuar
+    const lat = s.conductor_lat ?? s.latitud;
+    const lng = s.conductor_lng ?? s.longitud;
+    
+    if (lat == null || lng == null) {
+      console.warn('⚠️ Sin coordenadas del conductor aún, esperando...');
+      return;
+    }
+
     const motoIcon = L.icon({
       iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
       iconSize: [45, 45],
@@ -769,34 +793,48 @@ export class SolicitarTransporte
     });
 
     if (this.conductorMarker) {
-      this.conductorMarker.setLatLng([s.conductor_lat ?? s.latitud, s.conductor_lng ?? s.longitud]);
+      this.conductorMarker.setLatLng([lat, lng]);
     } else {
-      this.conductorMarker = L.marker([s.conductor_lat ?? s.latitud, s.conductor_lng ?? s.longitud], { icon: motoIcon })
+      this.conductorMarker = L.marker([lat, lng], { icon: motoIcon })
         .addTo(this.map)
         .bindPopup(`<b>Tu conductor: ${s.conductor_nombre}</b>`)
         .openPopup();
     }
 
     // Mejora UX: Mostrar ETA en el mensaje de estado si hay ruta calculada
-    if (this.duracionViaje > 0 && s.estado === 'ACEPTADO') {
+    if (this.duracionViaje > 0 && (s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO_AL_USUARIO')) {
       const minutos = Math.round(this.duracionViaje);
       this.mensajeEstado = minutos > 1 
-        ? `¡Conductor encontrado! Llega en unos ${minutos} min.` 
+        ? `¡Conductor encontrado! En camino hacia ti. Llega en unos ${minutos} min.` 
         : '¡Tu conductor está a la vuelta de la esquina!';
     }
 
-    // Si el conductor ya está muy cerca del usuario, cambiar ruta hacia el destino
-    const distAlUsuario = this.map.distance([s.latitud, s.longitud], [this.userLat, this.userLng]);
-    if (distAlUsuario < 50) { // 50 metros
-        const dest = this.destinoMarker?.getLatLng();
-        if (dest) {
-          this.routingControl.setWaypoints([
-            L.latLng(this.userLat, this.userLng),
-            L.latLng(dest.lat, dest.lng)
-          ]);
-        }
+    // ✅ Usar lat/lng validados en lugar de s.latitud directamente
+    const distAlUsuario = this.map.distance([lat, lng], [this.userLat, this.userLng]);
+    if (distAlUsuario < 50) {
+      const dest = this.destinoMarker?.getLatLng();
+      if (dest && this.routingControl) {
+        this.routingControl.setWaypoints([
+          L.latLng(this.userLat, this.userLng),
+          L.latLng(dest.lat, dest.lng)
+        ]);
+      }
     }
   }
+
+  /* =========================
+     MENSAJE RÁPIDO A CONDUCTOR
+  ========================= */
+  enviarMensajeConductor(): void {
+    if (this.conductorInfo && this.conductorInfo.conductor_telefono) {
+      const telefonoConductor = this.conductorInfo.conductor_telefono;
+      const mensaje = encodeURIComponent(`Hola ${this.conductorInfo.conductor_nombre}, soy ${this.conductorInfo.usuario_nombre ?? 'tu pasajero'}. Estoy esperando en ${this.origen}.`);
+      window.open(`https://wa.me/${telefonoConductor}?text=${mensaje}`, '_blank');
+    } else {
+      alert('No se encontró el número de teléfono del conductor.');
+    }
+  }
+
 
   /* =========================
      CANCELAR VIAJE
@@ -840,6 +878,31 @@ export class SolicitarTransporte
   /* =========================
      HELPERS DE INTERFAZ
   ========================= */
+
+  getProgresoPorcentaje(estado: string): number {
+    const pasos: { [key: string]: number } = {
+      'PENDIENTE': 10,
+      'ACEPTADO': 30,
+      'EN_CAMINO_AL_USUARIO': 50,
+      'LLEGO_AL_ORIGEN': 70,
+      'EN_VIAJE': 90,
+      'FINALIZADO': 100
+    };
+    return pasos[estado] || 0;
+  }
+
+  esPasoActivo(paso: string): boolean {
+    if (!this.conductorInfo) return false;
+    const porcentaje = this.getProgresoPorcentaje(this.conductorInfo.estado);
+    
+    switch (paso) {
+      case 'solicitado': return porcentaje >= 10;
+      case 'encamino':   return porcentaje >= 30;
+      case 'enviaje':    return porcentaje >= 90;
+      case 'finalizado': return porcentaje === 100;
+      default: return false;
+    }
+  }
 
   getEstadoColorClass(estado: string): string {
     switch (estado) {
