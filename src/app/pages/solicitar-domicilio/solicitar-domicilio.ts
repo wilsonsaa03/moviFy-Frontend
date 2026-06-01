@@ -332,13 +332,50 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
 
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
-      this.conductorInfo = null; // ✅ Limpia la info para ocultar el panel
-      this.buscandoConductor = false; // ✅ Cierra estados de búsqueda
+      const idServicio = s.id;
+      
+      // ✅ Limpieza exhaustiva para evitar que la UI se bloquee
+      this.conductorInfo = null;
+      this.buscandoConductor = false;
       this.transicionFinalizada = false;
-      this.limpiarEstela(); // ✅ Limpia el mapa
-      alert('🎉 ¡Tu entrega ha sido finalizada con éxito!');
+      this.descripcionEncargo = '';
+      this.tarifaEstimada = 0;
+
+      // ✅ Eliminar marcadores del mapa manualmente
+      if (this.destinoMarker) {
+        this.map.removeLayer(this.destinoMarker);
+        this.destinoMarker = undefined;
+      }
+      if (this.conductorMarker) {
+        this.map.removeLayer(this.conductorMarker);
+        this.conductorMarker = undefined;
+      }
+      
+      this.limpiarEstela();
+
+      const estrellas = prompt("📦 ¡Entrega exitosa! Califique al domiciliario (1-5):", "5");
+      if (estrellas) {
+        this.enviarCalificacion(idServicio, estrellas);
+      }
+
       this.router.navigate(['/home-usuario']);
     }
+  }
+
+  private async enviarCalificacion(servicioId: number, puntos: string) {
+    const usuarioId = localStorage.getItem('id') || '1';
+    const body = {
+      servicio_id: servicioId,
+      usuario_id: parseInt(usuarioId),
+      puntos: parseInt(puntos) || 5,
+      comentario: 'Entrega finalizada'
+    };
+
+    await fetch(`${this.apiBase}/calificar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
   }
 
   private actualizarMensajeConETA(s: any, targetLat?: number, targetLng?: number, prefijo: string = ''): void {

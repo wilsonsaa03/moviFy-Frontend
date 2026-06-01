@@ -772,12 +772,35 @@ export class SolicitarTransporte
     // FINALIZADO
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
+      const idServicio = s.id;
       this.conductorInfo = null; // ✅ Resetear info del conductor
       this.buscandoConductor = false;
       this.transicionFinalizada = true;
-      alert('🎉 ¡Has llegado a tu destino! Gracias por usar MoviFY');
+      
+      // Lógica de calificación simple (se puede mejorar con un modal de estrellas)
+      const estrellas = prompt("🎉 ¡Has llegado! Califique el servicio (1-5 estrellas):", "5");
+      if (estrellas) {
+        this.enviarCalificacion(idServicio, estrellas);
+      }
+      
       this.router.navigate(['/home-usuario']);
     }
+  }
+
+  private async enviarCalificacion(servicioId: number, puntos: string) {
+    const usuarioId = localStorage.getItem('id') || '1';
+    const body = {
+      servicio_id: servicioId,
+      usuario_id: parseInt(usuarioId),
+      puntos: parseInt(puntos) || 5,
+      comentario: 'Calificado desde la App'
+    };
+
+    await fetch(`${this.apiBase}/calificar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
   }
 
   private actualizarPosicionConductor(s: any): void {
