@@ -74,9 +74,8 @@ export class HomeUsuarioComponent implements OnInit {
       this.router.navigate(['/solicitar-transporte']);
     } else if (tipo === 'domicilio') {
       this.router.navigate(['/solicitar-domicilio']);
-    } else {
-      // Por ahora, los otros siguen igual o puedes crearles sus rutas luego
-      this.router.navigate(['/solicitar', tipo]);
+    } else if (tipo === 'encomienda') {
+      this.router.navigate(['/solicitar-encomienda']);
     }
   }
 

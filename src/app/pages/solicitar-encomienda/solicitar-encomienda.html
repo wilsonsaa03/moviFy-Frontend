@@ -1,0 +1,200 @@
+<div class="enc-wrapper">
+
+  <nav class="enc-nav">
+    <button class="btn-volver" (click)="volver()">← Volver</button>
+    <div class="nav-center">
+      <img src="/assets/movify.jpg" class="nav-logo" alt="MoviFY">
+      <span class="nav-brand">Movi<span class="text-orange">FY</span></span>
+    </div>
+    <div class="nav-spacer"></div>
+  </nav>
+
+  <div class="enc-grid">
+
+    <!-- PANEL IZQUIERDO -->
+    <div class="form-card">
+
+      <div class="form-header">
+        <h2>Solicitar Encomienda <span>📦</span></h2>
+        <p>Envía paquetes de forma rápida, segura y confiable.</p>
+      </div>
+
+      <!-- FILA 1: RECOGIDA + REMITENTE -->
+      <div class="two-col">
+        <div class="section-block">
+          <div class="section-title">📍 Lugar de recogida</div>
+          <div class="field-box" [class.active]="ubicacionEncontrada">
+            <span class="fi">📍</span>
+            <div class="ft">
+              <strong>{{ ubicacionEncontrada ? 'Mi ubicación actual' : 'Detectando...' }}</strong>
+              <small>{{ origen }}</small>
+            </div>
+            <span class="fi">🎯</span>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <div class="section-title">👤 Datos del remitente</div>
+          <input class="enc-input" type="text" placeholder="Nombre completo" [(ngModel)]="nombreRemitente">
+          <input class="enc-input mt6" type="tel" placeholder="Número de teléfono" [(ngModel)]="telefonoRemitente">
+        </div>
+      </div>
+
+      <!-- FILA 2: DESTINO + DESTINATARIO -->
+      <div class="two-col">
+        <div class="section-block">
+          <div class="section-title">🎯 Destino de entrega</div>
+          <div class="field-box" [class.active]="destinoMarker" style="cursor:pointer;">
+            <span class="fi">🎯</span>
+            <div class="ft">
+              <strong>{{ destinoMarker ? 'Destino seleccionado' : 'Toca el mapa para seleccionar el destino' }}</strong>
+              <small *ngIf="tarifaEstimada > 0">{{ distanciaViaje.toFixed(1) }} km calculados</small>
+            </div>
+            <span class="fi">🗺️</span>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <div class="section-title">👥 Datos del destinatario</div>
+          <input class="enc-input" type="text" placeholder="Nombre destinatario" [(ngModel)]="nombreDestinatario">
+          <input class="enc-input mt6" type="tel" placeholder="Teléfono destinatario" [(ngModel)]="telefonoDestinatario">
+        </div>
+      </div>
+
+      <!-- FILA 3: TIPO PAQUETE + DESCRIPCIÓN -->
+      <div class="section-block full-w">
+        <div class="section-title">📦 Información de la encomienda</div>
+        <div class="two-col">
+          <div>
+            <label class="sub-label">Tipo de paquete</label>
+            <div class="tipo-grid">
+              <div class="tipo-chip" *ngFor="let t of tiposPaquete"
+                [class.selected]="tipoPaquete === t.valor"
+                (click)="tipoPaquete = t.valor">
+                <span class="tipo-icon">{{ t.icon }}</span>
+                <small>{{ t.label }}</small>
+              </div>
+            </div>
+            <label class="sub-label mt10">Peso aproximado</label>
+            <div class="select-box">
+              <span>🔒</span>
+              <select [(ngModel)]="pesoAproximado" class="enc-select">
+                <option value="1">1 Kg</option>
+                <option value="2">2 Kg</option>
+                <option value="5">5 Kg</option>
+                <option value="10">10 Kg</option>
+                <option value="20">20+ Kg</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="sub-label">📝 Descripción del paquete</label>
+            <textarea class="enc-textarea" placeholder="Ej: Documentos importantes, ropa, libros, repuestos, etc."
+              [(ngModel)]="descripcion" maxlength="120" rows="4"></textarea>
+            <small class="char-count">{{ descripcion.length }}/120</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILA 4: FOTO + PAGO -->
+      <div class="two-col">
+        <div class="section-block">
+          <div class="section-title">📷 Foto del paquete <span class="optional">(opcional)</span></div>
+          <label class="foto-box">
+            <span class="foto-icon">📷</span>
+            <div>
+              <strong>Adjuntar imagen</strong>
+              <small>JPG, PNG (Máx. 5MB)</small>
+            </div>
+            <input type="file" accept="image/*" (change)="onFotoChange($event)" hidden>
+          </label>
+          <small *ngIf="fotoSeleccionada" class="foto-ok">✅ {{ fotoSeleccionada }}</small>
+        </div>
+
+        <div class="section-block">
+          <div class="section-title">💳 Método de pago</div>
+          <div class="pago-grid">
+            <div class="pago-chip" *ngFor="let p of metodosPago"
+              [class.selected]="metodoPago === p.valor"
+              (click)="metodoPago = p.valor">
+              <span>{{ p.icon }}</span>
+              <small>{{ p.label }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PANEL MAPA -->
+    <div class="map-card">
+      <div class="map-hint" *ngIf="!destinoMarker">
+        <span>ℹ️</span>
+        <div>
+          <strong>Selecciona el destino</strong>
+          <p>Toca en el mapa el punto de entrega para calcular la ruta y el valor.</p>
+        </div>
+      </div>
+      <div id="map" style="height:100%;width:100%;"></div>
+      <div class="map-overlay" *ngIf="buscandoConductor && !conductorInfo">
+        <div class="radar"></div>
+        <p class="radar-label">Buscando domiciliario...</p>
+      </div>
+
+      <!-- RESUMEN DEL ENVÍO -->
+      <div class="resumen-box" *ngIf="tarifaEstimada > 0">
+        <div class="resumen-title">Resumen del envío</div>
+        <div class="resumen-items">
+          <div class="resumen-item">
+            <span class="ri-icon">🛵</span>
+            <div><small>Distancia</small><strong>{{ distanciaViaje.toFixed(1) }} km</strong></div>
+          </div>
+          <div class="resumen-sep"></div>
+          <div class="resumen-item">
+            <span class="ri-icon">⏱️</span>
+            <div><small>Tiempo estimado</small><strong>{{ tiempoEstimado }} min</strong></div>
+          </div>
+          <div class="resumen-sep"></div>
+          <div class="resumen-item">
+            <span class="ri-icon">💰</span>
+            <div><small>Valor estimado</small><strong class="precio">${{ tarifaEstimada | number }}</strong></div>
+          </div>
+        </div>
+        <small class="resumen-nota">El valor puede variar según el tráfico y condiciones de la ruta.</small>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTÓN SOLICITAR -->
+  <div class="footer-bar">
+    <button class="btn-solicitar"
+      [disabled]="!puedeEnviar() || buscandoConductor"
+      [class.loading]="buscandoConductor"
+      (click)="solicitarEncomienda()">
+      <span *ngIf="!buscandoConductor">🛵 SOLICITAR ENCOMIENDA</span>
+      <span *ngIf="buscandoConductor" class="btn-loading">
+        <span class="dot-spin"></span> Buscando conductor...
+      </span>
+    </button>
+    <p class="seguridad">🔒 Tus datos están protegidos</p>
+  </div>
+
+  <!-- PANEL CONDUCTOR -->
+  <div class="panel-conductor slide-up" *ngIf="conductorInfo">
+    <div class="progress-steps">
+      <div class="step" [class.active]="esPasoActivo('PENDIENTE')"><span>📩</span><small>Pedido</small></div>
+      <div class="step-line" [class.done]="esPasoActivo('ACEPTADO')"></div>
+      <div class="step" [class.active]="esPasoActivo('ACEPTADO')"><span>🛵</span><small>En camino</small></div>
+      <div class="step-line" [class.done]="esPasoActivo('PAQUETE_RECOGIDO')"></div>
+      <div class="step" [class.active]="esPasoActivo('PAQUETE_RECOGIDO')"><span>📦</span><small>Recogido</small></div>
+      <div class="step-line" [class.done]="esPasoActivo('FINALIZADO')"></div>
+      <div class="step" [class.active]="esPasoActivo('FINALIZADO')"><span>🏁</span><small>Entregado</small></div>
+    </div>
+    <div class="panel-footer">
+      <span class="estado-badge">{{ mensajeEstado }}</span>
+      <button class="btn-chat" (click)="enviarMensaje()">💬 Chat</button>
+    </div>
+  </div>
+
+</div>
