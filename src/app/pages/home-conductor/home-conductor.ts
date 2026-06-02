@@ -14,13 +14,11 @@ import * as L from 'leaflet';
 })
 export class HomeConductorComponent implements OnInit, OnDestroy {
 
-  // =========================
   // DATOS DEL CONDUCTOR
-  // =========================
   nombre: string = 'Conductor';
   foto: string = '';
   conductorId: any = null;
-  placa: string = 'Cargando...'; // Valor inicial para el usuario
+  placa: string = 'Cargando...';
   modelo: string = 'Cargando...';
   telefono: string = '';
   correo: string = '';
@@ -29,23 +27,18 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   enLinea: boolean = false;
   notificaciones: number = 0;
 
-  // ==========================================
-  // MAPA, RASTREO Y ALERTAS
-  // ==========================================
+  // MAPA Y RASTREO
   mostrarMapa: boolean = false;
   mostrarAlerta: boolean = false;
   mensajeAlerta: string = '';
   mapa: any;
-  
-  watchId: any;           
-  markerUsuario: L.Marker | undefined; 
-  //  Seguimiento para rotación
+  watchId: any;
+  markerUsuario: L.Marker | undefined;
   private ultimaLat: number | null = null;
   private ultimaLng: number | null = null;
-  //  Variables para la estela
   private estelaMoto: L.Polyline | undefined;
   private puntosEstela: L.LatLng[] = [];
-  
+
   iconoMoto = L.icon({
     iconUrl: 'assets/moto-icon.png',
     iconSize: [60, 60],
@@ -53,33 +46,34 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     popupAnchor: [0, -60]
   });
 
-  // =========================
-  // MENUS INTERACTIVOS
-  // =========================
+  // MENUS
   menuAbierto: boolean = false;
   menuNavAbierto: boolean = false;
   sidebarColapsado: boolean = false;
 
-  // =========================
-  pollingNotificaciones: any;
   // ESTADISTICAS
-  // =========================
+  pollingNotificaciones: any;
   gananciasHoy: number = 0;
   gananciasSemana: number = 0;
   viajesHoy: number = 0;
   viajesTotal: number = 0;
-  cancelaciones: number = 0; //  Nueva métrica
-
+  cancelaciones: number = 0;
   solicitudes: any[] = [];
   historial: any[] = [];
 
-  // =========================
-  // VARIABLES NUEVAS — agregar junto a las demás
-  // =========================
+  // VIAJE ACTIVO
   viajeActivo: any = null;
   viajeId: number | null = null;
-  routingControl: any = null; // Routing control para el conductor
+  routingControl: any = null;
   pollingViajeActivo: any = null;
+
+  // ✅ SIMULACIÓN DE MOVIMIENTO (igual que solicitar-transporte)
+  private puntosSimulacion: L.LatLng[] = [];
+  private indexSimulacion: number = 0;
+  private intervaloSimulacion: any = null;
+  private simulacionActiva: boolean = false;
+  private lineaSimulacion?: L.Polyline;
+  private lineaRecorrida?: L.Polyline;
 
   constructor(
     private router: Router,
@@ -88,162 +82,249 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const correoSession = localStorage.getItem('correo');
-    
-    // Redirigir al login si no hay sesión
-    if (!correoSession) {
-      this.router.navigate(['/login']);
-      return;
-    }
+    if (!correoSession) { this.router.navigate(['/login']); return; }
 
-    // CARGAR PERFIL DESDE EL SERVICIO
     this.conductorService.obtenerPerfil(correoSession).subscribe({
       next: (data: any) => {
-        console.log("Datos recibidos:", data); // Para depuración
-        
-        // Mapeo de datos con operadores OR para asegurar que nada quede vacío
-        this.nombre   = data.nombre || 'Nombre no disponible';
-        this.foto     = data.foto || '';
-        this.correo   = data.correo || correoSession;
+        this.nombre = data.nombre || 'Nombre no disponible';
+        this.foto = data.foto || '';
+        this.correo = data.correo || correoSession;
         this.conductorId = data.conductor_id || data.id;
-        console.log("✅ Conductor cargado con ID:", this.conductorId);
         this.telefono = data.telefono || 'N/A';
-        
-        // CORRECCIÓN: Nombres de campos comunes en DB
-        this.placa    = data.placa || data.placa_vehiculo || 'No registrada';
-        this.modelo   = data.modelo || data.modelo_vehiculo || 'No registrado';
-        
+        this.placa = data.placa || data.placa_vehiculo || 'No registrada';
+        this.modelo = data.modelo || data.modelo_vehiculo || 'No registrado';
         this.estadoCuenta = data.estado || 'pendiente';
         this.gananciasHoy = Number(data.gananciasHoy) || 0;
         this.gananciasSemana = Number(data.gananciasSemana) || 0;
         this.viajesHoy = Number(data.viajesHoy) || 0;
         this.viajesTotal = Number(data.viajesTotal) || 0;
-        this.cancelaciones = Number(data.cancelaciones) || 0; // ✅ Carga desde el perfil
+        this.cancelaciones = Number(data.cancelaciones) || 0;
         this.historial = data.historial || [];
       },
-      error: (err: any) => { 
-        console.error("Error al cargar perfil:", err);
-        this.placa = "Error de conexión";
-        this.modelo = "Intente más tarde";
+      error: (err: any) => {
+        console.error('Error al cargar perfil:', err);
+        this.placa = 'Error de conexión';
+        this.modelo = 'Intente más tarde';
       }
     });
   }
 
   ngOnDestroy(): void {
     this.pararRastreo();
-    // Limpiar el mapa de la memoria si existe
-    if (this.mapa) {
-      if (this.pollingViajeActivo) clearInterval(this.pollingViajeActivo); // Limpiar polling de viaje
-      this.mapa.remove();
-    }
+    this.detenerSimulacionConductor();
+    if (this.pollingViajeActivo) clearInterval(this.pollingViajeActivo);
+    if (this.pollingNotificaciones) clearInterval(this.pollingNotificaciones);
+    if (this.mapa) this.mapa.remove();
   }
 
-  // =========================
-  // LOGICA DE INTERFAZ
-  // =========================
-  toggleSidebar(): void {
-    if (window.innerWidth <= 992) {
-      this.menuNavAbierto = !this.menuNavAbierto;
-    } else {
-      this.sidebarColapsado = !this.sidebarColapsado;
+  // ===================== SIMULACIÓN CONDUCTOR =====================
+
+  private iniciarSimulacionConductor(
+    origenLat: number, origenLng: number,
+    destinoLat: number, destinoLng: number,
+    colorLinea: string
+  ): void {
+    this.detenerSimulacionConductor();
+    this.simulacionActiva = true;
+    this.indexSimulacion = 0;
+
+    // ✅ Mismo sistema que solicitar-transporte: fetch directo a OSRM
+    const url = `https://router.project-osrm.org/route/v1/driving/${origenLng},${origenLat};${destinoLng},${destinoLat}?overview=full&geometries=geojson`;
+
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.routes?.length) { this.simulacionActiva = false; return; }
+
+        const coords = data.routes[0].geometry.coordinates;
+        this.puntosSimulacion = coords.map((c: number[]) => L.latLng(c[1], c[0]));
+
+        if (this.puntosSimulacion.length < 2) { this.simulacionActiva = false; return; }
+
+        // Quitar routing control de LRM para no duplicar líneas
+        if (this.routingControl && this.mapa) {
+          try { this.mapa.removeControl(this.routingControl); this.routingControl = null; } catch (e) {}
+        }
+
+        // Línea que se va recortando
+        this.lineaSimulacion = L.polyline(this.puntosSimulacion, {
+          color: colorLinea, weight: 6, opacity: 0.85
+        }).addTo(this.mapa);
+
+        // Estela del recorrido ya hecho
+        this.lineaRecorrida = L.polyline([this.puntosSimulacion[0]], {
+          color: colorLinea, weight: 3, opacity: 0.35
+        }).addTo(this.mapa);
+
+        // Ajustar cámara para ver toda la ruta
+        this.mapa.fitBounds((this.lineaSimulacion as L.Polyline).getBounds(), { padding: [60, 60] });
+
+        // Mover marcador de moto al inicio de la ruta
+        if (this.markerUsuario) {
+          this.markerUsuario.setLatLng(this.puntosSimulacion[0]);
+        } else {
+          this.markerUsuario = L.marker(this.puntosSimulacion[0], { icon: this.iconoMoto })
+            .addTo(this.mapa).bindPopup('<b>🛵 Tu posición</b>');
+        }
+
+        // Mover punto a punto
+        this.intervaloSimulacion = setInterval(() => {
+          if (this.indexSimulacion >= this.puntosSimulacion.length) {
+            this.detenerSimulacionConductor();
+            return;
+          }
+
+          const punto = this.puntosSimulacion[this.indexSimulacion];
+          const anterior = this.indexSimulacion > 0
+            ? this.puntosSimulacion[this.indexSimulacion - 1] : punto;
+
+          if (this.markerUsuario) {
+            this.markerUsuario.setLatLng(punto);
+
+            // Rotación
+            const angulo = Math.atan2(
+              punto.lng - anterior.lng,
+              punto.lat - anterior.lat
+            ) * (180 / Math.PI);
+            const el = this.markerUsuario.getElement();
+            if (el) {
+              el.style.transition = 'transform 0.6s linear';
+              el.style.transformOrigin = 'center center';
+              const base = el.style.transform.split(' rotate')[0];
+              el.style.transform = `${base} rotate(${angulo}deg)`;
+            }
+
+            // Recortar línea restante
+            const restantes = this.puntosSimulacion.slice(this.indexSimulacion);
+            if (restantes.length > 1 && this.lineaSimulacion) {
+              this.lineaSimulacion.setLatLngs(restantes);
+            }
+
+            // Crecer estela
+            const recorridos = this.puntosSimulacion.slice(0, this.indexSimulacion + 1);
+            if (recorridos.length > 1 && this.lineaRecorrida) {
+              this.lineaRecorrida.setLatLngs(recorridos);
+            }
+
+            // ✅ Enviar posición al backend para que el usuario la vea
+            if (this.conductorId && this.enLinea) {
+              fetch('http://localhost:8080/api/transporte/ubicacion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ conductor_id: this.conductorId, lat: punto.lat, lng: punto.lng })
+              }).catch(() => {});
+            }
+
+            // Zoom progresivo
+            const progreso = this.indexSimulacion / this.puntosSimulacion.length;
+            const zoomObjetivo = progreso < 0.3 ? 15 : progreso < 0.7 ? 16 : 17;
+            if (Math.abs(this.mapa.getZoom() - zoomObjetivo) >= 1) {
+              this.mapa.setView(punto, zoomObjetivo, { animate: true, duration: 1 });
+            } else {
+              this.mapa.panTo(punto, { animate: true, duration: 0.6 });
+            }
+          }
+
+          this.indexSimulacion++;
+        }, 700);
+      })
+      .catch(e => {
+        console.error('Error obteniendo ruta OSRM:', e);
+        this.simulacionActiva = false;
+      });
+  }
+
+  private detenerSimulacionConductor(): void {
+    if (this.intervaloSimulacion) {
+      clearInterval(this.intervaloSimulacion);
+      this.intervaloSimulacion = null;
     }
+    if (this.lineaSimulacion && this.mapa) {
+      try { this.mapa.removeLayer(this.lineaSimulacion); } catch (e) {}
+      this.lineaSimulacion = undefined;
+    }
+    if (this.lineaRecorrida && this.mapa) {
+      try { this.mapa.removeLayer(this.lineaRecorrida); } catch (e) {}
+      this.lineaRecorrida = undefined;
+    }
+    this.simulacionActiva = false;
+    this.indexSimulacion = 0;
+    this.puntosSimulacion = [];
+  }
+
+  // ===================== INTERFAZ =====================
+
+  toggleSidebar(): void {
+    if (window.innerWidth <= 992) this.menuNavAbierto = !this.menuNavAbierto;
+    else this.sidebarColapsado = !this.sidebarColapsado;
   }
 
   toggleMapa(): void {
     this.mostrarMapa = !this.mostrarMapa;
-    if (this.mostrarMapa) {
-      // Pequeño delay para asegurar que el div #map exista en el DOM
-      setTimeout(() => this.iniciarMapaBase(), 150);
-    } else {
-      this.pararRastreo();
-    }
+    if (this.mostrarMapa) setTimeout(() => this.iniciarMapaBase(), 150);
+    else this.pararRastreo();
   }
 
   iniciarMapaBase(): void {
-    // Si ya hay una instancia, invalidar tamaño para corregir tiles grises
-    if (this.mapa) {
-      this.mapa.invalidateSize();
-      return;
-    }
-
+    if (this.mapa) { this.mapa.invalidateSize(); return; }
     try {
       this.mapa = L.map('map').setView([3.8821, -77.0253], 14);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(this.mapa);
-      
       if (this.enLinea) this.iniciarRastreoRealTime();
-    } catch (e) {
-      console.error("Error inicializando Leaflet:", e);
-    }
+    } catch (e) { console.error('Error inicializando Leaflet:', e); }
   }
 
   toggleMapaActivo(): void {
     this.enLinea = !this.enLinea;
     this.mostrarAlerta = true;
-    
     if (this.enLinea) {
       this.mensajeAlerta = '🟢 Ahora estás disponible para recibir servicios';
       this.iniciarPollingNotificaciones();
       this.iniciarRastreoRealTime();
-
-      // Notificar al backend que el conductor está en línea
       if (this.conductorId) {
         fetch('http://localhost:8080/api/transporte/activar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ conductor_id: this.conductorId })
-        }).catch(err => console.error("Error al activar disponibilidad:", err));
+        }).catch(err => console.error('Error al activar disponibilidad:', err));
       }
-
     } else {
-      this.mensajeAlerta = '🔴 Has dejado de estar disponible. Rastreo apagado';
+      this.mensajeAlerta = '🔴 Has dejado de estar disponible';
       this.pararPollingNotificaciones();
       this.pararRastreo();
     }
-
     setTimeout(() => this.mostrarAlerta = false, 3000);
   }
 
   iniciarPollingNotificaciones() {
     this.pollingNotificaciones = setInterval(() => {
-      // Registro temporal para confirmar que el ID y el estado son correctos durante el polling
-      console.log("🔄 Polling activo | conductorId:", this.conductorId, "| enLinea:", this.enLinea);
-
       if (!this.conductorId || !this.enLinea) return;
-
       fetch(`http://localhost:8080/api/transporte/solicitudes-pendientes/${this.conductorId}`)
         .then(res => {
           if (res.status === 403) {
-            this.mensajeAlerta = '⚠️ Cuenta suspendida: Tasa de cancelación superior al 20%';
+            this.mensajeAlerta = '⚠️ Cuenta suspendida';
             this.mostrarAlerta = true;
-            this.enLinea = false; // Lo forzamos a estar fuera de línea visualmente
+            this.enLinea = false;
             this.pararPollingNotificaciones();
-            throw new Error('Sancionado por cancelaciones');
+            throw new Error('Sancionado');
           }
-          if (!res.ok) throw new Error(`Error servidor: ${res.status}`);
+          if (!res.ok) throw new Error(`Error: ${res.status}`);
           return res.json();
         })
         .then(solicitudes => {
           if (solicitudes) {
-            if (solicitudes.length > 0) {
-              console.log("📩 Notificaciones actualizadas:", solicitudes);
-            }
             this.solicitudes = solicitudes;
-            this.notificaciones = this.solicitudes.length;
+            this.notificaciones = solicitudes.length;
           }
         })
-        .catch(err => {
-          console.warn("⚠️ Servidor no disponible temporalmente...");
-          this.notificaciones = 0;
-        });
-    }, 2000); // Consulta cada 2 segundos para reaccionar a la simulación de 10s
+        .catch(() => { this.notificaciones = 0; });
+    }, 2000);
   }
 
   responderASolicitud(servicioId: number, nuevoEstado: string) {
-    // ✅ DETENER el polling INMEDIATAMENTE para evitar doble envío
     this.pararPollingNotificaciones();
-
-    // Buscamos los datos locales de la solicitud para mostrar el panel de inmediato
     const solicitudLocal = this.solicitudes.find(s => s.servicio_id === servicioId);
 
     fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}/estado`, {
@@ -251,25 +332,16 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: nuevoEstado, conductor_id: this.conductorId })
     })
-    .then(res => {
-      if (!res.ok) throw new Error('Error al actualizar estado');
-      return res.json();
-    })
+    .then(res => { if (!res.ok) throw new Error('Error'); return res.json(); })
     .then(() => {
       if (nuevoEstado === 'ACEPTADO') {
         this.viajeId = servicioId;
-        // Inicializamos viajeActivo con datos locales para que el panel aparezca YA
         this.viajeActivo = { ...solicitudLocal, estado: 'ACEPTADO' };
         this.solicitudes = [];
         this.notificaciones = 0;
-
-        // Asegurar que el mapa esté visible
         if (!this.mostrarMapa) {
           this.mostrarMapa = true;
-          setTimeout(() => {
-            this.iniciarMapaBase();
-            this.iniciarRutaViaje(servicioId);
-          }, 300);
+          setTimeout(() => { this.iniciarMapaBase(); this.iniciarRutaViaje(servicioId); }, 300);
         } else {
           this.iniciarRutaViaje(servicioId);
         }
@@ -284,16 +356,27 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   iniciarRutaViaje(servicioId: number) {
     this.cargarLRM().then(() => {
       fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}`)
-        .then(res => {
-          if (!res.ok) throw new Error('Error al consultar servicio');
-          return res.json();
-        })
+        .then(res => { if (!res.ok) throw new Error('Error'); return res.json(); })
         .then(servicio => {
           this.viajeActivo = servicio;
-          this.dibujarRutaConductorAUsuario(servicio);
+          // ✅ Iniciar simulación conductor → usuario (naranja)
+          navigator.geolocation.getCurrentPosition(pos => {
+            this.iniciarSimulacionConductor(
+              pos.coords.latitude, pos.coords.longitude,
+              servicio.origen_lat, servicio.origen_lng,
+              '#f59e0b'
+            );
+            // Marcador destino del usuario
+            const iconUsuario = L.icon({
+              iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+              iconSize: [38, 38], iconAnchor: [19, 38]
+            });
+            L.marker([servicio.origen_lat, servicio.origen_lng], { icon: iconUsuario })
+              .addTo(this.mapa).bindPopup('📍 Recoger aquí').openPopup();
+          });
           this.iniciarPollingViaje(servicioId);
         })
-        .catch(err => console.warn('No se pudo cargar la ruta del viaje:', err));
+        .catch(err => console.warn('No se pudo cargar la ruta:', err));
     });
   }
 
@@ -312,89 +395,35 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     });
   }
 
-  dibujarRutaConductorAUsuario(servicio: any) {
-    if (!this.mapa) return;
-    const W = (window as any).L;
-    if (!W?.Routing) return;
-
-    navigator.geolocation.getCurrentPosition(pos => {
-      const condLat = pos.coords.latitude;
-      const condLng = pos.coords.longitude;
-
-      if (this.routingControl) {
-        this.mapa.removeControl(this.routingControl);
-      }
-
-      this.routingControl = W.Routing.control({
-        waypoints: [
-          W.latLng(condLat, condLng),
-          W.latLng(servicio.origen_lat, servicio.origen_lng)
-        ],
-        router: W.Routing.osrmv1({ language: 'es', profile: 'driving' }),
-        lineOptions: { styles: [{ color: '#f59e0b', weight: 6, opacity: 0.9 }] },
-        addWaypoints: false,
-        draggableWaypoints: false,
-        fitSelectedRoutes: true,
-        show: false,
-        createMarker: () => null
-      }).addTo(this.mapa);
-
-      const iconUsuario = L.icon({
-        iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-        iconSize: [38, 38], iconAnchor: [19, 38]
-      });
-      L.marker([servicio.origen_lat, servicio.origen_lng], { icon: iconUsuario })
-        .addTo(this.mapa)
-        .bindPopup('📍 Recoger aquí')
-        .openPopup();
-    });
-  }
-
   iniciarPollingViaje(servicioId: number) {
     this.pollingViajeActivo = setInterval(() => {
       fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}`)
         .then(res => res.ok ? res.json() : Promise.reject(res))
         .then(servicio => {
           this.viajeActivo = servicio;
-          const W = (window as any).L;
 
-          // ✅ SIMULACIÓN: Mover el marcador de la moto según las coordenadas del backend
-          const cLat = servicio.conductor_lat ?? servicio.latitud;
-          const cLng = servicio.conductor_lng ?? servicio.longitud;
-          
-          if (cLat && cLng && this.mapa && this.markerUsuario) {
-            this.aplicarRotacionMarcador(cLat, cLng);
-            this.markerUsuario.setLatLng([cLat, cLng]);
-            // Hacer que la cámara siga a la moto si está en simulación
-            this.mapa.panTo([cLat, cLng]);
-          }
-
-          // ✅ Actualizar la ruta visual (waypoints)
-          if (this.routingControl) {
-            const esHaciaDestino = servicio.estado === 'EN_VIAJE' || servicio.estado === 'EN_CAMINO';
-            this.routingControl.setWaypoints([
-              W.latLng(cLat, cLng),
-              W.latLng(esHaciaDestino ? servicio.destino_lat : servicio.origen_lat, 
-                         esHaciaDestino ? servicio.destino_lng : servicio.origen_lng)
-            ]);
-
-            // Cambiar color: Naranja (buscando usuario), Verde (con pasajero)
-            const colorRuta = esHaciaDestino ? '#16a34a' : '#f59e0b';
-            this.routingControl.options.lineOptions.styles = [{ color: colorRuta, weight: 6, opacity: 0.9 }];
+          // ✅ EN_VIAJE: iniciar simulación conductor → destino (verde)
+          if ((servicio.estado === 'EN_VIAJE' || servicio.estado === 'EN_CAMINO') && !this.simulacionActiva) {
+            this.detenerSimulacionConductor();
+            const posActual = this.markerUsuario?.getLatLng();
+            const origenLat = posActual?.lat ?? servicio.origen_lat;
+            const origenLng = posActual?.lng ?? servicio.origen_lng;
+            this.iniciarSimulacionConductor(
+              origenLat, origenLng,
+              servicio.destino_lat, servicio.destino_lng,
+              '#16a34a'
+            );
           }
 
           if (servicio.estado === 'FINALIZADO') {
             clearInterval(this.pollingViajeActivo);
+            this.detenerSimulacionConductor();
             this.viajeActivo = null;
             this.viajeId = null;
-            if (this.routingControl) {
-              this.mapa.removeControl(this.routingControl);
-              this.routingControl = null;
-            }
             this.limpiarEstela();
           }
         })
-        .catch(err => console.warn("Polling de viaje pausado por error del servidor"));
+        .catch(() => console.warn('Polling de viaje pausado'));
     }, 3000);
   }
 
