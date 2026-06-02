@@ -46,6 +46,11 @@ export class SolicitarTransporte
 
   totalConductoresActivos: number = 0;
 
+  mostrarModalFin: boolean = false;
+  calificacionSeleccionada: number = 5;
+  estrellasArray: number[] = [1, 2, 3, 4, 5];
+  private idServicioFinal: number = 0;
+
   private map!: L.Map;
 
   private usuarioMarker?: L.Marker;
@@ -772,18 +777,8 @@ export class SolicitarTransporte
     // FINALIZADO
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
-      const idServicio = s.id;
-      this.conductorInfo = null; // ✅ Resetear info del conductor
-      this.buscandoConductor = false;
-      this.transicionFinalizada = true;
-      
-      // Lógica de calificación simple (se puede mejorar con un modal de estrellas)
-      const estrellas = prompt("🎉 ¡Has llegado! Califique el servicio (1-5 estrellas):", "5");
-      if (estrellas) {
-        this.enviarCalificacion(idServicio, estrellas);
-      }
-      
-      this.router.navigate(['/home-usuario']);
+      this.idServicioFinal = s.id;
+      this.mostrarModalFin = true;
     }
   }
 
@@ -949,5 +944,51 @@ export class SolicitarTransporte
   getFriendlyEstado(estado: string): string {
     if (!estado) return 'Procesando...';
     return estado.charAt(0) + estado.slice(1).toLowerCase().replace(/_/g, ' ');
+  }
+
+  seleccionarEstrella(n: number): void { this.calificacionSeleccionada = n; }
+
+  async confirmarCalificacion(): Promise<void> {
+    // enviar calificación al backend
+    await this.enviarCalificacion(this.idServicioFinal, String(this.calificacionSeleccionada));
+    this.mostrarModalFin = false;
+    this.reiniciarComponente();
+  }
+
+  saltarCalificacion(): void { 
+    this.mostrarModalFin = false; 
+    this.reiniciarComponente();
+  }
+
+  private reiniciarComponente(): void {
+    // 1. Limpiar polling
+    if (this.pollingServicio) clearInterval(this.pollingServicio);
+
+    // 2. Resetear todas las variables
+    this.conductorInfo = null;
+    this.buscandoConductor = false;
+    this.transicionFinalizada = false;
+    this.mensajeEstado = '';
+    this.tarifaEstimada = 0;
+    this.distanciaViaje = 0;
+    this.calificacionSeleccionada = 5;
+    this.idServicioFinal = 0;
+
+    // 3. Limpiar marcadores del mapa
+    if (this.destinoMarker) {
+      this.map.removeLayer(this.destinoMarker);
+      this.destinoMarker = undefined;
+    }
+    if (this.conductorMarker) {
+      this.map.removeLayer(this.conductorMarker);
+      this.conductorMarker = undefined;
+    }
+    // 4. Limpiar ruta del mapa
+    if (this.routingControl) {
+      this.routingControl.setWaypoints([]);
+    }
+
+    // 5. Redirigir al home
+    this.router.navigate(['/home-usuario']);
   }
 }

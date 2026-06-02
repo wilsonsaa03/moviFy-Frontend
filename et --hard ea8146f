@@ -1,0 +1,51 @@
+[33mc61ee97[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/prueba[m[33m, [m[1;32mprueba[m[33m)[m HEAD@{0}: reset: moving to origin/prueba
+[33md60b705[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{1}: commit: fix: increase angular style budgets
+[33m0d8be18[m HEAD@{2}: commit: fix: increase angular style budgets
+[33ma165358[m HEAD@{3}: commit: fix: increase angular style budgets
+[33mea8146f[m HEAD@{4}: commit: fix: finalizacion de diseño de pantalla de solicitar encomiendas
+[33m3d64853[m HEAD@{5}: reset: moving to origin/main
+[33m3d64853[m HEAD@{6}: commit: fix: iniciar con solicitar encomiendas
+[33m566590a[m HEAD@{7}: commit: fix: unificar política CORS para producción y corregir persistencia de servicios
+[33m7bdfd3b[m HEAD@{8}: commit: feat: implementar seguimiento de domicilios con estela, rotación y diseño premium1
+[33md665559[m HEAD@{9}: Branch: renamed refs/heads/main to refs/heads/main
+[33md665559[m HEAD@{11}: commit: feat: implementar seguimiento de domicilios con estela, rotación y diseño premium
+[33m3edb2c6[m HEAD@{12}: commit: feat: Implementar gestión de estados con Enum y mejoras de UX
+[33m593f9ed[m HEAD@{13}: commit: feat: actualizacion
+[33m8833d9c[m HEAD@{14}: commit: feat: actualizacion
+[33ma0ff920[m HEAD@{15}: commit: feat: actualizacion
+[33m101eb23[m HEAD@{16}: commit: feat: implementar lista de solicitudes de viaje y flujo de disponibilidad para conductores
+[33mb5c6eb4[m HEAD@{17}: reset: moving to origin/main
+[33mb5c6eb4[m HEAD@{18}: commit: feat: mapa conductor modificado ubicacion en tiempo real
+[33mf3ced82[m HEAD@{19}: commit: feat: corrección de visualización de placa y modelo en home conductor
+[33mba22e4c[m HEAD@{20}: commit: Se agrega perfil de usuario y correcciones Angular
+[33mf3e9b26[m HEAD@{21}: commit: Mejora menu perfil usuario y estilos home
+[33ma0891e0[m HEAD@{22}: commit: Mejoras en el registro de conductor
+[33m2a3a882[m HEAD@{23}: commit: OAuth 2.0 de google en inicio de seccion y mejora del home de usuario
+[33m25ed7e6[m HEAD@{24}: commit: Actualiza login y recuperación de contraseña
+[33m6680bce[m HEAD@{25}: rebase (finish): returning to refs/heads/main
+[33m6680bce[m HEAD@{26}: pull origin main --rebase (start): checkout 6680bce3143dba9a2aa1fee473d20f55790ac88a
+[33md378624[m HEAD@{27}: commit: pendiente inicio con google
+[33m42bb1d3[m HEAD@{28}: commit: mejora de interface de los formularios de registro
+[33m92317d7[m HEAD@{29}: commit: Actualizo login y modelo de usuario
+[33m748d082[m HEAD@{30}: checkout: moving from main to main
+[33m748d082[m HEAD@{31}: commit: Actualizo backend MoviFY
+[33m3baa607[m HEAD@{32}: checkout: moving from prueba to main
+[33mc61ee97[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/prueba[m[33m, [m[1;32mprueba[m[33m)[m HEAD@{33}: commit: fix: corrige login y conecta registro con backend
+[33m3baa607[m HEAD@{34}: checkout: moving from main to prueba
+[33m3baa607[m HEAD@{35}: pull: Fast-forward
+[33m815e5bd[m HEAD@{36}: pull origin main: Fast-forward
+[33mb34a17e[m HEAD@{37}: commit: boton inicio funcional
+[33m09bb4c3[m HEAD@{38}: pull: Fast-forward
+[33m1a5784e[m HEAD@{39}: reset: moving to origin/main
+[33m13e89eb[m HEAD@{40}: reset: moving to HEAD
+[33m13e89eb[m HEAD@{41}: reset: moving to HEAD
+[33m13e89eb[m HEAD@{42}: commit: cambios en la ruta de las imagenes
+[33m0bfa28b[m HEAD@{43}: commit: cambios en la ruta de las imagenes
+[33m3e08f31[m HEAD@{44}: commit: cambios en el index.html
+[33m43d5088[m HEAD@{45}: pull: Merge made by the 'ort' strategy.
+[33m46794f7[m HEAD@{46}: commit: cambios en el index.html
+[33m086eb7b[m HEAD@{47}: commit: actualizacion de .github
+[33m67bb3f0[m HEAD@{48}: pull: Merge made by the 'ort' strategy.
+[33m0e466dd[m HEAD@{49}: commit: cambio en angular.json
+[33ma1c9871[m HEAD@{50}: commit: cambio de ruta
+[33mb3d0041[m HEAD@{51}: clone: from https://github.com/wilsonsaa03/moviFy-Frontend.git

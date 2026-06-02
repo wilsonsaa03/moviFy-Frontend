@@ -33,6 +33,11 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   mensajeEstado: string = '';
   conductorInfo: any = null;
 
+  mostrarModalFin: boolean = false;
+  calificacionSeleccionada: number = 5;
+  estrellasArray: number[] = [1, 2, 3, 4, 5];
+  private idServicioFinal: number = 0;
+
   tiposPaquete = [
     { valor: 'documento', label: 'Documentos', icon: '📄' },
     { valor: 'caja-pequeña', label: 'Caja pequeña', icon: '📦' },
@@ -50,6 +55,7 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
   private routingControl: any;
   destinoMarker?: L.Marker;
+  private conductorMarker?: L.Marker;
   private pollingServicio: any;
   ubicacionEncontrada: boolean = false;
   userLat: number = 0;
@@ -220,9 +226,73 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     if (s.estado === 'PAQUETE_RECOGIDO' || s.estado === 'EN_VIAJE') this.mensajeEstado = '📦 Paquete recogido, en camino al destino';
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
-      alert('🎉 ¡Encomienda entregada exitosamente!');
-      this.router.navigate(['/home-usuario']);
+      this.idServicioFinal = s.id;
+      this.mostrarModalFin = true;
     }
+  }
+
+  private async enviarCalificacion(servicioId: number, puntos: string) {
+    const usuarioId = localStorage.getItem('id') || '1';
+    const body = {
+      servicio_id: servicioId,
+      usuario_id: parseInt(usuarioId),
+      puntos: parseInt(puntos) || 5,
+      comentario: 'Calificado desde Encomiendas'
+    };
+
+    await fetch(`${this.apiBase}/calificar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  }
+
+  seleccionarEstrella(n: number): void { this.calificacionSeleccionada = n; }
+
+  async confirmarCalificacion(): Promise<void> {
+    await this.enviarCalificacion(this.idServicioFinal, String(this.calificacionSeleccionada));
+    this.mostrarModalFin = false;
+    this.reiniciarComponente();
+  }
+
+  saltarCalificacion(): void { 
+    this.mostrarModalFin = false; 
+    this.reiniciarComponente();
+  }
+
+  private reiniciarComponente(): void {
+    // 1. Limpiar polling
+    if (this.pollingServicio) clearInterval(this.pollingServicio);
+
+    // 2. Resetear todas las variables
+    this.conductorInfo = null;
+    this.buscandoConductor = false;
+    this.transicionFinalizada = false;
+    this.mensajeEstado = '';
+    this.tarifaEstimada = 0;
+    this.distanciaViaje = 0;
+    this.descripcion = '';
+    this.nombreRemitente = '';
+    this.nombreDestinatario = '';
+    this.calificacionSeleccionada = 5;
+    this.idServicioFinal = 0;
+
+    // 3. Limpiar marcadores del mapa
+    if (this.destinoMarker) {
+      this.map.removeLayer(this.destinoMarker);
+      this.destinoMarker = undefined;
+    }
+    if (this.conductorMarker) {
+      this.map.removeLayer(this.conductorMarker);
+      this.conductorMarker = undefined;
+    }
+    // 4. Limpiar ruta del mapa
+    if (this.routingControl) {
+      this.routingControl.setWaypoints([]);
+    }
+
+    // 5. Redirigir al home
+    this.router.navigate(['/home-usuario']);
   }
 
   esPasoActivo(paso: string): boolean {

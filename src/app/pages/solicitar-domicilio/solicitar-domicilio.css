@@ -360,3 +360,128 @@
   .dom-nav { padding: 14px 20px; }
   .nav-spacer { display: none; }
 }
+
+/* ===== MODAL AGRADECIMIENTO ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 28px;
+  padding: 40px 36px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+}
+
+.modal-confetti {
+  font-size: 56px;
+  margin-bottom: 12px;
+  animation: bounce 0.6s ease;
+}
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.modal-titulo {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.modal-sub {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.modal-conductor {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+.modal-foto {
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #dcfce7;
+}
+.modal-conductor strong { display: block; font-size: 15px; color: #0f172a; }
+.modal-conductor small { font-size: 12px; color: #94a3b8; }
+.modal-tarifa {
+  margin-left: auto;
+  font-size: 20px;
+  font-weight: 800;
+  color: #16a34a;
+}
+
+.modal-estrellas p {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 12px;
+}
+.estrellas-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.estrella {
+  font-size: 38px;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.estrella:hover,
+.estrella.activa {
+  color: #f59e0b;
+  transform: scale(1.2);
+}
+
+.modal-btn-confirmar {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 16px;
+  background: #16a34a;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(22,163,74,0.3);
+  margin-bottom: 10px;
+}
+.modal-btn-confirmar:hover { background: #15803d; transform: translateY(-2px); }
+
+.modal-btn-saltar {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.modal-btn-saltar:hover { color: #475569; }

@@ -29,6 +29,11 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   incluirFoto: boolean = false;
   entregaRapida: boolean = false;
 
+  mostrarModalFin: boolean = false;
+  calificacionSeleccionada: number = 5;
+  estrellasArray: number[] = [1, 2, 3, 4, 5];
+  private idServicioFinal: number = 0;
+
   private map!: L.Map;
   private routingControl: any;
   destinoMarker?: L.Marker;
@@ -332,33 +337,8 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
 
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
-      const idServicio = s.id;
-      
-      // ✅ Limpieza exhaustiva para evitar que la UI se bloquee
-      this.conductorInfo = null;
-      this.buscandoConductor = false;
-      this.transicionFinalizada = false;
-      this.descripcionEncargo = '';
-      this.tarifaEstimada = 0;
-
-      // ✅ Eliminar marcadores del mapa manualmente
-      if (this.destinoMarker) {
-        this.map.removeLayer(this.destinoMarker);
-        this.destinoMarker = undefined;
-      }
-      if (this.conductorMarker) {
-        this.map.removeLayer(this.conductorMarker);
-        this.conductorMarker = undefined;
-      }
-      
-      this.limpiarEstela();
-
-      const estrellas = prompt("📦 ¡Entrega exitosa! Califique al domiciliario (1-5):", "5");
-      if (estrellas) {
-        this.enviarCalificacion(idServicio, estrellas);
-      }
-
-      this.router.navigate(['/home-usuario']);
+      this.idServicioFinal = s.id;
+      this.mostrarModalFin = true;
     }
   }
 
@@ -494,6 +474,54 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
       'FINALIZADO': 100 
     };
     return p[estado] || 0;
+  }
+
+  seleccionarEstrella(n: number): void { this.calificacionSeleccionada = n; }
+
+  async confirmarCalificacion(): Promise<void> {
+    // enviar calificación al backend
+    await this.enviarCalificacion(this.idServicioFinal, String(this.calificacionSeleccionada));
+    this.mostrarModalFin = false;
+    this.reiniciarComponente();
+  }
+
+  saltarCalificacion(): void { 
+    this.mostrarModalFin = false; 
+    this.reiniciarComponente();
+  }
+
+  private reiniciarComponente(): void {
+    // 1. Limpiar polling
+    if (this.pollingServicio) clearInterval(this.pollingServicio);
+
+    // 2. Resetear todas las variables
+    this.conductorInfo = null;
+    this.buscandoConductor = false;
+    this.transicionFinalizada = false;
+    this.mensajeEstado = '';
+    this.tarifaEstimada = 0;
+    this.distanciaViaje = 0;
+    this.descripcionEncargo = '';
+    this.calificacionSeleccionada = 5;
+    this.idServicioFinal = 0;
+    this.limpiarEstela();
+
+    // 3. Limpiar marcadores del mapa
+    if (this.destinoMarker) {
+      this.map.removeLayer(this.destinoMarker);
+      this.destinoMarker = undefined;
+    }
+    if (this.conductorMarker) {
+      this.map.removeLayer(this.conductorMarker);
+      this.conductorMarker = undefined;
+    }
+    // 4. Limpiar ruta del mapa
+    if (this.routingControl) {
+      this.routingControl.setWaypoints([]);
+    }
+
+    // 5. Redirigir al home
+    this.router.navigate(['/home-usuario']);
   }
 
   volver() { this.router.navigate(['/home-usuario']); }
