@@ -36,7 +36,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   userLat: number = 0;
 
   // Modal calificación
-  mostrarModalFin: boolean = false;
+  mostrarModalDestino: boolean = false; // reemplaza mostrarModalFin
   calificacionSeleccionada: number = 5;
   estrellasArray: number[] = [1, 2, 3, 4, 5];
 
@@ -401,7 +401,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       clearInterval(this.pollingServicio);
       this.detenerSimulacion();
       this.idServicioFinal = s.id;
-      this.mostrarModalFin = true;
+      this.mostrarModalDestino = true; // ✅ abre el modal bonito
     }
   }
 
@@ -554,12 +554,12 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
 
   async confirmarCalificacion(): Promise<void> {
     await this.enviarCalificacion(this.idServicioFinal, String(this.calificacionSeleccionada));
-    this.mostrarModalFin = false;
+    this.mostrarModalDestino = false;
     this.reiniciarComponente();
   }
 
   saltarCalificacion(): void {
-    this.mostrarModalFin = false;
+    this.mostrarModalDestino = false;
     this.reiniciarComponente();
   }
 

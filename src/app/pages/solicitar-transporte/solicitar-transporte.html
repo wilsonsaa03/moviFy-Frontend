@@ -150,6 +150,37 @@
     </div>
   </div>
 
+  <!-- MODAL LLEGADA AL DESTINO -->
+  <div class="modal-destino-overlay" *ngIf="mostrarModalDestino">
+    <div class="modal-destino-card">
+      <div class="modal-destino-icono">🏁</div>
+      <h2 class="modal-destino-titulo">¡Llegaste a tu destino!</h2>
+      <p class="modal-destino-sub">Esperamos que tu viaje haya sido excelente. <br>¡Gracias por usar <strong>MoviFY</strong>!</p>
+      <div class="modal-destino-conductor" *ngIf="conductorInfo">
+        <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="modal-foto">
+        <div>
+          <strong>{{ conductorInfo.conductor_nombre }}</strong>
+          <small>Tu conductor MoviFY · ⭐ 4.9</small>
+        </div>
+        <div class="modal-destino-tarifa">${{ conductorInfo.tarifa | number }}</div>
+      </div>
+      <div class="modal-estrellas">
+        <p>¿Cómo calificarías el servicio?</p>
+        <div class="estrellas-row">
+          <span *ngFor="let e of estrellasArray" class="estrella"
+            [class.activa]="e <= calificacionSeleccionada"
+            (click)="seleccionarEstrella(e)">★</span>
+        </div>
+      </div>
+      <button class="modal-btn-confirmar" (click)="confirmarCalificacion()">
+        ✅ Calificar e ir al inicio
+      </button>
+      <button class="modal-btn-saltar" (click)="saltarCalificacion()">
+        Omitir y volver al inicio
+      </button>
+    </div>
+  </div>
+
   <!-- BOTÓN DE PRUEBA - quítalo después -->
   <button (click)="probarSimulacion()" 
     style="position:fixed;bottom:20px;right:20px;z-index:9999;background:#f59e0b;color:white;padding:12px 20px;border:none;border-radius:12px;font-weight:700;cursor:pointer;">
