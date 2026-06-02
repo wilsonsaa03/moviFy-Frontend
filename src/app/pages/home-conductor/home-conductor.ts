@@ -39,10 +39,10 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   
   watchId: any;           
   markerUsuario: L.Marker | undefined; 
-  // ✅ Seguimiento para rotación
+  //  Seguimiento para rotación
   private ultimaLat: number | null = null;
   private ultimaLng: number | null = null;
-  // ✅ Variables para la estela
+  //  Variables para la estela
   private estelaMoto: L.Polyline | undefined;
   private puntosEstela: L.LatLng[] = [];
   
@@ -68,7 +68,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   gananciasSemana: number = 0;
   viajesHoy: number = 0;
   viajesTotal: number = 0;
-  cancelaciones: number = 0; // ✅ Nueva métrica
+  cancelaciones: number = 0; //  Nueva métrica
 
   solicitudes: any[] = [];
   historial: any[] = [];
@@ -524,7 +524,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     this.ultimaLng = nuevaLng;
   }
 
-  // ✅ MÉTODO PARA ACTUALIZAR EL RASTRO (ESTELA)
+  //  MÉTODO PARA ACTUALIZAR EL RASTRO (ESTELA)
   private actualizarEstela(lat: number, lng: number) {
     if (!this.mapa) return;
     
