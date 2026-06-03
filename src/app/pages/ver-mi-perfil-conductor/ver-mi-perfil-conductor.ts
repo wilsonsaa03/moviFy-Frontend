@@ -149,7 +149,8 @@ export class VerMiPerfilConductorComponent implements OnInit {
         this.modoEdicion = false;
         this.mostrarOk('Perfil actualizado en la base de datos.');
       } else {
-        this.mensajeErr = 'No se pudo guardar en el servidor.';
+        const errorData = await resp.json();
+        this.mensajeErr = errorData.error || 'No se pudo guardar en el servidor.';
       }
     } catch (e) {
       this.mensajeErr = 'Error de conexión con el servidor.';
