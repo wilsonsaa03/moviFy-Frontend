@@ -54,7 +54,8 @@ export class HomeUsuarioComponent implements OnInit {
   }
 
   verPerfil(): void {
-    this.router.navigate(['/perfil-usuario']); // Ajustado a tu ruta de app.routes.ts
+    this.menuAbierto = false;
+    this.router.navigate(['/perfil-conductor']);
   }
 
   editarPerfil(): void {

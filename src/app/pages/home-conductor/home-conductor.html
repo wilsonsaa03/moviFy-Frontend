@@ -1,32 +1,44 @@
 <div class="conductor-layout" [class.sidebar-colapsado]="sidebarColapsado">
-  
+
+  <!-- SIDEBAR -->
   <aside class="sidebar" [class.sidebar-visible]="menuNavAbierto">
-    
+
+    <!-- Logo area -->
+    <div class="sidebar-logo">
+      <img src="/assets/movify.jpg" class="sidebar-logo-img" alt="MoviFY Logo">
+      <span class="sidebar-brand">MoviFY</span>
+    </div>
+
     <div class="sidebar-menu">
       <a routerLink="/conductor" class="nav-link activo">
-        <span class="link-icon">🏠</span> 
+        <span class="link-icon">🏠</span>
         <span class="link-text">Inicio</span>
       </a>
-
       <a routerLink="/mis-viajes" class="nav-link">
-        <span class="link-icon">🛵</span> 
+        <span class="link-icon">🛵</span>
         <span class="link-text">Mis viajes</span>
       </a>
-
       <a routerLink="/ganancias" class="nav-link">
-        <span class="link-icon">💰</span> 
+        <span class="link-icon">💰</span>
         <span class="link-text">Ganancias</span>
       </a>
-
       <a routerLink="/perfil-conductor" class="nav-link">
-        <span class="link-icon">👤</span> 
+        <span class="link-icon">👤</span>
         <span class="link-text">Ver mi perfil</span>
       </a>
-
       <a routerLink="/soporte" class="nav-link">
-        <span class="link-icon">🎧</span> 
+        <span class="link-icon">🎧</span>
         <span class="link-text">Soporte</span>
       </a>
+    </div>
+
+    <!-- Banner promocional -->
+    <div class="sidebar-banner link-text">
+      <div class="sidebar-banner-text">
+        <p class="banner-title">¡Más viajes,<br>más ganancias!</p>
+        <p class="banner-sub">Conéctate y recibe<br>más solicitudes.</p>
+      </div>
+      <img src="/assets/moto-icon.png" class="banner-img" alt="">
     </div>
 
     <div class="sidebar-footer">
@@ -37,96 +49,74 @@
     </div>
   </aside>
 
+  <!-- CONTENIDO PRINCIPAL -->
   <div class="main-container-wrapper">
-    
+
+    <!-- NAVBAR -->
     <nav class="navbar">
-      
+
       <div class="navbar-left">
         <button class="menu-toggle" (click)="toggleSidebar()">☰</button>
-        <img src="/assets/movify.jpg" class="nav-logo" alt="MoviFY Logo">
-        <span class="nav-brand">MoviFY</span>
-        <span class="nav-rol">· Conductor</span>
+        <div class="navbar-greeting">
+          <span class="navbar-hello">¡Hola, {{ nombre }}! 👋</span>
+          <span class="navbar-rol">Conductor</span>
+        </div>
       </div>
 
       <div class="navbar-right">
-        
+
+        <!-- Botón En línea / Desconectado -->
         <button class="btn-estado" [class.en-linea]="enLinea" (click)="toggleMapaActivo()">
-          {{ enLinea ? '🟢 Mapa activo' : '🔴 Activar mapa' }}
+          <span class="estado-dot" [class.dot-verde]="enLinea" [class.dot-rojo]="!enLinea"></span>
+          {{ enLinea ? 'En línea' : 'Desconectado' }}
+          <span class="estado-chevron">▾</span>
         </button>
 
+        <!-- Botón Mapa activo (solo cuando está en línea) -->
+        <button class="btn-mapa-nav" *ngIf="enLinea" (click)="toggleMapa()">
+          🗺️ Mapa activo
+        </button>
+
+        <!-- Perfil -->
         <div class="nav-perfil" (click)="toggleMenu()">
-          <img *ngIf="foto" [src]="foto" class="nav-avatar">
-          <div *ngIf="!foto" class="nav-avatar-placeholder">
+          <div class="nav-avatar-circle">
             {{ nombre.charAt(0).toUpperCase() }}
           </div>
-
           <div class="nav-info">
             <span class="nav-nombre">{{ nombre }}</span>
             <span class="nav-sub">Ver perfil ▾</span>
           </div>
 
+          <!-- Dropdown -->
           <div class="menu-perfil" *ngIf="menuAbierto" (click)="$event.stopPropagation()">
             <div class="menu-header">
-              <div class="menu-avatar">
-                {{ nombre.charAt(0).toUpperCase() }}
-              </div>
+              <div class="menu-avatar">{{ nombre.charAt(0).toUpperCase() }}</div>
               <div class="menu-user">
                 <h3>{{ nombre }}</h3>
                 <p>Conductor MoviFY</p>
               </div>
             </div>
-
-            <button class="menu-item" (click)="verPerfil()">
-              <span class="menu-icon">👤</span> Ver perfil
-            </button>
-            <button class="menu-item" (click)="editarPerfil()">
-              <span class="menu-icon">✏️</span> Editar perfil
-            </button>
-            <button class="menu-item">
-              <span class="menu-icon">⭐</span> Favoritos
-            </button>
-            <button class="menu-item" (click)="configuracion()">
-              <span class="menu-icon">⚙️</span> Configuración
-            </button>
-            <button class="menu-item" (click)="cerrarSesion()">
-              <span class="menu-icon">🚪</span> Cerrar sesión
-            </button>
+            <button class="menu-item" (click)="verPerfil()"><span>👤</span> Ver perfil</button>
+            <button class="menu-item" (click)="editarPerfil()"><span>✏️</span> Editar perfil</button>
+            <button class="menu-item"><span>⭐</span> Favoritos</button>
+            <button class="menu-item" (click)="configuracion()"><span>⚙️</span> Configuración</button>
+            <button class="menu-item" (click)="cerrarSesion()"><span>🚪</span> Cerrar sesión</button>
           </div>
         </div>
 
       </div>
     </nav>
 
+    <!-- CUERPO -->
     <main class="content-body">
-      
-      <div class="hero">
-        <h1>¿A dónde vamos hoy, {{ nombre }}?</h1>
-        <p>Selecciona el servicio que necesitas desde tu panel de control</p>
-        <button class="btn-mapa" (click)="toggleMapa()">
-          {{ mostrarMapa ? '❌ Ocultar mapa' : '🗺️ Mostrar mapa' }}
-        </button>
-        <button class="btn-mapa" *ngIf="mostrarMapa" (click)="simularUbicacionManual()" style="background: #7c4dff; margin-left: 10px;">
-          🧪 Simular Movimiento
-        </button>
-      </div>
-
-      <div class="mapa-container" *ngIf="mostrarMapa">
-        <div class="mapa-header">
-          <h2>📍 Mapa en tiempo real</h2>
-          <span class="estado-mapa">
-            {{ enLinea ? '🟢 En línea' : '🔴 Desconectado' }}
-          </span>
-        </div>
-        <div id="map" class="mapa" style="height: 450px; width: 100%; z-index: 1;"></div>
-      </div>
 
       <!-- PANEL VIAJE ACTIVO -->
       <div class="viaje-activo-panel" *ngIf="viajeActivo">
         <div class="viaje-header">
           <span class="viaje-badge">🚦 Viaje en curso</span>
-        <span class="viaje-estado" [ngClass]="getBadgeClass(viajeActivo.estado)">
-          {{ getFriendlyEstado(viajeActivo.estado) }}
-        </span>
+          <span class="viaje-estado" [ngClass]="getBadgeClass(viajeActivo.estado)">
+            {{ getFriendlyEstado(viajeActivo.estado) }}
+          </span>
         </div>
         <div class="viaje-datos">
           <div class="viaje-fila">
@@ -143,12 +133,12 @@
           </div>
         </div>
         <div class="viaje-botones">
-          <button class="btn-llegue" 
+          <button class="btn-llegue"
             *ngIf="viajeActivo.estado === 'ACEPTADO' || viajeActivo.estado === 'EN_CAMINO_AL_USUARIO'"
             (click)="llegueAlUsuario()">
             📍 Llegué al usuario
           </button>
-          <button class="btn-llegue" style="background: #f59e0b;"
+          <button class="btn-llegue" style="background:#f59e0b;"
             *ngIf="viajeActivo.estado === 'LLEGO_AL_ORIGEN' && viajeActivo.tipo === 'DOMICILIO'"
             (click)="paqueteRecogido()">
             📦 Paquete recogido
@@ -161,95 +151,135 @@
         </div>
       </div>
 
-      <div class="main-content">
-        
-        <!-- NUEVA SECCIÓN: LISTA DE SOLICITUDES -->
-        <div class="full-width-column" *ngIf="solicitudes.length > 0">
-          <div class="card solicitudes-card">
-            <h2>📩 Solicitudes de Viaje Pendientes ({{ notificaciones }})</h2>
-            <div class="solicitud-item-lista" *ngFor="let s of solicitudes">
-              <div class="solicitud-info">
-                <span class="user-name">👤 {{ s.usuario_nombre }}</span>
-                <span class="tarifa">💰 ${{ s.tarifa | number }}</span>
-                <span class="distancia">📍 {{ s.distancia_km | number:'1.1-2' }} km</span>
-              </div>
-              <div class="solicitud-acciones">
-                <button class="btn-aceptar" (click)="responderASolicitud(s.servicio_id, 'ACEPTADO')">Aceptar</button>
-                <button class="btn-rechazar" (click)="responderASolicitud(s.servicio_id, 'RECHAZADO')">Rechazar</button>
-              </div>
-            </div>
+      <!-- SOLICITUDES LISTA -->
+      <div class="card solicitudes-card" *ngIf="solicitudes.length > 0">
+        <h2>📩 Solicitudes de Viaje Pendientes ({{ notificaciones }})</h2>
+        <div class="solicitud-item-lista" *ngFor="let s of solicitudes">
+          <div class="solicitud-info">
+            <span class="user-name">👤 {{ s.usuario_nombre }}</span>
+            <span class="tarifa-sol">💰 ${{ s.tarifa | number }}</span>
+            <span class="distancia-sol">📍 {{ s.distancia_km | number:'1.1-2' }} km</span>
+          </div>
+          <div class="solicitud-acciones">
+            <button class="btn-aceptar" (click)="responderASolicitud(s.servicio_id, 'ACEPTADO')">Aceptar</button>
+            <button class="btn-rechazar" (click)="responderASolicitud(s.servicio_id, 'RECHAZADO')">Rechazar</button>
           </div>
         </div>
-
-        <div class="left-column">
-          <div class="card">
-            <h2>📊 Resumen de Actividad</h2>
-            <div class="stats-grid">
-              <div class="stat-box">
-                <h2>${{ gananciasHoy | number }}</h2>
-                <p>Ganancias hoy</p>
-              </div>
-              <div class="stat-box">
-                <h2>{{ viajesHoy }}</h2>
-                <p>Viajes hoy</p>
-              </div>
-              <div class="stat-box">
-                <h2>${{ gananciasSemana | number }}</h2>
-                <p>Semana</p>
-              </div>
-              <div class="stat-box">
-                <h2>{{ viajesTotal }}</h2>
-                <p>Total viajes</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="right-column">
-          <div class="card">
-            <h2>🏍️ Mi vehículo</h2>
-            <div class="vehiculo-item">
-              <span>Placa:</span>
-              <strong>{{ placa }}</strong>
-            </div>
-            <div class="vehiculo-item">
-              <span>Modelo:</span>
-              <strong>{{ modelo }}</strong>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2>📋 Historial</h2>
-            <div class="historial-item" *ngFor="let h of historial">
-              <div>
-                <strong>{{ h.destino }}</strong>
-                <p>{{ h.fecha }}</p>
-              </div>
-              <strong>${{ h.precio | number }}</strong>
-            </div>
-            <p *ngIf="historial.length === 0" class="no-data">No registras viajes previos hoy.</p>
-          </div>
-        </div>
-
       </div>
-    </main>
 
+      <!-- SECCIÓN MAPA -->
+      <div class="mapa-section">
+        <div class="mapa-section-header">
+          <div class="mapa-section-title">
+            <span class="mapa-pin-icon">📍</span>
+            <div>
+              <h2>Mapa en tiempo real</h2>
+              <p>Sigue tu ubicación y las solicitudes en vivo</p>
+            </div>
+          </div>
+          <div class="mapa-section-actions">
+            <div class="mapa-conectado-badge" *ngIf="enLinea">
+              <span class="mapa-conectado-icon">📶</span>
+              <div>
+                <span class="mapa-conectado-label">Conectado</span>
+                <span class="mapa-conectado-sub">Actualizado hace 5s</span>
+              </div>
+            </div>
+            <button class="btn-filtros">
+              ☰ Filtros
+            </button>
+            <button class="btn-simular" *ngIf="mostrarMapa" (click)="simularUbicacionManual()" style="background:#7c4dff;">
+              🧪 Simular
+            </button>
+          </div>
+        </div>
+
+        <!-- Mapa -->
+        <div class="mapa-wrapper" *ngIf="mostrarMapa">
+          <div id="map" class="mapa" style="height:450px; width:100%; z-index:1;"></div>
+          <!-- Leyenda -->
+          <div class="mapa-leyenda">
+            <span><span class="leyenda-dot verde"></span> Tu ubicación</span>
+            <span><span class="leyenda-dot naranja"></span> Solicitudes</span>
+            <span><span class="leyenda-dot azul"></span> Otros conductores</span>
+          </div>
+          <!-- Botón centrar -->
+          <button class="btn-centrar" (click)="iniciarRastreoRealTime()">⊕ Centrar</button>
+        </div>
+
+        <!-- Estado desconectado -->
+        <div class="mapa-offline" *ngIf="!mostrarMapa">
+          <p>🔴 Activa el mapa para ver tu ubicación en tiempo real</p>
+          <button class="btn-mapa-activar" (click)="toggleMapa()">🗺️ Mostrar mapa</button>
+        </div>
+      </div>
+
+      <!-- STATS 4 TARJETAS HORIZONTALES -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-green">
+            <span>📈</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Hoy has ganado</span>
+            <span class="stat-value">${{ gananciasHoy | number }}</span>
+          </div>
+          <span class="stat-arrow">›</span>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-orange">
+            <span>💼</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Viajes completados</span>
+            <span class="stat-value">{{ viajesHoy }}</span>
+          </div>
+          <span class="stat-arrow">›</span>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-blue">
+            <span>⭐</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Calificación</span>
+            <span class="stat-value">{{ calificacion }} ★</span>
+          </div>
+          <span class="stat-arrow">›</span>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-purple">
+            <span>🕐</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Tiempo en línea</span>
+            <span class="stat-value">{{ viajesTotal }}h</span>
+          </div>
+          <span class="stat-arrow">›</span>
+        </div>
+      </div>
+
+    </main>
   </div>
 </div>
 
-<!-- OVERLAY PANTALLA COMPLETA - SOLICITUD ENTRANTE -->
+<!-- OVERLAY SOLICITUD ENTRANTE -->
 <div class="solicitud-overlay" *ngIf="solicitudes.length > 0 && enLinea">
   <div class="solicitud-fullscreen" *ngFor="let s of solicitudes; let i = index" [style.display]="i === 0 ? 'flex' : 'none'">
-    
     <div class="sol-header">
       <div class="sol-ping"></div>
       <span class="sol-badge">Nueva solicitud</span>
     </div>
-
     <div class="sol-icon">🏍️</div>
-
     <h1 class="sol-titulo">¡Viaje disponible!</h1>
-
     <div class="sol-datos">
       <div class="sol-fila">
         <span class="sol-label">👤 Pasajero</span>
@@ -264,18 +294,10 @@
         <strong class="sol-valor sol-tarifa">${{ s.tarifa | number }}</strong>
       </div>
     </div>
-
     <div class="sol-botones">
-      <button class="sol-btn sol-rechazar" (click)="responderASolicitud(s.servicio_id, 'RECHAZADO')">
-        ✕ Rechazar
-      </button>
-      <button class="sol-btn sol-aceptar" (click)="responderASolicitud(s.servicio_id, 'ACEPTADO')">
-        ✓ Aceptar viaje
-      </button>
+      <button class="sol-btn sol-rechazar" (click)="responderASolicitud(s.servicio_id, 'RECHAZADO')">✕ Rechazar</button>
+      <button class="sol-btn sol-aceptar" (click)="responderASolicitud(s.servicio_id, 'ACEPTADO')">✓ Aceptar viaje</button>
     </div>
-
-    <p class="sol-contador" *ngIf="solicitudes.length > 1">
-      +{{ solicitudes.length - 1 }} solicitud(es) más en espera
-    </p>
+    <p class="sol-contador" *ngIf="solicitudes.length > 1">+{{ solicitudes.length - 1 }} solicitud(es) más en espera</p>
   </div>
 </div>

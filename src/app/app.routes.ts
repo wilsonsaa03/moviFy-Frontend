@@ -23,6 +23,7 @@ import { PerfilUsuarioComponent } from './pages/perfil-usuario/perfil-usuario.co
 import { SolicitarTransporte } from './pages/solicitar-transporte/solicitar-transporte';
 import { SolicitarDomicilio } from './pages/solicitar-domicilio/solicitar-domicilio';
 import { SolicitarEncomienda } from './pages/solicitar-encomienda/solicitar-encomienda';
+import { VerMiPerfilConductorComponent } from './pages/ver-mi-perfil-conductor/ver-mi-perfil-conductor';
 
 export const routes: Routes = [
   // Inicio y Auth
@@ -43,7 +44,7 @@ export const routes: Routes = [
   { path: 'admin', component: HomeAdminComponent },
 
   // Perfil y Acciones de Usuario
-  { path: 'perfil-usuario', component: PerfilUsuarioComponent },
+  { path: 'perfil-conductor', component: VerMiPerfilConductorComponent },
   { path: 'solicitar-transporte', component: SolicitarTransporte },
   { path: 'solicitar-domicilio', component: SolicitarDomicilio },
   { path: 'solicitar-encomienda', component: SolicitarEncomienda },
