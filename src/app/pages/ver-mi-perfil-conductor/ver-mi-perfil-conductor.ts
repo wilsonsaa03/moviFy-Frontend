@@ -122,22 +122,40 @@ export class VerMiPerfilConductorComponent implements OnInit {
     this.limpiarAlertas();
   }
 
-  guardarCambios(): void {
+  async guardarCambios(): Promise<void> {
     if (!this.nombreEdit.trim()) {
       this.mensajeErr = 'El nombre no puede estar vacío.';
       return;
     }
 
-    // Actualizar datos locales
-    this.nombre   = this.nombreEdit.trim();
-    this.telefono = this.telefonoEdit.trim();
-    this.ciudad   = this.ciudadEdit.trim();
+    this.cargando = true;
+    try {
+      const resp = await fetch('http://localhost:8080/api/conductor/perfil/actualizar', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          correo: this.correo,
+          nombre: this.nombreEdit.trim(),
+          telefono: this.telefonoEdit.trim(),
+          ciudad: this.ciudadEdit.trim()
+        })
+      });
 
-    // Actualizar localStorage
-    localStorage.setItem('nombre', this.nombre);
-
-    this.modoEdicion = false;
-    this.mostrarOk('Perfil actualizado correctamente.');
+      if (resp.ok) {
+        this.nombre = this.nombreEdit.trim();
+        this.telefono = this.telefonoEdit.trim();
+        this.ciudad = this.ciudadEdit.trim();
+        localStorage.setItem('nombre', this.nombre);
+        this.modoEdicion = false;
+        this.mostrarOk('Perfil actualizado en la base de datos.');
+      } else {
+        this.mensajeErr = 'No se pudo guardar en el servidor.';
+      }
+    } catch (e) {
+      this.mensajeErr = 'Error de conexión con el servidor.';
+    } finally {
+      this.cargando = false;
+    }
   }
 
   // ============================================================

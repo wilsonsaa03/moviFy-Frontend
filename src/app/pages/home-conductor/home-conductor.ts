@@ -23,9 +23,10 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   telefono: string = '';
   correo: string = '';
   estadoCuenta: string = 'pendiente';
-  calificacion: number = 4.8;
+  calificacion: number = 0;
   enLinea: boolean = false;
   notificaciones: number = 0;
+  cargando: boolean = true;
 
   // MAPA Y RASTREO
   mostrarMapa: boolean = false;
@@ -94,17 +95,20 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
         this.placa = data.placa || data.placa_vehiculo || 'No registrada';
         this.modelo = data.modelo || data.modelo_vehiculo || 'No registrado';
         this.estadoCuenta = data.estado || 'pendiente';
+        this.calificacion = Number(data.calificacion) || 0;
         this.gananciasHoy = Number(data.gananciasHoy) || 0;
         this.gananciasSemana = Number(data.gananciasSemana) || 0;
         this.viajesHoy = Number(data.viajesHoy) || 0;
         this.viajesTotal = Number(data.viajesTotal) || 0;
         this.cancelaciones = Number(data.cancelaciones) || 0;
         this.historial = data.historial || [];
+        this.cargando = false;
       },
       error: (err: any) => {
         console.error('Error al cargar perfil:', err);
         this.placa = 'Error de conexión';
         this.modelo = 'Intente más tarde';
+        this.cargando = false;
       }
     });
   }

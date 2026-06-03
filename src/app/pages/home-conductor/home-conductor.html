@@ -1,4 +1,10 @@
-<div class="conductor-layout" [class.sidebar-colapsado]="sidebarColapsado">
+<!-- Pantalla de carga -->
+<div class="loading-overlay" *ngIf="cargando">
+  <div class="spinner"></div>
+  <p>Sincronizando con MoviFY...</p>
+</div>
+
+<div class="conductor-layout" [class.sidebar-colapsado]="sidebarColapsado" *ngIf="!cargando">
 
   <!-- SIDEBAR -->
   <aside class="sidebar" [class.sidebar-visible]="menuNavAbierto">
@@ -76,6 +82,15 @@
         <button class="btn-mapa-nav" *ngIf="enLinea" (click)="toggleMapa()">
           🗺️ Mapa activo
         </button>
+
+        <!-- Campana de Notificaciones Real -->
+        <div class="notification-bell-wrap" style="position: relative; margin-right: 15px; cursor: pointer;">
+          <span class="bell-icon" style="font-size: 20px;">🔔</span>
+          <span class="bell-badge" *ngIf="notificaciones > 0" 
+                style="position: absolute; top: -5px; right: -5px; background: #f97316; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50%; font-weight: bold;">
+            {{ notificaciones }}
+          </span>
+        </div>
 
         <!-- Perfil -->
         <div class="nav-perfil" (click)="toggleMenu()">
@@ -247,8 +262,8 @@
             <span>⭐</span>
           </div>
           <div class="stat-info">
-            <span class="stat-label">Calificación</span>
-            <span class="stat-value">{{ calificacion }} ★</span>
+            <span class="stat-label">En curso</span>
+            <span class="stat-value">{{ viajeActivo ? 1 : 0 }}</span>
           </div>
           <span class="stat-arrow">›</span>
         </div>
@@ -257,11 +272,11 @@
 
         <div class="stat-card">
           <div class="stat-icon-wrap stat-purple">
-            <span>🕐</span>
+            <span>⭐</span>
           </div>
           <div class="stat-info">
-            <span class="stat-label">Tiempo en línea</span>
-            <span class="stat-value">{{ viajesTotal }}h</span>
+            <span class="stat-label">Calificación</span>
+            <span class="stat-value">{{ calificacion }} ★</span>
           </div>
           <span class="stat-arrow">›</span>
         </div>
