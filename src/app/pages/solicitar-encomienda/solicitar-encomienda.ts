@@ -38,6 +38,14 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   estrellasArray: number[] = [1, 2, 3, 4, 5];
   private idServicioFinal: number = 0;
 
+  // ✅ SIMULACIÓN
+  private puntosRuta: L.LatLng[] = [];
+  private indexSimulacion: number = 0;
+  private intervaloSimulacion: any = null;
+  private simulacionActiva: boolean = false;
+  private lineaSimulacion?: L.Polyline;
+  private lineaRecorrida?: L.Polyline;
+
   tiposPaquete = [
     { valor: 'documento', label: 'Documentos', icon: '📄' },
     { valor: 'caja-pequeña', label: 'Caja pequeña', icon: '📦' },
@@ -67,6 +75,7 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {}
 
   ngOnDestroy(): void {
+    this.detenerSimulacion();
     if (this.pollingServicio) clearInterval(this.pollingServicio);
     if (this.map) this.map.remove();
   }
@@ -98,25 +107,6 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     try {
       this.map = L.map('map').setView([3.88, -77.02], 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
-
-      const W = (window as any).L;
-      if (W?.Routing) {
-        this.routingControl = W.Routing.control({
-          waypoints: [],
-          router: W.Routing.osrmv1({ language: 'es', profile: 'driving' }),
-          lineOptions: { styles: [{ color: '#f97316', weight: 5, opacity: 0.9 }] },
-          addWaypoints: false, draggableWaypoints: false,
-          fitSelectedRoutes: true, show: false, createMarker: () => null
-        }).addTo(this.map);
-
-        this.routingControl.on('routesfound', (e: any) => {
-          const s = e.routes[0].summary;
-          this.distanciaViaje = s.totalDistance / 1000;
-          this.tiempoEstimado = Math.round(s.totalTime / 60);
-          this.calcularTarifa();
-        });
-      }
-
       this.map.on('click', (e: L.LeafletMouseEvent) => {
         this.establecerDestino(e.latlng.lat, e.latlng.lng);
       });
@@ -152,18 +142,28 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     if (this.destinoMarker) this.destinoMarker.setLatLng([lat, lng]);
     else this.destinoMarker = L.marker([lat, lng], { icon }).addTo(this.map)
       .bindPopup('📦 Entregar aquí').openPopup();
-
-    if (this.routingControl) {
-      this.routingControl.setWaypoints([L.latLng(this.userLat, this.userLng), L.latLng(lat, lng)]);
-    }
+    this.calcularRutaYTarifa(lat, lng);
   }
 
-  private calcularTarifa(): void {
-    const base = 4000;
-    const porKm = 1500;
-    const porPeso = parseInt(this.pesoAproximado) * 200;
-    let total = base + (this.distanciaViaje * porKm) + porPeso;
-    this.tarifaEstimada = Math.ceil(total / 100) * 100;
+  private async calcularRutaYTarifa(dLat: number, dLng: number) {
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${this.userLng},${this.userLat};${dLng},${dLat}?overview=false`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (data.routes?.[0]) {
+        const s = data.routes[0];
+        this.distanciaViaje = s.distance / 1000;
+        this.tiempoEstimado = Math.round(s.duration / 60);
+        const base = 4000;
+        const porKm = 1500;
+        const porPeso = parseInt(this.pesoAproximado) * 200;
+        let total = base + (this.distanciaViaje * porKm) + porPeso;
+        this.tarifaEstimada = Math.ceil(total / 100) * 100;
+      }
+    } catch (e) {
+      this.distanciaViaje = this.map.distance([this.userLat, this.userLng], [dLat, dLng]) / 1000;
+      this.tarifaEstimada = 6000;
+    }
   }
 
   onFotoChange(event: any): void {
@@ -217,18 +217,109 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private procesarEstado(s: any): void {
+    // ACEPTADO → simulación conductor → usuario (naranja)
     if ((s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO_AL_USUARIO') && !this.transicionFinalizada) {
+      const condLat = s.conductor_lat ?? s.latitud;
+      const condLng = s.conductor_lng ?? s.longitud;
       this.transicionFinalizada = true;
       this.buscandoConductor = false;
       this.mensajeEstado = '🛵 Conductor en camino a recoger el paquete';
+      if (condLat && condLng) {
+        this.iniciarSimulacion(condLat, condLng, this.userLat, this.userLng, '#f59e0b');
+      }
     }
-    if (s.estado === 'LLEGO_AL_ORIGEN') this.mensajeEstado = '📍 Conductor llegó al punto de recogida';
-    if (s.estado === 'PAQUETE_RECOGIDO' || s.estado === 'EN_VIAJE') this.mensajeEstado = '📦 Paquete recogido, en camino al destino';
+
+    if (s.estado === 'LLEGO_AL_ORIGEN') {
+      this.mensajeEstado = '📍 Conductor llegó al punto de recogida';
+      this.detenerSimulacion();
+    }
+
+    // PAQUETE_RECOGIDO / EN_VIAJE → simulación usuario → destino (naranja MoviFY)
+    if ((s.estado === 'PAQUETE_RECOGIDO' || s.estado === 'EN_VIAJE') && !this.simulacionActiva) {
+      const dest = this.destinoMarker?.getLatLng();
+      this.mensajeEstado = '📦 Paquete recogido, en camino al destino';
+      if (dest) this.iniciarSimulacion(this.userLat, this.userLng, dest.lat, dest.lng, '#f97316');
+    }
+
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
+      this.detenerSimulacion();
       this.idServicioFinal = s.id;
       this.mostrarModalFin = true;
     }
+  }
+
+  // ✅ SIMULACIÓN
+  public iniciarSimulacion(
+    origenLat: number, origenLng: number,
+    destinoLat: number, destinoLng: number,
+    colorLinea: string
+  ): void {
+    this.detenerSimulacion();
+    this.simulacionActiva = true;
+    this.indexSimulacion = 0;
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${origenLng},${origenLat};${destinoLng},${destinoLat}?overview=full&geometries=geojson`;
+
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.routes?.length) { this.simulacionActiva = false; return; }
+        const coords = data.routes[0].geometry.coordinates;
+        this.puntosRuta = coords.map((c: number[]) => L.latLng(c[1], c[0]));
+        if (this.puntosRuta.length < 2) { this.simulacionActiva = false; return; }
+
+        this.lineaSimulacion = L.polyline(this.puntosRuta, { color: colorLinea, weight: 6, opacity: 0.85 }).addTo(this.map);
+        this.lineaRecorrida = L.polyline([this.puntosRuta[0]], { color: colorLinea, weight: 3, opacity: 0.35 }).addTo(this.map);
+        this.map.fitBounds((this.lineaSimulacion as L.Polyline).getBounds(), { padding: [60, 60] });
+
+        const motoIcon = L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
+          iconSize: [45, 45], iconAnchor: [22, 45]
+        });
+        if (!this.conductorMarker) {
+          this.conductorMarker = L.marker(this.puntosRuta[0], { icon: motoIcon })
+            .addTo(this.map).bindPopup('<b>🛵 Tu conductor</b>');
+        } else { this.conductorMarker.setLatLng(this.puntosRuta[0]); }
+
+        this.intervaloSimulacion = setInterval(() => {
+          if (this.indexSimulacion >= this.puntosRuta.length) { this.detenerSimulacion(); return; }
+          const punto = this.puntosRuta[this.indexSimulacion];
+          const anterior = this.indexSimulacion > 0 ? this.puntosRuta[this.indexSimulacion - 1] : punto;
+
+          if (this.conductorMarker) {
+            this.conductorMarker.setLatLng(punto);
+            const angulo = Math.atan2(punto.lng - anterior.lng, punto.lat - anterior.lat) * (180 / Math.PI);
+            const el = this.conductorMarker.getElement();
+            if (el) {
+              el.style.transition = 'transform 0.6s linear';
+              el.style.transformOrigin = 'center center';
+              const base = el.style.transform.split(' rotate')[0];
+              el.style.transform = `${base} rotate(${angulo}deg)`;
+            }
+            const restantes = this.puntosRuta.slice(this.indexSimulacion);
+            if (restantes.length > 1 && this.lineaSimulacion) this.lineaSimulacion.setLatLngs(restantes);
+            const recorridos = this.puntosRuta.slice(0, this.indexSimulacion + 1);
+            if (recorridos.length > 1 && this.lineaRecorrida) this.lineaRecorrida.setLatLngs(recorridos);
+            const progreso = this.indexSimulacion / this.puntosRuta.length;
+            const zoomObjetivo = progreso < 0.3 ? 15 : progreso < 0.7 ? 16 : 17;
+            if (Math.abs(this.map.getZoom() - zoomObjetivo) >= 1) {
+              this.map.setView(punto, zoomObjetivo, { animate: true, duration: 1 });
+            } else { this.map.panTo(punto, { animate: true, duration: 0.6 }); }
+          }
+          this.indexSimulacion++;
+        }, 700);
+      })
+      .catch(e => { console.error('Error ruta OSRM:', e); this.simulacionActiva = false; });
+  }
+
+  public detenerSimulacion(): void {
+    if (this.intervaloSimulacion) { clearInterval(this.intervaloSimulacion); this.intervaloSimulacion = null; }
+    if (this.lineaSimulacion) { try { this.map.removeLayer(this.lineaSimulacion); } catch (e) {} this.lineaSimulacion = undefined; }
+    if (this.lineaRecorrida) { try { this.map.removeLayer(this.lineaRecorrida); } catch (e) {} this.lineaRecorrida = undefined; }
+    this.simulacionActiva = false;
+    this.indexSimulacion = 0;
+    this.puntosRuta = [];
   }
 
   private async enviarCalificacion(servicioId: number, puntos: string) {
