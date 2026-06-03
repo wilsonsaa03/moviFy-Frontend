@@ -25,6 +25,7 @@ import { SolicitarDomicilio } from './pages/solicitar-domicilio/solicitar-domici
 import { SolicitarEncomienda } from './pages/solicitar-encomienda/solicitar-encomienda';
 import { VerMiPerfilConductorComponent } from './pages/ver-mi-perfil-conductor/ver-mi-perfil-conductor';
 import { MisViajesConductorComponent } from './pages/mis-viajes-conductor/mis-viajes-conductor';
+import { GananciasConductorComponent } from './pages/ganancias-conductor/ganancias-conductor';
 
 export const routes: Routes = [
   // Inicio y Auth
@@ -50,6 +51,7 @@ export const routes: Routes = [
   { path: 'solicitar-domicilio', component: SolicitarDomicilio },
   { path: 'solicitar-encomienda', component: SolicitarEncomienda },
   { path: 'mis-viajes-conductor', component: MisViajesConductorComponent },
+  { path: 'ganancias-conductor', component: GananciasConductorComponent },
 
   // Manejo de rutas no encontradas (SIEMPRE AL FINAL)
   { path: '**', redirectTo: '' }

@@ -1,0 +1,301 @@
+<div class="conductor-layout" [class.sidebar-colapsado]="sidebarColapsado">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <aside class="sidebar" [class.sidebar-visible]="menuNavAbierto">
+
+    <div class="sidebar-top">
+      <div class="sidebar-logo">
+        <img src="/assets/movify.jpg" class="sidebar-logo-img" alt="Logo">
+        <span class="sidebar-brand">MoviFY</span>
+      </div>
+
+      <nav class="sidebar-menu">
+        <a routerLink="/conductor"            class="nav-link"><span class="link-icon">🏠</span><span class="link-text">Inicio</span></a>
+        <a routerLink="/mis-viajes-conductor" class="nav-link"><span class="link-icon">🛵</span><span class="link-text">Mis viajes</span></a>
+        <a routerLink="/ganancias-conductor"  class="nav-link activo"><span class="link-icon">💰</span><span class="link-text">Ganancias</span></a>
+        <a routerLink="/perfil-conductor"     class="nav-link"><span class="link-icon">👤</span><span class="link-text">Ver mi perfil</span></a>
+        <a routerLink="/soporte"              class="nav-link"><span class="link-icon">🎧</span><span class="link-text">Soporte</span></a>
+      </nav>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-banner">
+        <img src="/assets/imagen home conductor.png" class="banner-img-full" alt="¡Más viajes, más ganancias!">
+      </div>
+      <button class="btn-cerrar-lateral" (click)="cerrarSesion()">
+        <span>🚪</span><span class="link-text">Cerrar sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══════════════ CONTENIDO ══════════════ -->
+  <div class="main-container-wrapper">
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+      <div class="navbar-left">
+        <button class="menu-toggle" (click)="toggleSidebar()">☰</button>
+        <div class="navbar-greeting">
+          <span class="navbar-hello">¡Hola, {{ nombre }}! 👋</span>
+          <span class="navbar-rol">Conductor</span>
+        </div>
+      </div>
+
+      <div class="navbar-right">
+        <button class="btn-estado" [class.en-linea]="enLinea" (click)="enLinea = !enLinea">
+          <span class="estado-dot" [class.dot-verde]="enLinea" [class.dot-rojo]="!enLinea"></span>
+          {{ enLinea ? 'En línea' : 'Desconectado' }}
+          <span>▾</span>
+        </button>
+
+        <div class="notif-wrap">
+          <span class="notif-icon">🔔</span>
+          <span class="notif-badge" *ngIf="notificaciones > 0">{{ notificaciones }}</span>
+        </div>
+
+        <div class="nav-perfil" (click)="toggleMenu()">
+          <div class="nav-avatar-circle">{{ nombre.charAt(0).toUpperCase() }}</div>
+          <div class="nav-info">
+            <span class="nav-nombre">{{ nombre }}</span>
+            <span class="nav-sub">Ver perfil ▾</span>
+          </div>
+          <div class="menu-perfil" *ngIf="menuAbierto" (click)="$event.stopPropagation()">
+            <button class="menu-item" routerLink="/perfil-conductor"><span>👤</span> Ver perfil</button>
+            <button class="menu-item" (click)="cerrarSesion()"><span>🚪</span> Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- CUERPO -->
+    <main class="content-body">
+
+      <!-- HEADER -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="page-icon">💰</div>
+          <div>
+            <h1 class="page-title">Ganancias</h1>
+            <p class="page-sub">Consulta tus ingresos, estadísticas y retiros.</p>
+          </div>
+        </div>
+        <button class="btn-historial" (click)="verHistorialRetiros()">
+          🏦 Historial de retiros
+        </button>
+      </div>
+
+      <!-- ALERT -->
+      <div class="alerta alerta-ok" *ngIf="mensajeOk">✅ {{ mensajeOk }}</div>
+      <div class="alerta alerta-err" *ngIf="mensajeErr">⚠️ {{ mensajeErr }}</div>
+
+      <!-- MÉTRICAS TOP -->
+      <div class="metrics-top" *ngIf="!cargando">
+
+        <div class="metric-card">
+          <div class="metric-icon-wrap bg-green"><span>📅</span></div>
+          <div class="metric-data">
+            <span class="metric-label">Ganancias hoy</span>
+            <h2 class="metric-value">${{ stats.ganancias_hoy | number }}</h2>
+            <span class="metric-sub">{{ stats.viajes_hoy }} viajes</span>
+            <span class="metric-trend trend-up">↑ {{ stats.trend_hoy }}% más que ayer</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-wrap bg-orange"><span>💼</span></div>
+          <div class="metric-data">
+            <span class="metric-label">Ganancias esta semana</span>
+            <h2 class="metric-value">${{ stats.ganancias_semana | number }}</h2>
+            <span class="metric-sub">{{ stats.viajes_semana }} viajes</span>
+            <span class="metric-trend trend-up">↑ {{ stats.trend_semana }}% más que la semana pasada</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-wrap bg-blue"><span>🚗</span></div>
+          <div class="metric-data">
+            <span class="metric-label">Ganancias este mes</span>
+            <h2 class="metric-value">${{ stats.ganancias_mes | number }}</h2>
+            <span class="metric-sub">{{ stats.viajes_mes }} viajes</span>
+            <span class="metric-trend trend-up">↑ {{ stats.trend_mes }}% más que el mes pasado</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-wrap bg-purple"><span>🏦</span></div>
+          <div class="metric-data">
+            <span class="metric-label">Saldo disponible</span>
+            <h2 class="metric-value">${{ stats.saldo_disponible | number }}</h2>
+            <span class="metric-sub">Listo para retirar ⓘ</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-wrap bg-gold"><span>💰</span></div>
+          <div class="metric-data">
+            <span class="metric-label">Total acumulado</span>
+            <h2 class="metric-value">${{ stats.total_acumulado | number }}</h2>
+            <span class="metric-sub">Desde que te uniste</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SKELETON MÉTRICAS -->
+      <div class="metrics-top" *ngIf="cargando">
+        <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5]"></div>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="filtros-bar">
+        <div class="filtros-left">
+          <button class="filtro-pill" [class.active]="filtro === 'mes'"    (click)="setFiltro('mes')">Este mes ▾</button>
+          <button class="filtro-pill" [class.active]="filtro === 'semana'" (click)="setFiltro('semana')">Semana</button>
+          <button class="filtro-pill" [class.active]="filtro === 'mes_cal'"(click)="setFiltro('mes_cal')">Mes</button>
+          <button class="filtro-pill" [class.active]="filtro === 'anio'"   (click)="setFiltro('anio')">Año</button>
+          <button class="filtro-pill date-pill">📅 {{ rangoLabel }}</button>
+        </div>
+        <button class="btn-exportar" (click)="exportarCSV()">
+          📥 Exportar
+        </button>
+      </div>
+
+      <!-- GRID PRINCIPAL -->
+      <div class="main-grid">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="col-left">
+
+          <!-- GRÁFICA DE LÍNEA -->
+          <div class="card card-grafica">
+            <div class="grafica-header">
+              <span class="grafica-titulo">Resumen de ganancias</span>
+              <span class="grafica-total">Total: ${{ stats.ganancias_mes | number }}</span>
+            </div>
+            <div class="grafica-wrap">
+              <canvas id="chartGanancias" class="chart-canvas"></canvas>
+            </div>
+          </div>
+
+          <!-- TRANSACCIONES RECIENTES -->
+          <div class="card card-transacciones">
+            <h3 class="card-titulo">Transacciones recientes</h3>
+
+            <div class="transaccion-item" *ngFor="let t of transacciones">
+              <div class="t-icon-wrap" [ngClass]="t.iconClass">
+                <span>{{ t.icono }}</span>
+              </div>
+              <div class="t-info">
+                <h4 class="t-titulo">{{ t.titulo }}</h4>
+                <p class="t-sub">{{ t.subtitulo }}</p>
+              </div>
+              <div class="t-fecha">
+                <span>{{ t.fecha }}</span>
+                <span>{{ t.hora }}</span>
+              </div>
+              <span class="t-badge" [ngClass]="t.badgeClass">{{ t.tipo }}</span>
+              <span class="t-monto" [class.monto-neg]="t.monto < 0" [class.monto-pos]="t.monto >= 0">
+                {{ t.monto < 0 ? '-' : '' }}${{ (t.monto < 0 ? -t.monto : t.monto) | number }}
+              </span>
+              <button class="t-chevron">›</button>
+            </div>
+
+            <div class="empty-transacciones" *ngIf="transacciones.length === 0 && !cargando">
+              <span>💳</span>
+              <p>No hay transacciones en este período.</p>
+            </div>
+
+            <div class="skeleton-list" *ngIf="cargando">
+              <div class="skeleton-t" *ngFor="let i of [1,2,3,4]"></div>
+            </div>
+
+            <button class="btn-ver-todas" (click)="cargarMasTransacciones()">
+              Ver todas las transacciones
+            </button>
+          </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA -->
+        <div class="col-right">
+
+          <!-- DESGLOSE DONA -->
+          <div class="card card-desglose">
+            <h3 class="card-titulo">Desglose de ganancias</h3>
+            <div class="dona-wrap">
+              <canvas id="chartDona" class="chart-dona"></canvas>
+              <div class="dona-centro">
+                <span class="dona-total">${{ stats.ganancias_mes | number }}</span>
+                <span class="dona-label">Total</span>
+              </div>
+            </div>
+            <div class="desglose-leyenda">
+              <div class="leyenda-item">
+                <span class="leyenda-dot dot-green"></span>
+                <div class="leyenda-info">
+                  <span class="leyenda-nombre">Viajes completados</span>
+                  <span class="leyenda-monto">${{ stats.ganancia_viajes | number }}</span>
+                </div>
+                <span class="leyenda-pct">{{ pctViajes }}%</span>
+              </div>
+              <div class="leyenda-item">
+                <span class="leyenda-dot dot-orange"></span>
+                <div class="leyenda-info">
+                  <span class="leyenda-nombre">Propinas</span>
+                  <span class="leyenda-monto">${{ stats.propinas | number }}</span>
+                </div>
+                <span class="leyenda-pct">{{ pctPropinas }}%</span>
+              </div>
+              <div class="leyenda-item">
+                <span class="leyenda-dot dot-blue"></span>
+                <div class="leyenda-info">
+                  <span class="leyenda-nombre">Incentivos</span>
+                  <span class="leyenda-monto">${{ stats.incentivos | number }}</span>
+                </div>
+                <span class="leyenda-pct">{{ pctIncentivos }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- MÉTODOS DE PAGO -->
+          <div class="card card-metodos">
+            <h3 class="card-titulo">Métodos de pago</h3>
+            <div class="metodo-item" *ngFor="let m of metodosPago">
+              <span class="metodo-icon">{{ m.icono }}</span>
+              <span class="metodo-nombre">{{ m.nombre }}</span>
+              <span class="metodo-monto">${{ m.monto | number }}</span>
+              <span class="metodo-pct">{{ m.pct }}%</span>
+            </div>
+          </div>
+
+          <!-- RETIRO -->
+          <div class="card card-retiro">
+            <h3 class="card-titulo">Retira tus ganancias</h3>
+            <p class="retiro-desc">Transfiere tu saldo disponible a tu cuenta bancaria fácil y rápido.</p>
+
+            <div class="retiro-row">
+              <div>
+                <span class="retiro-label">Saldo disponible</span>
+                <h2 class="retiro-saldo">${{ stats.saldo_disponible | number }}</h2>
+              </div>
+              <div>
+                <span class="retiro-label">Cuenta registrada</span>
+                <span class="retiro-banco">Bancolombia</span>
+                <span class="retiro-cuenta">•••• {{ ultimosCuatro }}</span>
+              </div>
+            </div>
+
+            <button class="btn-retirar" (click)="solicitarRetiro()" [disabled]="stats.saldo_disponible <= 0 || retirando">
+              <span *ngIf="!retirando">🏦 Retirar ahora</span>
+              <span *ngIf="retirando">⏳ Procesando...</span>
+            </button>
+
+            <p class="retiro-seguro">🔒 Tus datos y transacciones están protegidos</p>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>

@@ -23,7 +23,7 @@
         <span class="link-icon">🛵</span>
         <span class="link-text">Mis viajes</span>
       </a>
-      <a routerLink="/ganancias" class="nav-link">
+      <a routerLink="/ganancias-conductor" class="nav-link">
         <span class="link-icon">💰</span>
         <span class="link-text">Ganancias</span>
       </a>
@@ -256,7 +256,7 @@
             </div>
 
             <div class="stats-4">
-              <div class="stat-item">
+              <div class="stat-item" routerLink="/ganancias-conductor" style="cursor: pointer;">
                 <div class="stat-icon-wrap stat-green"><span>📈</span></div>
                 <div class="stat-data">
                   <span class="stat-num">${{ gananciasHoy | number }}</span>

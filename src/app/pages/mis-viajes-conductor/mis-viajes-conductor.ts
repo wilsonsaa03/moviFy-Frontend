@@ -1,84 +1,383 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ConductorService } from '../../Base_de_datos/conductor.service';
 import { environment } from '../../../environments/environment';
+
+// ─────────────────────────────────────────────
+// INTERFACES (tipos que llegan del backend)
+// ─────────────────────────────────────────────
+export interface ViajeItem {
+  servicio_id: number;
+  estado: string;
+  fecha_solicitud: string;          // ISO 8601: "2026-06-01T15:45:00"
+  origen_lat: number;
+  origen_lng: number;
+  destino_lat: number;
+  destino_lng: number;
+  origen_direccion: string;         // Ej: "Carrera 40 #12-45"
+  origen_ciudad: string;            // Ej: "Bucaramanga"
+  destino_direccion: string;
+  destino_ciudad: string;
+  distancia_km: number;
+  duracion_min: number;
+  tarifa: number;
+  metodo_pago: string;              // "Efectivo" | "Nequi" | "Daviplata"
+  usuario_nombre: string;
+  tipo: string;                     // "TRANSPORTE" | "DOMICILIO"
+  razon_cancelacion?: string;
+}
+
+export interface StatsViajes {
+  viajes_hoy: number;
+  ganancias_hoy: number;
+  activos: number;                  // viajes en curso ahora mismo
+  total_viajes: number;
+  tendencia_hoy: number;            // cuántos más que ayer
+  tendencia_ganancia: number;       // % más que ayer
+}
+
+// ─────────────────────────────────────────────
+// RESPUESTA ESPERADA DEL ENDPOINT
+// GET /api/transporte/historial-conductor/:id?filtro=&busqueda=&pagina=
+// {
+//   stats: StatsViajes,
+//   viajes: ViajeItem[],
+//   total_paginas: number,
+//   pagina_actual: number
+// }
+// ─────────────────────────────────────────────
 
 @Component({
   selector: 'app-mis-viajes-conductor',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './mis-viajes-conductor.html',
   styleUrls: ['./mis-viajes-conductor.css']
 })
-export class MisViajesConductorComponent implements OnInit {
+export class MisViajesConductorComponent implements OnInit, OnDestroy {
+
+  // ── DATOS CONDUCTOR ──
   nombre: string = '';
   conductorId: number | null = null;
-  viajes: any[] = [];
-  stats: any = { viajes_hoy: 0, ganancias_hoy: 0, activos: 0 };
+  calificacion: number = 0;
+  enLinea: boolean = false;
+  notificaciones: number = 0;
+
+  // ── UI STATE ──
+  menuAbierto: boolean = false;
   cargando: boolean = true;
-  calificacion: number = 4.9; // Esto podría venir del perfil
+  sidebarVisible: boolean = false;
+
+  // ── DATOS VIAJES ──
+  viajes: ViajeItem[] = [];
+  viajesFiltrados: ViajeItem[] = [];
+  stats: StatsViajes = {
+    viajes_hoy: 0,
+    ganancias_hoy: 0,
+    activos: 0,
+    total_viajes: 0,
+    tendencia_hoy: 0,
+    tendencia_ganancia: 0
+  };
+
+  // ── FILTROS ──
+  filtros = [
+    { label: 'Todos ▾', valor: 'todos' },
+    { label: 'Hoy',     valor: 'hoy'   },
+    { label: 'Semana',  valor: 'semana' },
+    { label: 'Mes',     valor: 'mes'   }
+  ];
+  filtroActivo: string = 'todos';
+  busqueda: string = '';
+  rangoFecha: string = '01 May - 31 May';
+
+  // ── PAGINACIÓN ──
+  paginaActual: number = 1;
+  totalPaginas: number = 1;
+  itemsPorPagina: number = 10;
+  paginas: number[] = [];
+
+  // ── POLLING ──
+  private pollingInterval: any;
 
   constructor(
     private conductorService: ConductorService,
     private router: Router
   ) {}
 
+  // ══════════════════════════════════════════
+  // CICLO DE VIDA
+  // ══════════════════════════════════════════
+
   ngOnInit(): void {
     const correo = localStorage.getItem('correo');
-    if (!correo) {
-      this.router.navigate(['/login']);
-      return;
-    }
+    if (!correo) { this.router.navigate(['/login']); return; }
 
-    // Primero obtenemos el ID del conductor
     this.conductorService.obtenerPerfil(correo).subscribe({
       next: (perfil: any) => {
-        this.nombre = perfil.nombre;
-        this.conductorId = perfil.conductor_id || perfil.id;
-        this.calificacion = perfil.calificacion || 4.9;
+        this.nombre       = perfil.nombre        || 'Conductor';
+        this.conductorId  = perfil.conductor_id  || perfil.id;
+        this.calificacion = Number(perfil.calificacion) || 4.9;
+        this.enLinea      = perfil.en_linea      || false;
+
+        // Una vez que tenemos el ID, cargamos viajes y activamos polling
         if (this.conductorId) {
-          this.cargarViajes();
+          this.cargarTodo();
+          this.iniciarPollingStats();
         }
       },
-      error: () => this.cargando = false
+      error: () => {
+        this.cargando = false;
+      }
     });
   }
 
-  cargarViajes(): void {
-    fetch(`${environment.apiUrl}/transporte/historial-conductor/${this.conductorId}`)
-      .then(res => res.json())
-      .then(data => {
-        this.viajes = data.viajes;
-        this.stats = data.stats;
-        this.cargando = false;
+  ngOnDestroy(): void {
+    if (this.pollingInterval) clearInterval(this.pollingInterval);
+  }
+
+  // ══════════════════════════════════════════
+  // CARGA DE DATOS DESDE LA BASE DE DATOS
+  // ══════════════════════════════════════════
+
+  /**
+   * Carga stats + lista de viajes en paralelo
+   */
+  cargarTodo(): void {
+    this.cargando = true;
+    Promise.all([
+      this.fetchStats(),
+      this.fetchViajes()
+    ]).finally(() => {
+      this.cargando = false;
+    });
+  }
+
+  /**
+   * ENDPOINT: GET /api/transporte/stats-conductor/:conductorId
+   *
+   * Respuesta esperada:
+   * {
+   *   viajes_hoy: number,
+   *   ganancias_hoy: number,
+   *   activos: number,
+   *   total_viajes: number,
+   *   tendencia_hoy: number,
+   *   tendencia_ganancia: number
+   * }
+   */
+  private fetchStats(): Promise<void> {
+    return fetch(`${environment.apiUrl}/transporte/stats-conductor/${this.conductorId}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: StatsViajes) => {
+        this.stats = data;
       })
       .catch(err => {
-        console.error('Error cargando historial:', err);
-        this.cargando = false;
+        console.warn('Stats no disponibles, usando valores por defecto:', err);
+        // Fallback calculado desde los viajes ya cargados
+        this.calcularStatsFallback();
       });
   }
 
+  /**
+   * ENDPOINT: GET /api/transporte/historial-conductor/:conductorId
+   *
+   * Query params opcionales:
+   *   ?filtro=todos|hoy|semana|mes
+   *   &busqueda=texto libre (busca en dirección, usuario, estado)
+   *   &pagina=1
+   *   &limite=10
+   *
+   * Respuesta esperada:
+   * {
+   *   viajes: ViajeItem[],
+   *   total: number,         <- total de registros sin paginar
+   *   total_paginas: number,
+   *   pagina_actual: number
+   * }
+   */
+  private fetchViajes(): Promise<void> {
+    const params = new URLSearchParams({
+      filtro:   this.filtroActivo,
+      busqueda: this.busqueda,
+      pagina:   String(this.paginaActual),
+      limite:   String(this.itemsPorPagina)
+    });
+
+    return fetch(
+      `${environment.apiUrl}/transporte/historial-conductor/${this.conductorId}?${params}`
+    )
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: { viajes: ViajeItem[]; total: number; total_paginas: number; pagina_actual: number }) => {
+        this.viajes         = data.viajes        || [];
+        this.totalPaginas   = data.total_paginas || 1;
+        this.paginaActual   = data.pagina_actual || 1;
+        this.viajesFiltrados = [...this.viajes];
+        this.construirPaginas();
+      })
+      .catch(err => {
+        console.error('Error cargando historial:', err);
+        this.viajes = [];
+        this.viajesFiltrados = [];
+      });
+  }
+
+  /**
+   * Polling cada 30 s para actualizar stats en tiempo real
+   * (viaje en curso, ganancias del día, etc.)
+   */
+  private iniciarPollingStats(): void {
+    this.pollingInterval = setInterval(() => {
+      if (this.conductorId) this.fetchStats();
+    }, 30_000);
+  }
+
+  /**
+   * Fallback: calcula stats localmente si el endpoint de stats falla.
+   */
+  private calcularStatsFallback(): void {
+    const hoy = new Date().toDateString();
+    const viajesHoy = this.viajes.filter(v =>
+      new Date(v.fecha_solicitud).toDateString() === hoy
+    );
+
+    this.stats = {
+      viajes_hoy:          viajesHoy.filter(v => v.estado === 'FINALIZADO').length,
+      ganancias_hoy:       viajesHoy
+                             .filter(v => v.estado === 'FINALIZADO')
+                             .reduce((acc, v) => acc + (v.tarifa || 0), 0),
+      activos:             this.viajes.filter(v =>
+                             ['EN_VIAJE','ACEPTADO','EN_CAMINO'].includes(v.estado)
+                           ).length,
+      total_viajes:        this.viajes.filter(v => v.estado === 'FINALIZADO').length,
+      tendencia_hoy:       0,
+      tendencia_ganancia:  0
+    };
+  }
+
+  // ══════════════════════════════════════════
+  // FILTROS Y BÚSQUEDA (CLIENT-SIDE FALLBACK)
+  // El servidor aplica los filtros; este método
+  // los aplica localmente si el servidor no lo soporta.
+  // ══════════════════════════════════════════
+
+  cambiarFiltro(valor: string): void {
+    this.filtroActivo = valor;
+    this.paginaActual = 1;
+    this.fetchViajes().then(() => this.cargando = false);
+  }
+
+  filtrarViajes(): void {
+    // Debounce simple de 300 ms
+    clearTimeout((this as any)._debounce);
+    (this as any)._debounce = setTimeout(() => {
+      this.paginaActual = 1;
+      this.fetchViajes();
+    }, 300);
+  }
+
+  // ══════════════════════════════════════════
+  // PAGINACIÓN
+  // ══════════════════════════════════════════
+
+  construirPaginas(): void {
+    this.paginas = Array.from({ length: this.totalPaginas }, (_, i) => i + 1);
+  }
+
+  cambiarPagina(pagina: number): void {
+    if (pagina < 1 || pagina > this.totalPaginas) return;
+    this.paginaActual = pagina;
+    this.fetchViajes();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ══════════════════════════════════════════
+  // EXPORTAR
+  // ══════════════════════════════════════════
+
+  /**
+   * ENDPOINT: GET /api/transporte/exportar-ganancias/:conductorId
+   * Devuelve un archivo CSV / XLSX con el historial completo.
+   */
+  exportarGanancias(): void {
+    const url = `${environment.apiUrl}/transporte/exportar-ganancias/${this.conductorId}`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ganancias-${this.conductorId}-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+
+  // ══════════════════════════════════════════
+  // ACCIONES DE VIAJE
+  // ══════════════════════════════════════════
+
+  verDetalle(viajeId: number): void {
+    this.router.navigate(['/detalle-viaje', viajeId]);
+  }
+
+  abrirMapa(viaje: ViajeItem): void {
+    // Navega a home-conductor con el viaje activo
+    this.router.navigate(['/conductor'], { queryParams: { viaje_id: viaje.servicio_id } });
+  }
+
+  toggleOpciones(viaje: ViajeItem): void {
+    // Aquí puedes abrir un menú contextual con opciones (reportar, ver ruta, etc.)
+    console.log('Opciones para viaje:', viaje.servicio_id);
+  }
+
+  // ══════════════════════════════════════════
+  // HELPERS DE UI
+  // ══════════════════════════════════════════
+
   getBadgeClass(estado: string): string {
-    const e = estado?.toUpperCase();
-    if (e === 'FINALIZADO') return 'completed-badge';
-    if (e === 'CANCELADO' || e === 'RECHAZADO') return 'cancelled-badge';
-    return 'in-progress-badge';
+    switch (estado?.toUpperCase()) {
+      case 'FINALIZADO':                     return 'badge-completado';
+      case 'EN_VIAJE':
+      case 'ACEPTADO':
+      case 'EN_CAMINO':
+      case 'EN_CAMINO_AL_USUARIO':
+      case 'LLEGO_AL_ORIGEN':
+      case 'PAQUETE_RECOGIDO':               return 'badge-en-curso';
+      case 'CANCELADO':
+      case 'RECHAZADO':                      return 'badge-cancelado';
+      default:                               return 'badge-pendiente';
+    }
   }
 
   getFriendlyEstado(estado: string): string {
-    if (estado === 'FINALIZADO') return '✓ COMPLETADO';
-    if (estado === 'CANCELADO') return '✕ CANCELADO';
-    if (estado === 'ACEPTADO' || estado === 'EN_VIAJE') return '● EN CURSO';
-    return estado;
+    switch (estado?.toUpperCase()) {
+      case 'FINALIZADO':                     return 'COMPLETADO';
+      case 'CANCELADO':                      return 'CANCELADO';
+      case 'RECHAZADO':                      return 'RECHAZADO';
+      case 'EN_VIAJE':
+      case 'ACEPTADO':
+      case 'EN_CAMINO':
+      case 'EN_CAMINO_AL_USUARIO':
+      case 'LLEGO_AL_ORIGEN':
+      case 'PAQUETE_RECOGIDO':               return 'EN CURSO';
+      case 'PENDIENTE':                      return 'PENDIENTE';
+      default:                               return estado || '—';
+    }
   }
+
+  // ══════════════════════════════════════════
+  // NAVEGACIÓN
+  // ══════════════════════════════════════════
+
+  toggleMenu(): void    { this.menuAbierto = !this.menuAbierto; }
+  toggleSidebar(): void { this.sidebarVisible = !this.sidebarVisible; }
+  irAPerfil(): void     { this.menuAbierto = false; this.router.navigate(['/perfil-conductor']); }
 
   cerrarSesion(): void {
     localStorage.clear();
     this.router.navigate(['/login']);
-  }
-
-  verDetalle(viajeId: number) {
-    // Lógica para ver detalle si fuera necesario
   }
 }

@@ -1,220 +1,350 @@
 <div class="mv-layout">
 
-  <!-- SIDEBAR (MENÚ LATERAL) -->
+  <!-- ══════════════ SIDEBAR ══════════════ -->
   <aside class="mv-sidebar">
     <div class="sidebar-top">
+
       <div class="sidebar-logo">
-        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" fill="#10B981"/>
-          <path d="M8 12H16M16 12L13 9M16 12L13 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="sidebar-brand">Movi<span class="brand-orange">FY</span></span>
+        <img src="/assets/movify.jpg" class="logo-img" alt="Logo">
+        <span class="sidebar-brand">Movi<span class="brand-fy">FY</span></span>
       </div>
-      
-      <div class="sidebar-menu">
+
+      <nav class="sidebar-menu">
         <a routerLink="/conductor" class="nav-link">
-          <span class="link-icon">🏠</span> <span class="link-text">Inicio</span>
+          <span class="link-icon">🏠</span><span class="link-text">Inicio</span>
         </a>
         <a routerLink="/mis-viajes-conductor" class="nav-link activo">
-          <span class="link-icon">🛵</span> <span class="link-text">Mis viajes</span>
+          <span class="link-icon">🛵</span><span class="link-text">Mis viajes</span>
         </a>
-        <a routerLink="/ganancias" class="nav-link">
-          <span class="link-icon">💰</span> <span class="link-text">Ganancias</span>
+        <a routerLink="/ganancias-conductor" class="nav-link">
+          <span class="link-icon">💰</span><span class="link-text">Ganancias</span>
         </a>
         <a routerLink="/perfil-conductor" class="nav-link">
-          <span class="link-icon">👤</span> <span class="link-text">Ver mi perfil</span>
+          <span class="link-icon">👤</span><span class="link-text">Ver mi perfil</span>
         </a>
         <a routerLink="/soporte" class="nav-link">
-          <span class="link-icon">🎧</span> <span class="link-text">Soporte</span>
+          <span class="link-icon">🎧</span><span class="link-text">Soporte</span>
         </a>
-      </div>
+      </nav>
     </div>
-    
+
     <div class="sidebar-bottom">
-      <!-- Tarjeta de promoción/Consejos del lateral -->
       <div class="sidebar-promo-card">
         <h3>¡Más viajes,<br>más ganancias!</h3>
         <p>Mantente en línea y recibe más solicitudes.</p>
         <a href="#" class="promo-link">Ver consejos →</a>
-        <img src="https://cdni.iconscout.com/illustration/premium/thumb/delivery-man-riding-scooter-4437146-3715153.png" class="promo-img" alt="Scooter">
+        <img src="/assets/moto-icon.png" class="promo-img" alt="Moto">
       </div>
-
       <button class="btn-cerrar-sesion" (click)="cerrarSesion()">
-        <span>Logout Icon ➡️</span> Cerrar sesión
+        <span>🚪</span> Cerrar sesión
       </button>
     </div>
   </aside>
 
-  <!-- CUERPO PRINCIPAL -->
+  <!-- ══════════════ CONTENIDO PRINCIPAL ══════════════ -->
   <div class="mv-main">
 
-    <!-- NAVBAR SUPERIOR -->
+    <!-- NAVBAR -->
     <nav class="mv-navbar">
       <div class="navbar-left">
-        <button class="menu-toggle-btn">☰</button>
+        <button class="menu-toggle-btn" (click)="toggleSidebar()">☰</button>
         <div class="user-welcome">
           <h2>¡Hola, {{ nombre }}! 👋</h2>
           <span class="user-role">Conductor</span>
         </div>
       </div>
-      
+
       <div class="navbar-right">
-        <button class="status-pill-btn">
-          <span class="status-dot-green"></span> En línea <span class="arrow-down">▾</span>
+        <button class="status-pill-btn" [class.pill-online]="enLinea">
+          <span class="status-dot" [class.dot-green]="enLinea" [class.dot-red]="!enLinea"></span>
+          {{ enLinea ? 'En línea' : 'Desconectado' }} <span class="arrow-down">▾</span>
         </button>
-        
-        <div class="notification-bell-wrap">
+
+        <div class="notif-bell">
           <span class="bell-icon">🔔</span>
-          <span class="bell-badge">3</span>
+          <span class="bell-badge" *ngIf="notificaciones > 0">{{ notificaciones }}</span>
         </div>
-        
-        <div class="profile-pill-wrap">
-          <div class="profile-avatar-circle">{{ nombre.charAt(0).toUpperCase() }}</div>
-          <div class="profile-text-meta">
+
+        <div class="profile-pill" (click)="toggleMenu()">
+          <div class="profile-avatar">{{ nombre.charAt(0).toUpperCase() }}</div>
+          <div class="profile-meta">
             <span class="profile-name">{{ nombre }}</span>
-            <span class="profile-dropdown-label">Ver perfil ▾</span>
+            <span class="profile-sub">Ver perfil ▾</span>
+          </div>
+
+          <!-- Dropdown -->
+          <div class="profile-dropdown" *ngIf="menuAbierto" (click)="$event.stopPropagation()">
+            <button class="drop-item" (click)="irAPerfil()">👤 Ver perfil</button>
+            <button class="drop-item" (click)="cerrarSesion()">🚪 Cerrar sesión</button>
           </div>
         </div>
       </div>
     </nav>
 
-    <!-- ÁREA DE CONTENIDO -->
-    <main class="mv-body-content">
+    <!-- ══════ CUERPO ══════ -->
+    <main class="mv-body">
 
-      <!-- TITULO DE PÁGINA -->
-      <div class="page-title-area">
-        <div class="title-flex">
-          <span class="title-emoji-bg">🛵</span>
+      <!-- TÍTULO + EXPORTAR -->
+      <div class="page-title-row">
+        <div class="title-left">
+          <div class="title-icon-box">🛵</div>
           <div>
             <h1>Mis viajes</h1>
             <p>Gestiona y consulta tu historial de viajes.</p>
           </div>
         </div>
-        <button class="export-data-btn">
-          <span>📥</span> Exportar ganancias
+        <button class="btn-export" (click)="exportarGanancias()">
+          📥 Exportar ganancias
         </button>
       </div>
 
-      <!-- TARJETAS DE ESTADÍSTICAS -->
-      <div class="metrics-grid-row">
-        <!-- CARD 1 -->
-        <div class="metric-box-card">
-          <div class="metric-icon-circle bg-light-green">📅</div>
-          <div class="metric-data-col">
-            <span class="metric-meta-label">Hoy</span>
-            <h3 class="metric-large-number">{{ stats.viajes_hoy }}</h3>
-            <span class="metric-bottom-title">Viajes realizados</span>
+      <!-- ── STATS 4 TARJETAS ── -->
+      <div class="stats-grid" *ngIf="!cargando">
+
+        <!-- Hoy -->
+        <div class="stat-card">
+          <div class="stat-icon-bg bg-green-light">📅</div>
+          <div class="stat-body">
+            <span class="stat-meta">Hoy</span>
+            <span class="stat-big">{{ stats.viajes_hoy }}</span>
+            <span class="stat-sub-title">Viajes realizados</span>
+            <span class="stat-trend trend-up" *ngIf="stats.tendencia_hoy > 0">
+              ↑ {{ stats.tendencia_hoy }} más que ayer
+            </span>
           </div>
         </div>
-        <!-- CARD 2 -->
-        <div class="metric-box-card">
-          <div class="metric-icon-circle bg-light-orange">💰</div>
-          <div class="metric-data-col">
-            <span class="metric-meta-label">Ganancias hoy</span>
-            <h3 class="metric-large-number">${{ stats.ganancias_hoy | number }}</h3>
-            <span class="metric-bottom-title">Ingresos netos</span>
+
+        <!-- Ganancias -->
+        <div class="stat-card">
+          <div class="stat-icon-bg bg-orange-light">💰</div>
+          <div class="stat-body">
+            <span class="stat-meta">Ganancias hoy</span>
+            <span class="stat-big stat-big-green">${{ stats.ganancias_hoy | number }}</span>
+            <span class="stat-sub-title">Total ganancias</span>
+            <span class="stat-trend trend-up" *ngIf="stats.tendencia_ganancia > 0">
+              ↑ {{ stats.tendencia_ganancia }}% más que ayer
+            </span>
           </div>
         </div>
-        <!-- CARD 3 -->
-        <div class="metric-box-card">
-          <div class="metric-icon-circle bg-light-blue">🚗</div>
-          <div class="metric-data-col">
-            <span class="metric-meta-label">En curso</span>
-            <h3 class="metric-large-number">{{ stats.activos }}</h3>
-            <span class="metric-bottom-title">Viaje activo</span>
+
+        <!-- En curso -->
+        <div class="stat-card">
+          <div class="stat-icon-bg bg-blue-light">🚗</div>
+          <div class="stat-body">
+            <span class="stat-meta">En curso</span>
+            <span class="stat-big">{{ stats.activos }}</span>
+            <span class="stat-sub-title">Viaje activo</span>
+            <a class="stat-link" routerLink="/conductor" *ngIf="stats.activos > 0">Ver en mapa →</a>
           </div>
         </div>
-        <!-- CARD 4 -->
-        <div class="metric-box-card">
-          <div class="metric-icon-circle bg-light-purple">⭐</div>
-          <div class="metric-data-col">
-            <span class="metric-meta-label">Calificación</span>
-            <h3 class="metric-large-number">{{ calificacion }}</h3>
-            <div class="stars-gold-row">★★★★★</div>
+
+        <!-- Calificación -->
+        <div class="stat-card">
+          <div class="stat-icon-bg bg-purple-light">⭐</div>
+          <div class="stat-body">
+            <span class="stat-meta">Calificación</span>
+            <span class="stat-big">{{ calificacion | number:'1.1-1' }}</span>
+            <div class="stars-row">★★★★★</div>
+            <span class="stat-sub-title">Basado en {{ stats.total_viajes }} viajes</span>
           </div>
         </div>
       </div>
 
-      <!-- SECCIÓN FILTROS -->
-      <div class="filter-controls-bar">
-        <div class="filters-left-group">
-          <button class="filter-tab-pill active-pill">Todos ▾</button>
-          <button class="filter-tab-pill">Hoy</button>
-          <button class="filter-tab-pill">Semana</button>
-          <button class="filter-tab-pill">Mes</button>
-          <button class="filter-tab-pill date-range-pill">📅 01 May - 31 May</button>
+      <!-- ── SKELETON STATS ── -->
+      <div class="stats-grid" *ngIf="cargando">
+        <div class="stat-card skeleton" *ngFor="let i of [1,2,3,4]"></div>
+      </div>
+
+      <!-- ── FILTROS ── -->
+      <div class="filter-bar">
+        <div class="filter-left">
+          <button class="pill-btn"
+            *ngFor="let f of filtros"
+            [class.pill-active]="filtroActivo === f.valor"
+            (click)="cambiarFiltro(f.valor)">
+            {{ f.label }}
+          </button>
+          <button class="pill-btn pill-date">
+            📅 {{ rangoFecha }}
+          </button>
         </div>
-        
-        <div class="filters-right-group">
-          <div class="search-input-container">
-            <span class="search-lens">🔍</span>
-            <input type="text" placeholder="Buscar viaje...">
+
+        <div class="filter-right">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Buscar viaje..."
+              [(ngModel)]="busqueda"
+              (input)="filtrarViajes()"
+            >
           </div>
-          <button class="advanced-filters-trigger-btn">
-            <span>📊</span> Filtros
+          <button class="pill-btn">
+            🔧 Filtros
           </button>
         </div>
       </div>
 
-      <!-- LISTADO DE TARJETAS DE VIAJES -->
-      <div class="trips-vertical-stack" *ngIf="!cargando">
-        
-        <div class="trip-item-row-card" *ngFor="let viaje of viajes" [class.bg-faded-grey]="viaje.estado === 'CANCELADO'">
-          <!-- COL 1: ESTADO Y FECHA -->
-          <div class="trip-cell-status">
-            <span class="status-tag-badge" [ngClass]="getBadgeClass(viaje.estado)">
-              {{ getFriendlyEstado(viaje.estado) }}
+      <!-- ── LISTA DE VIAJES ── -->
+      <div class="trips-list" *ngIf="!cargando">
+
+        <div class="trip-card"
+          *ngFor="let v of viajesFiltrados"
+          [class.trip-cancelled]="v.estado === 'CANCELADO'"
+          [class.trip-active]="v.estado === 'EN_VIAJE' || v.estado === 'ACEPTADO'">
+
+          <!-- COL 1: ESTADO + FECHA -->
+          <div class="tc-status">
+            <span class="estado-badge" [ngClass]="getBadgeClass(v.estado)">
+              <span class="badge-dot"></span>
+              {{ getFriendlyEstado(v.estado) }}
             </span>
-            <div class="meta-time-item"><span>📅</span> {{ viaje.fecha_solicitud | date:'dd MMM yyyy' }}</div>
-            <div class="meta-time-item"><span>🕒</span> {{ viaje.fecha_solicitud | date:'shortTime' }}</div>
+            <div class="fecha-row">
+              <span>📅</span>
+              <span>{{ v.fecha_solicitud | date:'dd MMM yyyy' }}</span>
+            </div>
+            <div class="fecha-row">
+              <span>🕒</span>
+              <span>{{ v.fecha_solicitud | date:'h:mm a' }}</span>
+            </div>
           </div>
 
-          <!-- COL 2: RUTA CON LÍNEA -->
-          <div class="trip-cell-route">
-            <div class="route-timeline-visual">
-              <span class="dot-node node-green"></span>
-              <div class="line-connector" [class.connector-dashed]="viaje.estado === 'CANCELADO'"></div>
-              <span class="dot-node" [class.node-orange]="viaje.estado !== 'CANCELADO'" [class.node-red]="viaje.estado === 'CANCELADO'"></span>
+          <!-- COL 2: RUTA -->
+          <div class="tc-route">
+            <div class="route-line">
+              <span class="dot-origin"></span>
+              <div class="line-segment" [class.dashed]="v.estado === 'CANCELADO'"></div>
+              <span class="dot-dest" [class.dot-cancelled]="v.estado === 'CANCELADO'"></span>
             </div>
-            <div class="route-addresses-text">
-              <div class="address-block">
-                <h4>{{ viaje.tipo }}</h4>
-                <p>Recogida en coordenadas</p>
+            <div class="route-addresses">
+              <div class="addr-block">
+                <strong>{{ v.origen_direccion || 'Origen del servicio' }}</strong>
+                <span>{{ v.origen_ciudad || 'Bucaramanga' }}</span>
               </div>
-              <div class="address-block">
-                <h4>Destino del cliente</h4>
-                <p>{{ viaje.usuario_nombre }}</p>
+              <div class="addr-block">
+                <strong>{{ v.destino_direccion || 'Destino del cliente' }}</strong>
+                <span>{{ v.destino_ciudad || 'Bucaramanga' }}</span>
               </div>
+            </div>
+          </div>
+
+          <!-- COL 3: MINI MAPA SVG -->
+          <div class="tc-map">
+            <div class="mini-map-wrap" [class.map-cancelled]="v.estado === 'CANCELADO'">
+              <svg viewBox="0 0 140 90" xmlns="http://www.w3.org/2000/svg" class="mini-map-svg">
+                <!-- Fondo mapa -->
+                <rect width="140" height="90" fill="#e8f0e8" rx="8"/>
+                <!-- Calles simuladas -->
+                <line x1="0" y1="30" x2="140" y2="30" stroke="#c8d8c8" stroke-width="6"/>
+                <line x1="0" y1="60" x2="140" y2="60" stroke="#c8d8c8" stroke-width="4"/>
+                <line x1="50" y1="0" x2="50" y2="90" stroke="#c8d8c8" stroke-width="4"/>
+                <line x1="100" y1="0" x2="100" y2="90" stroke="#c8d8c8" stroke-width="6"/>
+                <!-- Ruta -->
+                <polyline
+                  [attr.points]="v.estado === 'CANCELADO' ? '25,70 50,50 80,30 115,20' : '20,65 40,50 70,35 100,25 120,18'"
+                  [attr.stroke]="v.estado === 'CANCELADO' ? '#ef4444' : '#10b981'"
+                  stroke-width="3"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  [attr.stroke-dasharray]="v.estado === 'CANCELADO' ? '5,4' : 'none'"
+                />
+                <!-- Pin origen -->
+                <circle cx="20" cy="65" r="5" [attr.fill]="v.estado === 'CANCELADO' ? '#ef4444' : '#10b981'"/>
+                <circle cx="20" cy="65" r="8" [attr.fill]="v.estado === 'CANCELADO' ? '#fecaca' : '#d1fae5'" opacity="0.5"/>
+                <!-- Pin destino -->
+                <g [attr.transform]="v.estado === 'CANCELADO' ? 'translate(115,18)' : 'translate(120,16)'" *ngIf="v.estado !== 'CANCELADO'">
+                  <ellipse cx="0" cy="2" rx="4" ry="2" fill="#f97316" opacity="0.3"/>
+                  <path d="M0,-10 C-5,-10 -5,-3 0,0 C5,-3 5,-10 0,-10Z" fill="#f97316"/>
+                  <circle cx="0" cy="-7" r="2" fill="white"/>
+                </g>
+                <!-- X cancelado -->
+                <g *ngIf="v.estado === 'CANCELADO'" transform="translate(115,18)">
+                  <circle cx="0" cy="0" r="6" fill="#ef4444"/>
+                  <text x="0" y="4" text-anchor="middle" fill="white" font-size="8" font-weight="bold">✕</text>
+                </g>
+                <!-- Moto si en curso -->
+                <text *ngIf="v.estado === 'EN_VIAJE' || v.estado === 'ACEPTADO'"
+                  x="70" y="40" text-anchor="middle" font-size="14">🛵</text>
+              </svg>
             </div>
           </div>
 
           <!-- COL 4: MÉTRICAS -->
-          <div class="trip-cell-metrics">
-            <div class="metric-data-inline">
-              <span class="inline-icon">🛣️</span>
+          <div class="tc-metrics">
+            <div class="metric-inline" *ngIf="v.estado !== 'CANCELADO'">
+              <span class="metric-icon">🛣️</span>
               <div>
-                <h4>{{ viaje.distancia_km | number:'1.1-2' }} km</h4>
-                <p>Distancia</p>
+                <strong>{{ v.distancia_km | number:'1.1-1' }} km</strong>
+                <span>Distancia</span>
               </div>
             </div>
+            <div class="metric-inline" *ngIf="v.estado !== 'CANCELADO'">
+              <span class="metric-icon">🕒</span>
+              <div>
+                <strong>{{ v.duracion_min || '—' }} min</strong>
+                <span>{{ (v.estado === 'EN_VIAJE' || v.estado === 'ACEPTADO') ? 'Tiempo restante' : 'Duración' }}</span>
+              </div>
+            </div>
+            <!-- Cancelado: razón -->
+            <div class="cancel-reason-box" *ngIf="v.estado === 'CANCELADO'">
+              <strong>{{ v.razon_cancelacion || 'Cliente canceló la solicitud' }}</strong>
+            </div>
           </div>
 
-          <!-- COL 5: PRECIO Y ACCIONES -->
-          <div class="trip-cell-actions">
-            <div class="price-box-wrapper">
-              <h2 class="price-value" [class.text-green]="viaje.estado === 'FINALIZADO'" [class.text-muted]="viaje.estado === 'CANCELADO'">
-                ${{ viaje.tarifa | number }}
-              </h2>
-              <span class="payment-method-label">{{ viaje.metodo_pago || 'Efectivo' }}</span>
+          <!-- COL 5: PRECIO + ACCIÓN -->
+          <div class="tc-actions">
+            <div class="price-col">
+              <span class="price-val"
+                [class.price-green]="v.estado === 'FINALIZADO'"
+                [class.price-orange]="v.estado === 'EN_VIAJE' || v.estado === 'ACEPTADO'"
+                [class.price-muted]="v.estado === 'CANCELADO'">
+                ${{ v.tarifa | number }}
+              </span>
+              <span class="payment-method">{{ v.metodo_pago || 'Efectivo' }}</span>
             </div>
-            <button class="btn-action-outline-green" (click)="verDetalle(viaje.id)">Ver detalle</button>
+
+            <button class="btn-detalle"
+              *ngIf="v.estado === 'FINALIZADO'"
+              (click)="verDetalle(v.servicio_id)">
+              Ver detalle ›
+            </button>
+
+            <button class="btn-mapa-orange"
+              *ngIf="v.estado === 'EN_VIAJE' || v.estado === 'ACEPTADO'"
+              (click)="abrirMapa(v)">
+              🗺️ Abrir mapa
+            </button>
           </div>
+
+          <!-- TRES PUNTOS -->
+          <button class="btn-dots" (click)="toggleOpciones(v)">⋮</button>
         </div>
+
       </div>
 
-      <!-- Pantalla de carga -->
-      <div class="empty-state-msg" *ngIf="viajes.length === 0 && !cargando">
-        <p>No tienes viajes registrados en el historial todavía.</p>
+      <!-- ── SKELETON VIAJES ── -->
+      <div class="trips-list" *ngIf="cargando">
+        <div class="trip-card skeleton-trip" *ngFor="let i of [1,2,3]"></div>
+      </div>
+
+      <!-- ── VACÍO ── -->
+      <div class="empty-state" *ngIf="!cargando && viajesFiltrados.length === 0">
+        <span style="font-size:48px">🛵</span>
+        <p>No tienes viajes en este período.</p>
+        <span>Los viajes que realices aparecerán aquí.</span>
+      </div>
+
+      <!-- ── PAGINACIÓN ── -->
+      <div class="pagination" *ngIf="!cargando && totalPaginas > 1">
+        <button class="page-btn" [disabled]="paginaActual === 1" (click)="cambiarPagina(paginaActual - 1)">‹</button>
+        <button class="page-btn"
+          *ngFor="let p of paginas"
+          [class.page-active]="p === paginaActual"
+          (click)="cambiarPagina(p)">
+          {{ p }}
+        </button>
+        <button class="page-btn" [disabled]="paginaActual === totalPaginas" (click)="cambiarPagina(paginaActual + 1)">›</button>
       </div>
 
     </main>
