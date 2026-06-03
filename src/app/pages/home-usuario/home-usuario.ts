@@ -59,11 +59,13 @@ export class HomeUsuarioComponent implements OnInit {
   }
 
   editarPerfil(): void {
-    this.router.navigate(['/editar-perfil']);
+    this.menuAbierto = false;
+    this.router.navigate(['/perfil-conductor']);
   }
 
   configuracion(): void {
-    this.router.navigate(['/configuracion']);
+    this.menuAbierto = false;
+    this.router.navigate(['/perfil-conductor']);
   }
 
   // ==========================================

@@ -1,0 +1,367 @@
+<div class="mv-layout">
+
+  <!-- SIDEBAR (MENÚ LATERAL) -->
+  <aside class="mv-sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-logo">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" fill="#10B981"/>
+          <path d="M8 12H16M16 12L13 9M16 12L13 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="sidebar-brand">Movi<span class="brand-orange">FY</span></span>
+      </div>
+      
+      <div class="sidebar-menu">
+        <a routerLink="/conductor" class="nav-link">
+          <span class="link-icon">🏠</span> <span class="link-text">Inicio</span>
+        </a>
+        <a routerLink="/mis-viajes-conductor" class="nav-link activo">
+          <span class="link-icon">🛵</span> <span class="link-text">Mis viajes</span>
+        </a>
+        <a routerLink="/ganancias" class="nav-link">
+          <span class="link-icon">💰</span> <span class="link-text">Ganancias</span>
+        </a>
+        <a routerLink="/perfil-conductor" class="nav-link">
+          <span class="link-icon">👤</span> <span class="link-text">Ver mi perfil</span>
+        </a>
+        <a routerLink="/soporte" class="nav-link">
+          <span class="link-icon">🎧</span> <span class="link-text">Soporte</span>
+        </a>
+      </div>
+    </div>
+    
+    <div class="sidebar-bottom">
+      <!-- Tarjeta de promoción/Consejos del lateral -->
+      <div class="sidebar-promo-card">
+        <h3>¡Más viajes,<br>más ganancias!</h3>
+        <p>Mantente en línea y recibe más solicitudes.</p>
+        <a href="#" class="promo-link">Ver consejos →</a>
+        <img src="https://cdni.iconscout.com/illustration/premium/thumb/delivery-man-riding-scooter-4437146-3715153.png" class="promo-img" alt="Scooter">
+      </div>
+
+      <button class="btn-cerrar-sesion" (click)="cerrarSesion()">
+        <span>Logout Icon ➡️</span> Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <!-- CUERPO PRINCIPAL -->
+  <div class="mv-main">
+
+    <!-- NAVBAR SUPERIOR -->
+    <nav class="mv-navbar">
+      <div class="navbar-left">
+        <button class="menu-toggle-btn">☰</button>
+        <div class="user-welcome">
+          <h2>¡Hola, {{ nombre || 'diego' }}! 👋</h2>
+          <span class="user-role">Conductor</span>
+        </div>
+      </div>
+      
+      <div class="navbar-right">
+        <button class="status-pill-btn">
+          <span class="status-dot-green"></span> En línea <span class="arrow-down">▾</span>
+        </button>
+        
+        <div class="notification-bell-wrap">
+          <span class="bell-icon">🔔</span>
+          <span class="bell-badge">3</span>
+        </div>
+        
+        <div class="profile-pill-wrap">
+          <div class="profile-avatar-circle">D</div>
+          <div class="profile-text-meta">
+            <span class="profile-name">{{ nombre || 'diego t' }}</span>
+            <span class="profile-dropdown-label">Ver perfil ▾</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ÁREA DE CONTENIDO -->
+    <main class="mv-body-content">
+
+      <!-- TITULO DE PÁGINA -->
+      <div class="page-title-area">
+        <div class="title-flex">
+          <span class="title-emoji-bg">🛵</span>
+          <div>
+            <h1>Mis viajes</h1>
+            <p>Gestiona y consulta tu historial de viajes.</p>
+          </div>
+        </div>
+        <button class="export-data-btn">
+          <span>📥</span> Exportar ganancias
+        </button>
+      </div>
+
+      <!-- TARJETAS DE ESTADÍSTICAS -->
+      <div class="metrics-grid-row">
+        <!-- CARD 1 -->
+        <div class="metric-box-card">
+          <div class="metric-icon-circle bg-light-green">📅</div>
+          <div class="metric-data-col">
+            <span class="metric-meta-label">Hoy</span>
+            <h3 class="metric-large-number">8</h3>
+            <span class="metric-bottom-title">Viajes realizados</span>
+            <span class="metric-trend-text text-green">↑ 2 más que ayer</span>
+          </div>
+        </div>
+        <!-- CARD 2 -->
+        <div class="metric-box-card">
+          <div class="metric-icon-circle bg-light-orange">💰</div>
+          <div class="metric-data-col">
+            <span class="metric-meta-label">Ganancias hoy</span>
+            <h3 class="metric-large-number">$120.000</h3>
+            <span class="metric-bottom-title">Total ganancias</span>
+            <span class="metric-trend-text text-green">↑ 15% más que ayer</span>
+          </div>
+        </div>
+        <!-- CARD 3 -->
+        <div class="metric-box-card">
+          <div class="metric-icon-circle bg-light-blue">🚗</div>
+          <div class="metric-data-col">
+            <span class="metric-meta-label">En curso</span>
+            <h3 class="metric-large-number">1</h3>
+            <span class="metric-bottom-title">Viaje activo</span>
+            <span class="metric-trend-text text-blue style-link">Ver en mapa →</span>
+          </div>
+        </div>
+        <!-- CARD 4 -->
+        <div class="metric-box-card">
+          <div class="metric-icon-circle bg-light-purple">⭐</div>
+          <div class="metric-data-col">
+            <span class="metric-meta-label">Calificación</span>
+            <h3 class="metric-large-number">4.9</h3>
+            <div class="stars-gold-row">★★★★★</div>
+            <span class="metric-trend-text text-muted">Basado en 128 viajes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN FILTROS -->
+      <div class="filter-controls-bar">
+        <div class="filters-left-group">
+          <button class="filter-tab-pill active-pill">Todos ▾</button>
+          <button class="filter-tab-pill">Hoy</button>
+          <button class="filter-tab-pill">Semana</button>
+          <button class="filter-tab-pill">Mes</button>
+          <button class="filter-tab-pill date-range-pill">📅 01 May - 31 May</button>
+        </div>
+        
+        <div class="filters-right-group">
+          <div class="search-input-container">
+            <span class="search-lens">🔍</span>
+            <input type="text" placeholder="Buscar viaje...">
+          </div>
+          <button class="advanced-filters-trigger-btn">
+            <span>📊</span> Filtros
+          </button>
+        </div>
+      </div>
+
+      <!-- LISTADO DE TARJETAS DE VIAJES -->
+      <div class="trips-vertical-stack">
+        
+        <!-- CARD 1: COMPLETADO -->
+        <div class="trip-item-row-card">
+          <!-- COL 1: ESTADO Y FECHA -->
+          <div class="trip-cell-status">
+            <span class="status-tag-badge completed-badge">✓ COMPLETADO</span>
+            <div class="meta-time-item"><span>📅</span> 01 Jun 2026</div>
+            <div class="meta-time-item"><span>🕒</span> 3:45 PM</div>
+          </div>
+
+          <!-- COL 2: RUTA CON LÍNEA -->
+          <div class="trip-cell-route">
+            <div class="route-timeline-visual">
+              <span class="dot-node node-green"></span>
+              <div class="line-connector connector-solid"></div>
+              <span class="dot-node node-orange"></span>
+            </div>
+            <div class="route-addresses-text">
+              <div class="address-block">
+                <h4>Carrera 40 #12-45</h4>
+                <p>Barrio Cabecera</p>
+              </div>
+              <div class="address-block">
+                <h4>Centro Comercial Plaza</h4>
+                <p>Bucaramanga</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- COL 3: MINI MAPA -->
+          <div class="trip-cell-map">
+            <div class="map-wrapper-frame">
+              <svg viewBox="0 0 160 100" class="map-vector-canvas">
+                <rect width="160" height="100" fill="#f1f5f9" rx="12"/>
+                <path d="M20,75 Q60,25 100,55 T140,25" stroke="#10B981" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <circle cx="20" cy="75" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+                <circle cx="140" cy="25" r="5" fill="#EF466F" stroke="white" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- COL 4: INFORMACIÓN COMPLEMENTARIA -->
+          <div class="trip-cell-metrics">
+            <div class="metric-data-inline">
+              <span class="inline-icon">🛣️</span>
+              <div>
+                <h4>4.8 km</h4>
+                <p>Distancia</p>
+              </div>
+            </div>
+            <div class="metric-data-inline">
+              <span class="inline-icon">⏱️</span>
+              <div>
+                <h4>15 min</h4>
+                <p>Duración</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- COL 5: PRECIO Y ACCIONES -->
+          <div class="trip-cell-actions">
+            <div class="price-box-wrapper">
+              <h2 class="price-value text-green">$12.500</h2>
+              <span class="payment-method-label">Efectivo</span>
+            </div>
+            <button class="btn-action-outline-green">Ver detalle <span>&gt;</span></button>
+            <button class="context-menu-dots-btn">⋮</button>
+          </div>
+        </div>
+
+        <!-- CARD 2: EN CURSO -->
+        <div class="trip-item-row-card border-left-orange">
+          <!-- COL 1: ESTADO Y FECHA -->
+          <div class="trip-cell-status">
+            <span class="status-tag-badge in-progress-badge">● EN CURSO</span>
+            <div class="meta-time-item"><span>📅</span> 01 Jun 2026</div>
+            <div class="meta-time-item"><span>🕒</span> 4:10 PM</div>
+          </div>
+
+          <!-- COL 2: RUTA CON LÍNEA -->
+          <div class="trip-cell-route">
+            <div class="route-timeline-visual">
+              <span class="dot-node node-green"></span>
+              <div class="line-connector connector-solid"></div>
+              <span class="dot-node node-orange"></span>
+            </div>
+            <div class="route-addresses-text">
+              <div class="address-block">
+                <h4>Barrio El Jardín</h4>
+                <p>Bucaramanga</p>
+              </div>
+              <div class="address-block">
+                <h4>Universidad Industrial</h4>
+                <p>de Santander</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- COL 3: MINI MAPA -->
+          <div class="trip-cell-map">
+            <div class="map-wrapper-frame">
+              <svg viewBox="0 0 160 100" class="map-vector-canvas">
+                <rect width="160" height="100" fill="#f1f5f9" rx="12"/>
+                <path d="M20,70 Q70,30 110,60 T140,30" stroke="#10B981" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <circle cx="20" cy="70" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+                <circle cx="100" cy="53" r="7" fill="#1E293B" stroke="white" stroke-width="1.5"/> <!-- Icono moto simulado -->
+                <circle cx="140" cy="30" r="5" fill="#EF466F" stroke="white" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- COL 4: INFORMACIÓN COMPLEMENTARIA -->
+          <div class="trip-cell-metrics">
+            <div class="metric-data-inline">
+              <span class="inline-icon">⏱️</span>
+              <div>
+                <h4>8 min</h4>
+                <p>Tiempo restante</p>
+              </div>
+            </div>
+            <div class="metric-data-inline">
+              <span class="inline-icon">🛣️</span>
+              <div>
+                <h4>3.2 km</h4>
+                <p>Distancia restante</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- COL 5: PRECIO Y ACCIONES -->
+          <div class="trip-cell-actions">
+            <div class="price-box-wrapper">
+              <h2 class="price-value text-orange">$9.200</h2>
+              <span class="payment-method-label">Efectivo</span>
+            </div>
+            <button class="btn-action-solid-orange">📖 Abrir mapa</button>
+            <button class="context-menu-dots-btn">⋮</button>
+          </div>
+        </div>
+
+        <!-- CARD 3: CANCELADO -->
+        <div class="trip-item-row-card bg-faded-grey">
+          <!-- COL 1: ESTADO Y FECHA -->
+          <div class="trip-cell-status">
+            <span class="status-tag-badge cancelled-badge">✕ CANCELADO</span>
+            <div class="meta-time-item"><span>📅</span> 01 Jun 2026</div>
+            <div class="meta-time-item"><span>🕒</span> 11:40 AM</div>
+          </div>
+
+          <!-- COL 2: RUTA CON LÍNEA -->
+          <div class="trip-cell-route">
+            <div class="route-timeline-visual">
+              <span class="dot-node node-grey"></span>
+              <div class="line-connector connector-dashed"></div>
+              <span class="dot-node node-red"></span>
+            </div>
+            <div class="route-addresses-text">
+              <div class="address-block opacity-6">
+                <h4>Carrera 33 #51-23</h4>
+                <p>Bucaramanga</p>
+              </div>
+              <div class="address-block opacity-6">
+                <h4>Cañaveral</h4>
+                <p>Floridablanca</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- COL 3: MINI MAPA -->
+          <div class="trip-cell-map">
+            <div class="map-wrapper-frame opacity-5">
+              <svg viewBox="0 0 160 100" class="map-vector-canvas">
+                <rect width="160" height="100" fill="#f8fafc" rx="12"/>
+                <path d="M20,60 Q80,70 140,40" stroke="#94A3B8" stroke-dasharray="4,4" stroke-width="3" fill="none"/>
+                <circle cx="20" cy="60" r="5" fill="#94A3B8"/>
+                <circle cx="140" cy="40" r="5" fill="#EF466F"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- COL 4: CAJA MENSAJE CANCELADO -->
+          <div class="trip-cell-metrics justify-center">
+            <div class="cancellation-reason-box">
+              <h4>Cliente canceló</h4>
+              <p>la solicitud</p>
+            </div>
+          </div>
+
+          <!-- COL 5: PRECIO Y ACCIONES -->
+          <div class="trip-cell-actions">
+            <div class="price-box-wrapper">
+              <h2 class="price-value text-muted">$0</h2>
+              <span class="payment-method-label">Sin cobro</span>
+            </div>
+            <div class="empty-spacer-btn"></div>
+            <button class="context-menu-dots-btn">⋮</button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>

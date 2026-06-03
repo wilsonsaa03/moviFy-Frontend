@@ -1,4 +1,10 @@
-<div class="conductor-layout" [class.sidebar-colapsado]="sidebarColapsado">
+<!-- Pantalla de carga para evitar datos predeterminados -->
+<div class="loading-overlay" *ngIf="cargando">
+  <div class="spinner"></div>
+  <p>Cargando tu perfil...</p>
+</div>
+
+<div class="conductor-layout" [class.sidebar-colapsado]="sidebarColapsado" *ngIf="!cargando">
 
   <!-- SIDEBAR -->
   <aside class="sidebar" [class.sidebar-visible]="menuNavAbierto">
@@ -13,7 +19,7 @@
         <span class="link-icon">🏠</span>
         <span class="link-text">Inicio</span>
       </a>
-      <a routerLink="/mis-viajes" class="nav-link">
+      <a routerLink="/mis-viajes-conductor" class="nav-link">
         <span class="link-icon">🛵</span>
         <span class="link-text">Mis viajes</span>
       </a>
@@ -180,7 +186,7 @@
             </div>
             <div class="info-row">
               <span class="info-label">Estado SOAT</span>
-              <span class="info-val chip-verde">Al día ✓</span>
+              <span class="info-val" [class.chip-verde]="estadoSoat.includes('v') || estadoSoat.includes('día')">{{ estadoSoat }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Estado cuenta</span>
@@ -304,7 +310,7 @@
                 <div class="doc-icon">🪪</div>
                 <div class="doc-info">
                   <span class="doc-nombre">Cédula de ciudadanía</span>
-                  <span class="doc-estado doc-ok">Verificado ✓</span>
+                  <span class="doc-estado" [ngClass]="estadoCuenta === 'activo' ? 'doc-ok' : 'doc-pending'">{{ estadoCuenta === 'activo' ? 'Verificado ✓' : 'En revisión' }}</span>
                 </div>
                 <button class="btn-doc">Ver</button>
               </div>
@@ -313,7 +319,7 @@
                 <div class="doc-icon">📋</div>
                 <div class="doc-info">
                   <span class="doc-nombre">Licencia de conducción</span>
-                  <span class="doc-estado doc-ok">Verificado ✓</span>
+                  <span class="doc-estado" [ngClass]="estadoCuenta === 'activo' ? 'doc-ok' : 'doc-pending'">{{ estadoCuenta === 'activo' ? 'Verificado ✓' : 'En revisión' }}</span>
                 </div>
                 <button class="btn-doc">Ver</button>
               </div>
@@ -322,7 +328,7 @@
                 <div class="doc-icon">🛡️</div>
                 <div class="doc-info">
                   <span class="doc-nombre">SOAT</span>
-                  <span class="doc-estado doc-ok">Verificado ✓</span>
+                  <span class="doc-estado" [ngClass]="estadoSoat.includes('día') ? 'doc-ok' : 'doc-pending'">{{ estadoSoat }}</span>
                 </div>
                 <button class="btn-doc">Ver</button>
               </div>

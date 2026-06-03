@@ -24,6 +24,7 @@ import { SolicitarTransporte } from './pages/solicitar-transporte/solicitar-tran
 import { SolicitarDomicilio } from './pages/solicitar-domicilio/solicitar-domicilio';
 import { SolicitarEncomienda } from './pages/solicitar-encomienda/solicitar-encomienda';
 import { VerMiPerfilConductorComponent } from './pages/ver-mi-perfil-conductor/ver-mi-perfil-conductor';
+import { MisViajesConductorComponent } from './pages/mis-viajes-conductor/mis-viajes-conductor';
 
 export const routes: Routes = [
   // Inicio y Auth
@@ -48,6 +49,7 @@ export const routes: Routes = [
   { path: 'solicitar-transporte', component: SolicitarTransporte },
   { path: 'solicitar-domicilio', component: SolicitarDomicilio },
   { path: 'solicitar-encomienda', component: SolicitarEncomienda },
+  { path: 'mis-viajes-conductor', component: MisViajesConductorComponent },
 
   // Manejo de rutas no encontradas (SIEMPRE AL FINAL)
   { path: '**', redirectTo: '' }

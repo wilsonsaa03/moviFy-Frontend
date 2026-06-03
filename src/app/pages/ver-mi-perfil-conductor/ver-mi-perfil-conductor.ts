@@ -24,8 +24,12 @@ export class VerMiPerfilConductorComponent implements OnInit {
   placa: string = '';
   modelo: string = '';
   estadoCuenta: string = 'pendiente';
-  calificacion: number = 4.8;
-  miembroDesde: string = '2024';
+  calificacion: number = 0;
+  miembroDesde: string = '';
+
+  // Documentos (estados dinámicos)
+  estadoSoat: string = 'Pendiente';
+  documentosVerificados: boolean = false;
 
   // Estadísticas
   gananciasHoy: number = 0;
@@ -58,6 +62,7 @@ export class VerMiPerfilConductorComponent implements OnInit {
   enLinea: boolean = false;
   mensajeOk: string = '';
   mensajeErr: string = '';
+  cargando: boolean = true;
 
   constructor(
     private router: Router,
@@ -77,19 +82,24 @@ export class VerMiPerfilConductorComponent implements OnInit {
         this.correo    = data.correo    || correoSession;
         this.telefono  = data.telefono  || '';
         this.foto      = data.foto      || localStorage.getItem('foto') || '';
+        this.ciudad    = data.ciudad    || 'No registrada';
         this.placa     = data.placa     || data.placa_vehiculo  || 'No registrada';
         this.modelo    = data.modelo    || data.modelo_vehiculo || 'No registrado';
         this.estadoCuenta = data.estado || 'pendiente';
         this.gananciasHoy = Number(data.gananciasHoy) || 0;
         this.viajesHoy    = Number(data.viajesHoy)    || 0;
         this.viajesTotal  = Number(data.viajesTotal)  || 0;
-        this.calificacion = Number(data.calificacion) || 4.8;
+        this.calificacion = Number(data.calificacion) || 0;
+        this.miembroDesde = data.fecha_registro ? new Date(data.fecha_registro).getFullYear().toString() : '2024';
+        this.estadoSoat   = data.estado_soat || 'Al día ✓';
+        this.cargando = false;
       },
       error: () => {
         // Fallback a localStorage si el backend falla
         this.nombre = localStorage.getItem('nombre') || 'Conductor';
         this.correo = correoSession;
         this.foto   = localStorage.getItem('foto')   || '';
+        this.cargando = false;
       }
     });
   }

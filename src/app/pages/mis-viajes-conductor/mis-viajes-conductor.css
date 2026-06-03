@@ -1,0 +1,747 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* =========================================
+   RESET GENERAL Y VARIABLES DE COLOR EXACTAS
+   ========================================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+:root {
+  --app-bg: #f4f6f9;
+  --panel-white: #ffffff;
+  --txt-main: #1e293b;
+  --txt-muted: #64748b;
+  
+  /* Estados e Iconos de la imagen */
+  --movify-green: #10b981;
+  --movify-green-bg: #e6f7f0;
+  --movify-orange: #f97316;
+  --movify-orange-bg: #ffedd5;
+  --movify-red: #ef4444;
+  --movify-red-bg: #fee2e2;
+  --movify-blue: #3b82f6;
+  --movify-blue-bg: #eff6ff;
+  --movify-purple: #8b5cf6;
+  --movify-purple-bg: #f5f3ff;
+  
+  --border-light: #e2e8f0;
+}
+
+body {
+  background-color: var(--app-bg);
+  color: var(--txt-main);
+}
+
+/* =========================================
+   ESTRUCTURA DE CONTENEDORES (LAYOUT)
+   ========================================= */
+.mv-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--app-bg);
+}
+
+.mv-sidebar {
+  width: 280px;
+  background-color: var(--panel-white);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 30px 24px;
+}
+
+.mv-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================
+   COMPONENTE: SIDEBAR (MENÚ LATERAL)
+   ========================================= */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 35px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.sidebar-brand {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--txt-main);
+}
+
+.brand-orange {
+  color: var(--movify-orange);
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  color: var(--txt-main);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background-color: #f8fafc;
+}
+
+.nav-link.activo {
+  background-color: var(--movify-green);
+  color: var(--panel-white);
+}
+
+/* Tarjeta de promoción interior */
+.sidebar-promo-card {
+  background-color: var(--movify-green-bg);
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.sidebar-promo-card h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #065f46;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+
+.sidebar-promo-card p {
+  font-size: 12px;
+  color: #047857;
+  max-width: 65%;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.promo-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--movify-green);
+  text-decoration: none;
+}
+
+.promo-img {
+  position: absolute;
+  right: -10px;
+  bottom: -10px;
+  width: 90px;
+  object-fit: contain;
+}
+
+.btn-cerrar-sesion {
+  width: 100%;
+  padding: 14px;
+  background-color: var(--movify-red);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* =========================================
+   COMPONENTE: NAVBAR SUPERIOR
+   ========================================= */
+.mv-navbar {
+  height: 80px;
+  background-color: var(--panel-white);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.menu-toggle-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: #047857;
+  color: white;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.user-welcome h2 {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.user-role {
+  font-size: 13px;
+  color: var(--txt-muted);
+  font-weight: 500;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.status-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+  background-color: #f8fafc;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.status-dot-green {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--movify-green);
+}
+
+.notification-bell-wrap {
+  position: relative;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: var(--movify-orange);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-pill-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.profile-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--movify-green);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.profile-text-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.profile-dropdown-label {
+  font-size: 12px;
+  color: var(--txt-muted);
+}
+
+/* =========================================
+   ÁREA DE CONTENIDO PRINCIPAL Y TITULARES
+   ========================================= */
+.mv-body-content {
+  padding: 35px 40px;
+}
+
+.page-title-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.title-flex {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-emoji-bg {
+  font-size: 28px;
+  background-color: var(--panel-white);
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+
+.page-title-area h1 {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.page-title-area p {
+  font-size: 14px;
+  color: var(--txt-muted);
+}
+
+.export-data-btn {
+  padding: 12px 20px;
+  background-color: var(--panel-white);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* =========================================
+   SECCIÓN DE CUADROS METRICOS (STATS)
+   ========================================= */
+.metrics-grid-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.metric-box-card {
+  background-color: var(--panel-white);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.01);
+}
+
+.metric-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.bg-light-green { background-color: var(--movify-green-bg); }
+.bg-light-orange { background-color: var(--movify-orange-bg); }
+.bg-light-blue { background-color: var(--movify-blue-bg); }
+.bg-light-purple { background-color: var(--movify-purple-bg); }
+
+.metric-data-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-meta-label {
+  font-size: 13px;
+  color: var(--txt-muted);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.metric-large-number {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.metric-bottom-title {
+  font-size: 13px;
+  color: var(--txt-main);
+  font-weight: 500;
+}
+
+.metric-trend-text {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.text-green { color: var(--movify-green); }
+.text-blue { color: var(--movify-blue); }
+.style-link { cursor: pointer; text-decoration: none; }
+.stars-gold-row { color: #f59e0b; letter-spacing: 2px; margin: 4px 0; font-size: 14px;}
+
+/* =========================================
+   BARRA DE FILTROS Y CONTROLES
+   ========================================= */
+.filter-controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.filters-left-group {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-tab-pill {
+  padding: 10px 18px;
+  background-color: var(--panel-white);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--txt-main);
+  cursor: pointer;
+}
+
+.filter-tab-pill.active-pill {
+  background-color: #047857;
+  color: white;
+  border-color: #047857;
+}
+
+.filter-tab-pill.date-range-pill {
+  background-color: var(--panel-white);
+  color: var(--txt-main);
+}
+
+.filters-right-group {
+  display: flex;
+  gap: 12px;
+}
+
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-lens {
+  position: absolute;
+  left: 14px;
+  color: var(--txt-muted);
+  font-size: 14px;
+}
+
+.search-input-container input {
+  padding: 10px 16px 10px 42px;
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  background-color: var(--panel-white);
+  font-size: 14px;
+  width: 220px;
+  outline: none;
+}
+
+.advanced-filters-trigger-btn {
+  padding: 10px 18px;
+  background-color: var(--panel-white);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* =========================================
+   TARJETAS DE LISTADO DE VIAJES (FILAS COMPLETAS)
+   ========================================= */
+.trips-vertical-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.trip-item-row-card {
+  background-color: var(--panel-white);
+  border-radius: 20px;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 160px 1fr 180px 160px 170px;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.01);
+  position: relative;
+}
+
+/* Variación Borde Izquierdo En Curso */
+.border-left-orange {
+  border-left: 5px solid var(--movify-orange);
+}
+
+.bg-faded-grey {
+  background-color: #fafbfc;
+}
+
+/* COL 1: Estado y Tiempos */
+.trip-cell-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-tag-badge {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  width: fit-content;
+}
+
+.completed-badge { background-color: var(--movify-green-bg); color: #047857; }
+.in-progress-badge { background-color: var(--movify-orange-bg); color: #c2410c; }
+.cancelled-badge { background-color: var(--movify-red-bg); color: #b91c1c; }
+
+.meta-time-item {
+  font-size: 13px;
+  color: var(--txt-muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* COL 2: Ruta Dinámica Conectada */
+.trip-cell-route {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.route-timeline-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 4px 0;
+}
+
+.dot-node {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.node-green { background-color: var(--movify-green); box-shadow: 0 0 0 3px var(--movify-green-bg); }
+.node-orange { background-color: var(--movify-orange); box-shadow: 0 0 0 3px var(--movify-orange-bg); }
+.node-grey { background-color: #94a3b8; }
+.node-red { background-color: var(--movify-red); }
+
+.line-connector {
+  flex: 1;
+  width: 2px;
+  margin: 4px 0;
+}
+
+.connector-solid { background-color: #cbd5e1; }
+.connector-dashed { border-left: 2px dashed #cbd5e1; }
+
+.route-addresses-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.address-block h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--txt-main);
+}
+
+.address-block p {
+  font-size: 12px;
+  color: var(--txt-muted);
+}
+
+/* COL 3: Contenedor Mapa vectorizado */
+.trip-cell-map {
+  display: flex;
+  align-items: center;
+}
+
+.map-wrapper-frame {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.map-vector-canvas {
+  width: 100%;
+  display: block;
+}
+
+/* COL 4: Métricas Internas */
+.trip-cell-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.metric-data-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inline-icon {
+  font-size: 18px;
+}
+
+.metric-data-inline h4 {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.metric-data-inline p {
+  font-size: 12px;
+  color: var(--txt-muted);
+}
+
+/* Caja especial para cancelaciones */
+.cancellation-reason-box {
+  background-color: var(--movify-red-bg);
+  padding: 10px 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.cancellation-reason-box h4 {
+  color: var(--movify-red);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cancellation-reason-box p {
+  color: #991b1b;
+  font-size: 12px;
+}
+
+/* COL 5: Precios y Acciones Finales */
+.trip-cell-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding-right: 24px;
+}
+
+.price-box-wrapper {
+  margin-bottom: 2px;
+}
+
+.price-value {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.price-value.text-green { color: var(--movify-green); }
+.price-value.text-orange { color: var(--movify-orange); }
+
+.payment-method-label {
+  font-size: 12px;
+  color: var(--txt-muted);
+  font-weight: 500;
+}
+
+.btn-action-outline-green {
+  border: 1px solid var(--movify-green);
+  background-color: transparent;
+  color: var(--movify-green);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+}
+
+.btn-action-outline-green:hover {
+  background-color: var(--movify-green-bg);
+}
+
+.btn-action-solid-orange {
+  border: none;
+  background-color: var(--movify-orange);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.empty-spacer-btn {
+  height: 33px; /* Simula la altura exacta del botón ausente */
+}
+
+.context-menu-dots-btn {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: var(--txt-muted);
+  cursor: pointer;
+}
+
+/* =========================================
+   MISCELÁNEOS DE OPACIDAD Y RECTIFICACIÓN
+   ========================================= */
+.opacity-5 { opacity: 0.5; }
+.opacity-6 { opacity: 0.6; }
+.justify-center { justify-content: center; }
