@@ -1,0 +1,423 @@
+<div class="vu-layout">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <aside class="vu-sidebar" [class.visible]="sidebarVisible">
+
+    <div class="sb-logo">
+      <img src="/assets/movify.jpg" class="sb-logo-img" alt="MoviFY">
+      <span class="sb-brand">MoviFY</span>
+    </div>
+
+    <nav class="sb-nav">
+
+      <a class="sb-link" routerLink="/home-usuario">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+        </span>
+        <span class="sb-txt">Inicio</span>
+      </a>
+
+      <a class="sb-link activo" routerLink="/mis-viajes">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </span>
+        <span class="sb-txt">Mis viajes</span>
+      </a>
+
+      <a class="sb-link" routerLink="/mis-pedidos">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        </span>
+        <span class="sb-txt">Mis pedidos</span>
+      </a>
+
+      <a class="sb-link" routerLink="/favoritos">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        </span>
+        <span class="sb-txt">Favoritos</span>
+      </a>
+
+      <a class="sb-link" routerLink="/metodos-pago">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+        </span>
+        <span class="sb-txt">Métodos de pago</span>
+      </a>
+
+      <a class="sb-link" routerLink="/promociones">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+        </span>
+        <span class="sb-txt">Promociones</span>
+      </a>
+
+      <a class="sb-link" routerLink="/soporte">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>
+        </span>
+        <span class="sb-txt">Soporte</span>
+      </a>
+
+      <a class="sb-link" routerLink="/notificaciones">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        </span>
+        <span class="sb-txt">Notificaciones</span>
+        <span class="sb-badge">3</span>
+      </a>
+
+      <a class="sb-link" routerLink="/configuracion">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </span>
+        <span class="sb-txt">Configuración</span>
+      </a>
+
+    </nav>
+
+    <div class="sb-promo">
+      <div class="sb-promo-icon">🎁</div>
+      <p class="sb-promo-title">¡Invita a tus amigos!</p>
+      <p class="sb-promo-sub">Obtén descuentos en tus próximos viajes.</p>
+      <button class="sb-promo-btn">Invitar ahora</button>
+    </div>
+
+  </aside>
+
+  <!-- ══════════════ MAIN ══════════════ -->
+  <div class="vu-main">
+
+    <!-- NAVBAR -->
+    <nav class="vu-navbar">
+      <div class="hn-left">
+        <button class="hn-hamburger" (click)="toggleMenu()">☰</button>
+        <div class="hn-greeting">
+          <span class="hn-hello">¡Hola, {{ nombre }}! 👋</span>
+          <span class="hn-sub">¿A dónde vamos hoy?</span>
+        </div>
+      </div>
+
+      <div class="hn-right">
+        <button class="hn-ciudad">
+          <span class="hn-ciudad-dot">📍</span>
+          <span>Bucaramanga</span>
+          <span class="hn-chevron">▾</span>
+        </button>
+
+        <div class="hn-bell">
+          <span class="hn-bell-icon">🔔</span>
+          <span class="hn-badge">3</span>
+        </div>
+
+        <div class="hn-profile" (click)="toggleMenuPerfil()">
+          <div class="hn-avatar">{{ nombre.charAt(0).toUpperCase() }}</div>
+          <span class="hn-name">{{ nombre }}</span>
+          <span class="hn-chevron">▾</span>
+
+          <div class="hn-dropdown" *ngIf="menuAbierto" (click)="$event.stopPropagation()">
+            <div class="dd-header">
+              <div class="dd-av">{{ nombre.charAt(0).toUpperCase() }}</div>
+              <div>
+                <p class="dd-name">{{ nombre }}</p>
+                <p class="dd-role">Usuario MoviFY</p>
+              </div>
+            </div>
+            <button class="dd-item">👤 Ver perfil</button>
+            <button class="dd-item">✏️ Editar perfil</button>
+            <button class="dd-item">⭐ Favoritos</button>
+            <button class="dd-item">⚙️ Configuración</button>
+            <button class="dd-item dd-logout" (click)="cerrarSesion()">🚪 Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ══════ CONTENIDO ══════ -->
+    <div class="vu-content" style="background-image: url('/assets/home.png');">
+      <div class="vu-overlay"></div>
+
+      <div class="vu-inner">
+
+        <!-- ── HEADER DE PÁGINA ── -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1 class="page-title">Mis viajes</h1>
+            <p class="page-sub">Consulta el historial de tus servicios y su estado.</p>
+          </div>
+          <button class="btn-exportar" (click)="exportar()">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar
+          </button>
+        </div>
+
+        <!-- ── STATS ── -->
+        <div class="stats-grid">
+
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-green">
+              <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Este mes</span>
+              <span class="stat-value">{{ stats.viajes }}</span>
+              <span class="stat-unit">viajes</span>
+              <span class="stat-change up">↑ 12% vs mes pasado</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-yellow">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Gastado</span>
+              <span class="stat-value">${{ stats.gastado | number }}</span>
+              <span class="stat-unit">&nbsp;</span>
+              <span class="stat-change up">↑ 8% vs mes pasado</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-orange">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">En curso</span>
+              <span class="stat-value">{{ stats.enCurso }}</span>
+              <span class="stat-unit">servicio</span>
+              <span class="stat-change neutral">&nbsp;</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-purple">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Favoritos</span>
+              <span class="stat-value">{{ stats.favoritos }}</span>
+              <span class="stat-unit">lugares</span>
+              <span class="stat-change neutral">&nbsp;</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── SERVICIO EN CURSO ── -->
+        <div class="servicio-curso-card">
+          <div class="sc-badge">
+            <span class="sc-dot"></span>
+            SERVICIO EN CURSO
+          </div>
+
+          <div class="sc-body">
+            <!-- Ruta -->
+            <div class="sc-ruta">
+              <div class="sc-punto origen">
+                <span class="sc-punto-dot green"></span>
+                <div>
+                  <strong>{{ servicioEnCurso.origen }}</strong>
+                  <span>{{ servicioEnCurso.origenDir }}</span>
+                </div>
+              </div>
+              <div class="sc-linea-vertical"></div>
+              <div class="sc-punto destino">
+                <span class="sc-punto-dot orange"></span>
+                <div>
+                  <strong>{{ servicioEnCurso.destino }}</strong>
+                  <span>{{ servicioEnCurso.destinoDir }}</span>
+                </div>
+              </div>
+
+              <!-- Conductor -->
+              <div class="sc-conductor">
+                <div class="sc-conductor-av">
+                  <svg viewBox="0 0 24 24" class="sc-av-icon"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                </div>
+                <div class="sc-conductor-info">
+                  <span class="sc-conductor-label">Conductor</span>
+                  <span class="sc-conductor-name">
+                    {{ servicioEnCurso.conductorNombre }}
+                    <span class="sc-star">⭐ {{ servicioEnCurso.conductorRating }}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mapa placeholder -->
+            <div class="sc-mapa">
+              <div class="sc-mapa-inner">
+                <!-- Mapa SVG decorativo -->
+                <svg viewBox="0 0 260 160" xmlns="http://www.w3.org/2000/svg" class="mapa-svg">
+                  <rect width="260" height="160" rx="14" fill="#e8f5e9"/>
+                  <!-- Calles -->
+                  <rect x="0" y="40" width="260" height="12" fill="#c8e6c9" rx="2"/>
+                  <rect x="0" y="90" width="260" height="12" fill="#c8e6c9" rx="2"/>
+                  <rect x="60" y="0" width="12" height="160" fill="#c8e6c9" rx="2"/>
+                  <rect x="130" y="0" width="12" height="160" fill="#c8e6c9" rx="2"/>
+                  <rect x="200" y="0" width="12" height="160" fill="#c8e6c9" rx="2"/>
+                  <!-- Bloques ciudad -->
+                  <rect x="15" y="55" width="42" height="32" rx="4" fill="#a5d6a7" opacity=".6"/>
+                  <rect x="75" y="55" width="52" height="32" rx="4" fill="#a5d6a7" opacity=".6"/>
+                  <rect x="145" y="55" width="52" height="32" rx="4" fill="#a5d6a7" opacity=".6"/>
+                  <rect x="15" y="105" width="42" height="32" rx="4" fill="#a5d6a7" opacity=".6"/>
+                  <rect x="75" y="105" width="52" height="32" rx="4" fill="#a5d6a7" opacity=".6"/>
+                  <rect x="145" y="105" width="52" height="32" rx="4" fill="#a5d6a7" opacity=".6"/>
+                  <!-- Ruta verde -->
+                  <polyline points="50,46 50,20 136,20 136,46 136,96 200,96" fill="none" stroke="#16a34a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 3"/>
+                  <!-- Pin origen verde -->
+                  <circle cx="50" cy="46" r="8" fill="#22c55e"/>
+                  <circle cx="50" cy="46" r="4" fill="white"/>
+                  <!-- Pin destino naranja -->
+                  <ellipse cx="206" cy="88" rx="8" ry="10" fill="#f97316"/>
+                  <circle cx="206" cy="85" r="3.5" fill="white"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Tiempo restante -->
+            <div class="sc-tiempo">
+              <span class="sc-tiempo-label">Tiempo restante</span>
+              <span class="sc-tiempo-valor">{{ servicioEnCurso.tiempoRestante }} min</span>
+              <span class="sc-tiempo-sub">Tu conductor<br>está en camino.</span>
+              <button class="btn-seguimiento" (click)="verSeguimiento()">
+                Ver seguimiento →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── LISTA DE VIAJES ── -->
+        <div class="viajes-card">
+
+          <!-- Filtros + Búsqueda -->
+          <div class="viajes-filtros">
+            <div class="filtros-tabs">
+              <button class="ftab" [class.activo]="filtroActivo==='todos'" (click)="setFiltro('todos')">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Todos
+              </button>
+              <button class="ftab" [class.activo]="filtroActivo==='transporte'" (click)="setFiltro('transporte')">
+                <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                Transporte
+              </button>
+              <button class="ftab" [class.activo]="filtroActivo==='domicilio'" (click)="setFiltro('domicilio')">
+                <svg viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M6 17.5h7l1.5-5.5H8L6 17.5z"/><path d="M15 6h2l3 5.5"/></svg>
+                Domicilios
+              </button>
+              <button class="ftab" [class.activo]="filtroActivo==='encomienda'" (click)="setFiltro('encomienda')">
+                <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                Encomiendas
+              </button>
+            </div>
+            <div class="filtros-search">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="Buscar servicio..." class="search-input">
+              <button class="btn-filtro">
+                <svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="11" y2="6"/><line x1="4" y1="12" x2="13" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><line x1="14" y1="3" x2="14" y2="9"/><line x1="16" y1="9" x2="16" y2="15"/><line x1="23" y1="15" x2="23" y2="21"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Items -->
+          <div class="viaje-item" *ngFor="let v of viajesFiltrados">
+
+            <!-- Ícono tipo -->
+            <div class="vi-tipo-wrap">
+              <div class="vi-ico" [ngClass]="'vi-ico-' + v.tipoColor">
+                <span *ngIf="v.tipo==='transporte'">
+                  <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </span>
+                <span *ngIf="v.tipo==='domicilio'">
+                  <svg viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M6 17.5h7l1.5-5.5H8L6 17.5z"/><path d="M15 6h2l3 5.5"/></svg>
+                </span>
+                <span *ngIf="v.tipo==='encomienda'">
+                  <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                </span>
+              </div>
+              <span class="vi-tipo-label" [ngClass]="'vi-label-' + v.tipoColor">{{ v.tipoLabel }}</span>
+            </div>
+
+            <!-- Ruta -->
+            <div class="vi-ruta">
+              <div class="vi-origen">
+                <span class="vi-dot green"></span>
+                <strong>{{ v.origen }}</strong>
+              </div>
+              <div class="vi-dest-line">
+                <div class="vi-vert-line"></div>
+              </div>
+              <div class="vi-destino">
+                <span class="vi-dot orange"></span>
+                <span>{{ v.destino }}</span>
+              </div>
+            </div>
+
+            <!-- Meta -->
+            <div class="vi-meta">
+              <span class="vi-meta-item">
+                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                {{ v.fecha }}
+              </span>
+              <span class="vi-meta-item">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                {{ v.hora }}
+              </span>
+              <span class="vi-meta-item">
+                <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                {{ v.pago }}
+              </span>
+            </div>
+
+            <!-- Precio + Estado -->
+            <div class="vi-precio-wrap">
+              <span class="vi-precio">${{ v.precio | number }}</span>
+              <span class="vi-estado" [ngClass]="v.estadoClass">
+                <span *ngIf="v.estadoClass !== 'cancelado'">✓</span>
+                <span *ngIf="v.estadoClass === 'cancelado'">✕</span>
+                {{ v.estado }}
+              </span>
+            </div>
+
+            <!-- Mini mapa -->
+            <div class="vi-mapa">
+              <svg viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg" class="vi-mapa-svg">
+                <rect width="80" height="60" rx="8" fill="#f0fdf4"/>
+                <rect x="0" y="15" width="80" height="6" fill="#bbf7d0"/>
+                <rect x="0" y="38" width="80" height="6" fill="#bbf7d0"/>
+                <rect x="20" y="0" width="6" height="60" fill="#bbf7d0"/>
+                <rect x="54" y="0" width="6" height="60" fill="#bbf7d0"/>
+                <polyline
+                  [attr.points]="v.estadoClass==='cancelado' ? '16,18 23,18 23,41 57,41' : '16,18 23,18 23,41 57,41'"
+                  fill="none"
+                  [attr.stroke]="v.tipo==='encomienda' ? '#7c3aed' : v.tipo==='domicilio' ? '#f97316' : '#22c55e'"
+                  stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4 2"/>
+                <circle cx="16" cy="18" r="4"
+                  [attr.fill]="v.tipo==='transporte' ? '#22c55e' : v.tipo==='domicilio' ? '#f97316' : '#7c3aed'"/>
+                <circle cx="57" cy="41" r="4" fill="#f97316"/>
+              </svg>
+            </div>
+
+            <!-- Acción + flecha -->
+            <button class="vi-accion" [ngClass]="v.accionClass">{{ v.accionLabel }}</button>
+            <span class="vi-arrow">›</span>
+
+          </div>
+
+        </div>
+
+        <!-- ── CTA VOLVER A PEDIR ── -->
+        <div class="cta-card">
+          <img src="/assets/Domicilios-home.png" class="cta-img" alt="Volver a pedir">
+          <div class="cta-texto">
+            <strong>¿Necesitas volver a pedir?</strong>
+            <span>Solicita nuevamente un servicio desde lugares frecuentes o repite un viaje anterior.</span>
+          </div>
+          <button class="cta-btn" (click)="solicitarDeNuevo()">Solicitar de nuevo</button>
+        </div>
+
+      </div><!-- /vu-inner -->
+    </div><!-- /vu-content -->
+  </div><!-- /vu-main -->
+</div>

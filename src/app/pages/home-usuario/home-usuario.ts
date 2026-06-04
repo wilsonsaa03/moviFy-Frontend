@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-home-usuario',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './home-usuario.html',
   styleUrls: ['./home-usuario.css']
 })
@@ -22,7 +22,8 @@ export class HomeUsuarioComponent implements OnInit {
       fecha: '12 May, 2024',
       hora: '10:30 AM',
       estado: 'Completado',
-      statusClass: 'completado'
+      statusClass: 'completado',
+      precio: 12500          // ← agregado
     },
     {
       icono: '📦',
@@ -30,7 +31,8 @@ export class HomeUsuarioComponent implements OnInit {
       fecha: '11 May, 2024',
       hora: '04:15 PM',
       estado: 'En camino',
-      statusClass: 'en-camino'
+      statusClass: 'en-camino',
+      precio: 8000           // ← agregado
     },
     {
       icono: '🛵',
@@ -38,7 +40,8 @@ export class HomeUsuarioComponent implements OnInit {
       fecha: '10 May, 2024',
       hora: '08:45 PM',
       estado: 'Cancelado',
-      statusClass: 'cancelado'
+      statusClass: 'cancelado',
+      precio: 0              // ← agregado
     }
   ];
 
@@ -46,10 +49,16 @@ export class HomeUsuarioComponent implements OnInit {
 
   ngOnInit(): void {
     this.nombre = localStorage.getItem('nombre') || 'Usuario';
-    this.foto = localStorage.getItem('foto') || '';
+    this.foto   = localStorage.getItem('foto')   || '';
   }
 
+  // Abre/cierra el menú hamburguesa del sidebar (mobile)
   toggleMenu(): void {
+    this.menuAbierto = !this.menuAbierto;
+  }
+
+  // Abre/cierra el dropdown del perfil en el navbar  ← agregado
+  toggleMenuPerfil(): void {
     this.menuAbierto = !this.menuAbierto;
   }
 
@@ -68,18 +77,10 @@ export class HomeUsuarioComponent implements OnInit {
     this.router.navigate(['/perfil-conductor']);
   }
 
-  // ==========================================
-  // FUNCIÓN ACTUALIZADA
-  // ==========================================
   solicitarServicio(tipo: string): void {
-    if (tipo === 'transporte') {
-      // Navega a la ruta exacta que pusimos en app.routes.ts
-      this.router.navigate(['/solicitar-transporte']);
-    } else if (tipo === 'domicilio') {
-      this.router.navigate(['/solicitar-domicilio']);
-    } else if (tipo === 'encomienda') {
-      this.router.navigate(['/solicitar-encomienda']);
-    }
+    if (tipo === 'transporte')  this.router.navigate(['/solicitar-transporte']);
+    else if (tipo === 'domicilio')  this.router.navigate(['/solicitar-domicilio']);
+    else if (tipo === 'encomienda') this.router.navigate(['/solicitar-encomienda']);
   }
 
   cerrarSesion(): void {

@@ -1,9 +1,8 @@
 import { Routes } from '@angular/router';
-import { LandingComponent } from './pages/landing/landing';
 
 export const routes: Routes = [
   // Inicio y Auth
-  { path: '', component: LandingComponent },
+  { path: '', loadComponent: () => import('./pages/landing/landing').then(m => m.LandingComponent) },
   { path: 'login', loadComponent: () => import('./Controlador/login.component').then(m => m.LoginComponent) },
   { path: 'olvide-password', loadComponent: () => import('./pages/olvide-password/olvide-password').then(m => m.OlvidePasswordComponent) },
   { path: 'restablecer-password', loadComponent: () => import('./pages/restablecer-password/restablecer-password').then(m => m.RestablecerPasswordComponent) },
