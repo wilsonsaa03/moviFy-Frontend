@@ -82,7 +82,7 @@ export class VerMiPerfilConductorComponent implements OnInit {
         this.correo    = data.correo    || correoSession;
         this.telefono  = data.telefono  || '';
         this.foto      = data.foto      || localStorage.getItem('foto') || '';
-        this.ciudad    = data.ciudad    || 'No registrada';
+        this.ciudad    = data.ciudad    || 'Buenaventura';
         this.placa     = data.placa     || data.placa_vehiculo  || 'No registrada';
         this.modelo    = data.modelo    || data.modelo_vehiculo || 'No registrado';
         this.estadoCuenta = data.estado || 'pendiente';

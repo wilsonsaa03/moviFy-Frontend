@@ -97,7 +97,9 @@
             <span class="metric-label">Ganancias hoy</span>
             <h2 class="metric-value">${{ stats.ganancias_hoy | number }}</h2>
             <span class="metric-sub">{{ stats.viajes_hoy }} viajes</span>
-            <span class="metric-trend trend-up">↑ {{ stats.trend_hoy }}% más que ayer</span>
+            <span class="metric-trend" [ngClass]="stats.trend_hoy >= 0 ? 'trend-up' : 'trend-down'">
+              {{ stats.trend_hoy >= 0 ? '↑' : '↓' }} {{ (stats.trend_hoy < 0 ? -stats.trend_hoy : stats.trend_hoy) }}% más que ayer
+            </span>
           </div>
         </div>
 
@@ -107,7 +109,9 @@
             <span class="metric-label">Ganancias esta semana</span>
             <h2 class="metric-value">${{ stats.ganancias_semana | number }}</h2>
             <span class="metric-sub">{{ stats.viajes_semana }} viajes</span>
-            <span class="metric-trend trend-up">↑ {{ stats.trend_semana }}% más que la semana pasada</span>
+            <span class="metric-trend" [ngClass]="stats.trend_semana >= 0 ? 'trend-up' : 'trend-down'">
+              {{ stats.trend_semana >= 0 ? '↑' : '↓' }} {{ (stats.trend_semana < 0 ? -stats.trend_semana : stats.trend_semana) }}% más que la semana pasada
+            </span>
           </div>
         </div>
 
@@ -117,7 +121,9 @@
             <span class="metric-label">Ganancias este mes</span>
             <h2 class="metric-value">${{ stats.ganancias_mes | number }}</h2>
             <span class="metric-sub">{{ stats.viajes_mes }} viajes</span>
-            <span class="metric-trend trend-up">↑ {{ stats.trend_mes }}% más que el mes pasado</span>
+            <span class="metric-trend" [ngClass]="stats.trend_mes >= 0 ? 'trend-up' : 'trend-down'">
+              {{ stats.trend_mes >= 0 ? '↑' : '↓' }} {{ (stats.trend_mes < 0 ? -stats.trend_mes : stats.trend_mes) }}% más que el mes pasado
+            </span>
           </div>
         </div>
 
