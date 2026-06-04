@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ConductorService } from '../../Base_de_datos/conductor.service';
+import { environment } from '../../../environments/environment';
 import * as L from 'leaflet';
 
 @Component({
@@ -212,7 +213,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
 
             // ✅ Enviar posición al backend para que el usuario la vea
             if (this.conductorId && this.enLinea) {
-              fetch('http://localhost:8080/api/transporte/ubicacion', {
+              fetch(`${environment.apiUrl}/transporte/ubicacion`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ conductor_id: this.conductorId, lat: punto.lat, lng: punto.lng })
@@ -288,7 +289,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
       this.iniciarPollingNotificaciones();
       this.iniciarRastreoRealTime();
       if (this.conductorId) {
-        fetch('http://localhost:8080/api/transporte/activar', {
+        fetch(`${environment.apiUrl}/transporte/activar`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ conductor_id: this.conductorId })
@@ -305,7 +306,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   iniciarPollingNotificaciones() {
     this.pollingNotificaciones = setInterval(() => {
       if (!this.conductorId || !this.enLinea) return;
-      fetch(`http://localhost:8080/api/transporte/solicitudes-pendientes/${this.conductorId}`)
+      fetch(`${environment.apiUrl}/transporte/solicitudes-pendientes/${this.conductorId}`)
         .then(res => {
           if (res.status === 403) {
             this.mensajeAlerta = '⚠️ Cuenta suspendida';
@@ -331,7 +332,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     this.pararPollingNotificaciones();
     const solicitudLocal = this.solicitudes.find(s => s.servicio_id === servicioId);
 
-    fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}/estado`, {
+    fetch(`${environment.apiUrl}/transporte/servicio/${servicioId}/estado`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: nuevoEstado, conductor_id: this.conductorId })
@@ -359,7 +360,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
 
   iniciarRutaViaje(servicioId: number) {
     this.cargarLRM().then(() => {
-      fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}`)
+      fetch(`${environment.apiUrl}/transporte/servicio/${servicioId}`)
         .then(res => { if (!res.ok) throw new Error('Error'); return res.json(); })
         .then(servicio => {
           this.viajeActivo = servicio;
@@ -401,7 +402,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
 
   iniciarPollingViaje(servicioId: number) {
     this.pollingViajeActivo = setInterval(() => {
-      fetch(`http://localhost:8080/api/transporte/servicio/${servicioId}`)
+      fetch(`${environment.apiUrl}/transporte/servicio/${servicioId}`)
         .then(res => res.ok ? res.json() : Promise.reject(res))
         .then(servicio => {
           this.viajeActivo = servicio;
@@ -433,7 +434,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
 
   finalizarViaje() {
     if (!this.viajeId) return;
-    fetch(`http://localhost:8080/api/transporte/servicio/${this.viajeId}/estado`, {
+    fetch(`${environment.apiUrl}/transporte/servicio/${this.viajeId}/estado`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: 'FINALIZADO', conductor_id: this.conductorId })
@@ -461,7 +462,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     const confirmar = confirm('¿Estás seguro de que deseas cancelar este viaje? Entendemos que pueden surgir imprevistos.');
     if (!confirmar) return;
 
-    fetch(`http://localhost:8080/api/transporte/servicio/${this.viajeId}/estado`, {
+    fetch(`${environment.apiUrl}/transporte/servicio/${this.viajeId}/estado`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: 'CANCELADO', conductor_id: this.conductorId })
@@ -492,7 +493,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
 
   llegueAlUsuario() {
     if (!this.viajeId) return;
-    fetch(`http://localhost:8080/api/transporte/servicio/${this.viajeId}/estado`, {
+    fetch(`${environment.apiUrl}/transporte/servicio/${this.viajeId}/estado`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: 'EN_CAMINO', conductor_id: this.conductorId })
@@ -514,7 +515,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
 
   paqueteRecogido() {
     if (!this.viajeId) return;
-    fetch(`http://localhost:8080/api/transporte/servicio/${this.viajeId}/estado`, {
+    fetch(`${environment.apiUrl}/transporte/servicio/${this.viajeId}/estado`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: 'PAQUETE_RECOGIDO', conductor_id: this.conductorId })
@@ -593,7 +594,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     // ENVIAR UBICACIÓN INMEDIATA PARA SER ENCONTRADO POR EL BACKEND
     navigator.geolocation.getCurrentPosition((pos) => {
       const { latitude: lat, longitude: lon } = pos.coords;
-      fetch('http://localhost:8080/api/transporte/ubicacion', {
+      fetch(`${environment.apiUrl}/transporte/ubicacion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conductor_id: this.conductorId, lat, lng: lon })
@@ -607,7 +608,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
 
         // ✅ Solo enviar ubicación GPS si NO hay una simulación/viaje activo
         if (this.conductorId && this.enLinea && !this.viajeId) {
-          fetch('http://localhost:8080/api/transporte/ubicacion', {
+          fetch(`${environment.apiUrl}/transporte/ubicacion`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ conductor_id: this.conductorId, lat: lat, lng: lon })
@@ -684,7 +685,7 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     // Opcional: Si el conductor está "En línea", enviamos esta posición al backend
     // para que el pasajero vea el movimiento en su pantalla de solicitud.
     if (this.enLinea && this.conductorId) {
-      fetch('http://localhost:8080/api/transporte/ubicacion', {
+      fetch(`${environment.apiUrl}/transporte/ubicacion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conductor_id: this.conductorId, lat: nuevaLat, lng: nuevaLng })
