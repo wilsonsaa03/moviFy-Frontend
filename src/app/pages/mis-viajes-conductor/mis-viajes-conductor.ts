@@ -16,8 +16,8 @@ export interface ViajeItem {
   origen_lng: number;
   destino_lat: number;
   destino_lng: number;
-  origen_direccion: string;         // Ej: "Carrera 40 #12-45"
-  origen_ciudad: string;            // Ej: "Bucaramanga"
+  origen_direccion: string;
+  origen_ciudad: string;
   destino_direccion: string;
   destino_ciudad: string;
   distancia_km: number;
@@ -32,22 +32,11 @@ export interface ViajeItem {
 export interface StatsViajes {
   viajes_hoy: number;
   ganancias_hoy: number;
-  activos: number;                  // viajes en curso ahora mismo
+  activos: number;
   total_viajes: number;
-  tendencia_hoy: number;            // cuántos más que ayer
-  tendencia_ganancia: number;       // % más que ayer
+  tendencia_hoy: number;
+  tendencia_ganancia: number;
 }
-
-// ─────────────────────────────────────────────
-// RESPUESTA ESPERADA DEL ENDPOINT
-// GET /api/transporte/historial-conductor/:id?filtro=&busqueda=&pagina=
-// {
-//   stats: StatsViajes,
-//   viajes: ViajeItem[],
-//   total_paginas: number,
-//   pagina_actual: number
-// }
-// ─────────────────────────────────────────────
 
 @Component({
   selector: 'app-mis-viajes-conductor',
@@ -61,14 +50,17 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   // ── DATOS CONDUCTOR ──
   nombre: string = '';
   conductorId: number | null = null;
+  correo: string = '';
+  foto: string = '';
   calificacion: number = 0;
   enLinea: boolean = false;
   notificaciones: number = 0;
 
   // ── UI STATE ──
   menuAbierto: boolean = false;
+  menuNavAbierto: boolean = false;
+  sidebarColapsado: boolean = false;
   cargando: boolean = true;
-  sidebarVisible: boolean = false;
 
   // ── DATOS VIAJES ──
   viajes: ViajeItem[] = [];
@@ -122,7 +114,6 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
         this.calificacion = Number(perfil.calificacion) || 4.9;
         this.enLinea      = perfil.en_linea      || false;
 
-        // Una vez que tenemos el ID, cargamos viajes y activamos polling
         if (this.conductorId) {
           this.cargarTodo();
           this.iniciarPollingStats();
@@ -139,12 +130,9 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   }
 
   // ══════════════════════════════════════════
-  // CARGA DE DATOS DESDE LA BASE DE DATOS
+  // CARGA DE DATOS
   // ══════════════════════════════════════════
 
-  /**
-   * Carga stats + lista de viajes en paralelo
-   */
   cargarTodo(): void {
     this.cargando = true;
     Promise.all([
@@ -155,19 +143,6 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * ENDPOINT: GET /api/transporte/stats-conductor/:conductorId
-   *
-   * Respuesta esperada:
-   * {
-   *   viajes_hoy: number,
-   *   ganancias_hoy: number,
-   *   activos: number,
-   *   total_viajes: number,
-   *   tendencia_hoy: number,
-   *   tendencia_ganancia: number
-   * }
-   */
   private fetchStats(): Promise<void> {
     return fetch(`${environment.apiUrl}/transporte/stats-conductor/${this.conductorId}`)
       .then(res => {
@@ -179,28 +154,10 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
       })
       .catch(err => {
         console.warn('Stats no disponibles, usando valores por defecto:', err);
-        // Fallback calculado desde los viajes ya cargados
         this.calcularStatsFallback();
       });
   }
 
-  /**
-   * ENDPOINT: GET /api/transporte/historial-conductor/:conductorId
-   *
-   * Query params opcionales:
-   *   ?filtro=todos|hoy|semana|mes
-   *   &busqueda=texto libre (busca en dirección, usuario, estado)
-   *   &pagina=1
-   *   &limite=10
-   *
-   * Respuesta esperada:
-   * {
-   *   viajes: ViajeItem[],
-   *   total: number,         <- total de registros sin paginar
-   *   total_paginas: number,
-   *   pagina_actual: number
-   * }
-   */
   private fetchViajes(): Promise<void> {
     const params = new URLSearchParams({
       filtro:   this.filtroActivo,
@@ -217,9 +174,9 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
         return res.json();
       })
       .then((data: { viajes: ViajeItem[]; total: number; total_paginas: number; pagina_actual: number }) => {
-        this.viajes         = data.viajes        || [];
-        this.totalPaginas   = data.total_paginas || 1;
-        this.paginaActual   = data.pagina_actual || 1;
+        this.viajes          = data.viajes        || [];
+        this.totalPaginas    = data.total_paginas || 1;
+        this.paginaActual    = data.pagina_actual || 1;
         this.viajesFiltrados = [...this.viajes];
         this.construirPaginas();
       })
@@ -230,43 +187,32 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Polling cada 30 s para actualizar stats en tiempo real
-   * (viaje en curso, ganancias del día, etc.)
-   */
   private iniciarPollingStats(): void {
     this.pollingInterval = setInterval(() => {
       if (this.conductorId) this.fetchStats();
     }, 30_000);
   }
 
-  /**
-   * Fallback: calcula stats localmente si el endpoint de stats falla.
-   */
   private calcularStatsFallback(): void {
     const hoy = new Date().toDateString();
     const viajesHoy = this.viajes.filter(v =>
       new Date(v.fecha_solicitud).toDateString() === hoy
     );
-
     this.stats = {
-      viajes_hoy:          viajesHoy.filter(v => v.estado === 'FINALIZADO').length,
-      ganancias_hoy:       viajesHoy
-                             .filter(v => v.estado === 'FINALIZADO')
-                             .reduce((acc, v) => acc + (v.tarifa || 0), 0),
-      activos:             this.viajes.filter(v =>
-                             ['EN_VIAJE','ACEPTADO','EN_CAMINO'].includes(v.estado)
-                           ).length,
-      total_viajes:        this.viajes.filter(v => v.estado === 'FINALIZADO').length,
-      tendencia_hoy:       0,
-      tendencia_ganancia:  0
+      viajes_hoy:         viajesHoy.filter(v => v.estado === 'FINALIZADO').length,
+      ganancias_hoy:      viajesHoy.filter(v => v.estado === 'FINALIZADO')
+                                   .reduce((acc, v) => acc + (v.tarifa || 0), 0),
+      activos:            this.viajes.filter(v =>
+                            ['EN_VIAJE','ACEPTADO','EN_CAMINO'].includes(v.estado)
+                          ).length,
+      total_viajes:       this.viajes.filter(v => v.estado === 'FINALIZADO').length,
+      tendencia_hoy:      0,
+      tendencia_ganancia: 0
     };
   }
 
   // ══════════════════════════════════════════
-  // FILTROS Y BÚSQUEDA (CLIENT-SIDE FALLBACK)
-  // El servidor aplica los filtros; este método
-  // los aplica localmente si el servidor no lo soporta.
+  // FILTROS Y BÚSQUEDA
   // ══════════════════════════════════════════
 
   cambiarFiltro(valor: string): void {
@@ -276,7 +222,6 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   }
 
   filtrarViajes(): void {
-    // Debounce simple de 300 ms
     clearTimeout((this as any)._debounce);
     (this as any)._debounce = setTimeout(() => {
       this.paginaActual = 1;
@@ -303,10 +248,6 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   // EXPORTAR
   // ══════════════════════════════════════════
 
-  /**
-   * ENDPOINT: GET /api/transporte/exportar-ganancias/:conductorId
-   * Devuelve un archivo CSV / XLSX con el historial completo.
-   */
   exportarGanancias(): void {
     const url = `${environment.apiUrl}/transporte/exportar-ganancias/${this.conductorId}`;
     const a = document.createElement('a');
@@ -324,12 +265,10 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   }
 
   abrirMapa(viaje: ViajeItem): void {
-    // Navega a home-conductor con el viaje activo
     this.router.navigate(['/conductor'], { queryParams: { viaje_id: viaje.servicio_id } });
   }
 
   toggleOpciones(viaje: ViajeItem): void {
-    // Aquí puedes abrir un menú contextual con opciones (reportar, ver ruta, etc.)
     console.log('Opciones para viaje:', viaje.servicio_id);
   }
 
@@ -369,12 +308,50 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   }
 
   // ══════════════════════════════════════════
-  // NAVEGACIÓN
+  // NAVEGACIÓN / SIDEBAR
   // ══════════════════════════════════════════
 
-  toggleMenu(): void    { this.menuAbierto = !this.menuAbierto; }
-  toggleSidebar(): void { this.sidebarVisible = !this.sidebarVisible; }
-  irAPerfil(): void     { this.menuAbierto = false; this.router.navigate(['/perfil-conductor']); }
+  /**
+   * Alias usado por el HTML: [class.sidebar-visible]="sidebarVisible"
+   * Mapea menuNavAbierto (móvil) o el inverso de sidebarColapsado (desktop).
+   */
+  get sidebarVisible(): boolean {
+    return window.innerWidth <= 992
+      ? this.menuNavAbierto
+      : !this.sidebarColapsado;
+  }
+
+  toggleSidebar(): void {
+    if (window.innerWidth <= 992) {
+      this.menuNavAbierto = !this.menuNavAbierto;
+    } else {
+      this.sidebarColapsado = !this.sidebarColapsado;
+    }
+  }
+
+  toggleMenu(): void {
+    this.menuAbierto = !this.menuAbierto;
+  }
+
+  /** Alias usado por el HTML: (click)="irAPerfil()" */
+  irAPerfil(): void {
+    this.verPerfil();
+  }
+
+  verPerfil(): void {
+    this.menuAbierto = false;
+    this.router.navigate(['/perfil-conductor']);
+  }
+
+  editarPerfil(): void {
+    this.menuAbierto = false;
+    this.router.navigate(['/editar-perfil']);
+  }
+
+  configuracion(): void {
+    this.menuAbierto = false;
+    this.router.navigate(['/configuracion']);
+  }
 
   cerrarSesion(): void {
     localStorage.clear();
