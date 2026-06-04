@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ConductorService } from '../../Base_de_datos/conductor.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-ver-mi-perfil-conductor',
@@ -130,14 +131,15 @@ export class VerMiPerfilConductorComponent implements OnInit {
 
     this.cargando = true;
     try {
-      const resp = await fetch('http://localhost:8080/api/conductor/perfil/actualizar', {
+      const resp = await fetch(`${environment.apiUrl}/conductor/perfil/actualizar`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           correo: this.correo,
           nombre: this.nombreEdit.trim(),
           telefono: this.telefonoEdit.trim(),
-          ciudad: this.ciudadEdit.trim()
+          ciudad: this.ciudadEdit.trim(),
+          foto: this.foto
         })
       });
 
@@ -149,8 +151,14 @@ export class VerMiPerfilConductorComponent implements OnInit {
         this.modoEdicion = false;
         this.mostrarOk('Perfil actualizado en la base de datos.');
       } else {
-        const errorData = await resp.json();
-        this.mensajeErr = errorData.error || 'No se pudo guardar en el servidor.';
+        // Intentar leer el error solo si la respuesta es JSON
+        const contentType = resp.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await resp.json();
+          this.mensajeErr = errorData.details || errorData.error || 'Error en el servidor.';
+        } else {
+          this.mensajeErr = `Error del servidor (${resp.status}). Revisa la consola de Spring Boot.`;
+        }
       }
     } catch (e) {
       this.mensajeErr = 'Error de conexión con el servidor.';

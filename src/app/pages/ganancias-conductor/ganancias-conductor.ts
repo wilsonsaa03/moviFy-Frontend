@@ -89,10 +89,11 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
         // Refresca estadísticas cada 30 s
         this.pollingInterval = setInterval(() => this.cargarStats(), 30000);
       },
-      error: () => {
+      error: (err: any) => {
         this.nombre = localStorage.getItem('nombre') || 'Conductor';
         this.cargando = false;
-        this.cargarDatosFallback();
+        const msg = err.error?.error || 'No eres un conductor registrado.';
+        this.mensajeErr = `Error: ${msg}`;
       }
     });
   }
@@ -171,7 +172,10 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
           }));
         }
       })
-      .catch(() => this.cargarDatosFallback());
+      .catch((err) => {
+        console.error('Error al cargar estadísticas reales:', err);
+        this.mensajeErr = 'Error al sincronizar estadísticas con la base de datos.';
+      });
   }
 
   /**
@@ -200,7 +204,10 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
         this.transacciones = pagina === 0 ? mapeadas : [...this.transacciones, ...mapeadas];
         this.paginaTransacciones = pagina;
       })
-      .catch(() => this.cargarTransaccionesFallback());
+      .catch((err) => {
+        console.error('Error al cargar transacciones reales:', err);
+        this.transacciones = [];
+      });
   }
 
   /**
@@ -216,7 +223,10 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
       .then((data: { dia: string; valor: number }[]) => {
         this.puntosGrafica = data;
       })
-      .catch(() => this.cargarGraficaFallback());
+      .catch((err) => {
+        console.error('Error al cargar gráfica real:', err);
+        this.puntosGrafica = [];
+      });
   }
 
   cargarMasTransacciones(): void {
@@ -417,45 +427,16 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
   //  FALLBACKS (datos de demostración cuando el backend no responde)
   // ════════════════════════════════════════════════════════════
   private cargarDatosFallback(): void {
-    this.stats = {
-      ganancias_hoy:    45800,  viajes_hoy:    5,   trend_hoy:    18,
-      ganancias_semana: 285600, viajes_semana: 32,  trend_semana: 12,
-      ganancias_mes:    1240500,viajes_mes:    128,  trend_mes:    22,
-      saldo_disponible: 320000,
-      total_acumulado:  8450300,
-      ganancia_viajes:  1050300,
-      propinas:         120800,
-      incentivos:       69400
-    };
-    this.metodosPago = [
-      { icono: '💵', nombre: 'Efectivo',           monto: 870200, pct: 70.2 },
-      { icono: '💳', nombre: 'Tarjeta',            monto: 320300, pct: 25.8 },
-      { icono: '📱', nombre: 'Billeteras digitales',monto:  50000, pct:  4.0 }
-    ];
-    this.cargarGraficaFallback();
-    this.cargarTransaccionesFallback();
+    // Método vaciado para evitar mostrar datos falsos de david s
+    console.warn('El sistema intentó cargar datos de prueba, pero han sido deshabilitados.');
   }
 
   private cargarGraficaFallback(): void {
-    const hoy = new Date();
-    const dias = Array.from({ length: 31 }, (_, i) => {
-      const d = new Date(hoy.getFullYear(), hoy.getMonth(), i + 1);
-      return {
-        dia: d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }),
-        valor: Math.floor(30000 + Math.random() * 170000)
-      };
-    });
-    this.puntosGrafica = dias;
+    this.puntosGrafica = [];
   }
 
   private cargarTransaccionesFallback(): void {
-    this.transacciones = [
-      { id: 1, tipo: 'Pago',      titulo: 'Viaje completado',    subtitulo: 'Carrera 40 #12-45 → C.C. Plaza',             fecha: '01 Jun 2026', hora: '3:45 PM', monto:  12500, icono: '✅', iconClass: 'ti-green',  badgeClass: 'badge-pago' },
-      { id: 2, tipo: 'Pago',      titulo: 'Viaje completado',    subtitulo: 'Barrio El Jardín → Universidad Industrial',  fecha: '01 Jun 2026', hora: '2:10 PM', monto:   9200, icono: '✅', iconClass: 'ti-green',  badgeClass: 'badge-pago' },
-      { id: 3, tipo: 'Propina',   titulo: 'Propina recibida',    subtitulo: 'De: Juan Pérez',                              fecha: '01 Jun 2026', hora: '2:10 PM', monto:   3000, icono: '🎁', iconClass: 'ti-orange', badgeClass: 'badge-propina' },
-      { id: 4, tipo: 'Incentivo', titulo: 'Incentivo por objetivo',subtitulo: 'Meta de 20 viajes completados',            fecha: '31 May 2026', hora: '11:59 PM',monto:  15000, icono: '⭐', iconClass: 'ti-blue',   badgeClass: 'badge-incentivo' },
-      { id: 5, tipo: 'Retiro',    titulo: 'Retiro realizado',    subtitulo: 'Transferencia a Bancolombia •••• 4567',      fecha: '31 May 2026', hora: '9:30 AM', monto: -200000, icono: '🏦', iconClass: 'ti-purple', badgeClass: 'badge-retiro' }
-    ];
+    this.transacciones = [];
   }
 
   // ════════════════════════════════════════════════════════════
