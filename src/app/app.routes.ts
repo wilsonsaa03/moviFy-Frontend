@@ -15,6 +15,15 @@ export const routes: Routes = [
 
   // Dashboards (Home)
   { path: 'home-usuario', loadComponent: () => import('./pages/home-usuario/home-usuario').then(m => m.HomeUsuarioComponent) },
+  { path: 'mis-viajes', loadComponent: () => import('./pages/viajes-usuario/viajes-usuario').then(m => m.ViajesUsuarioComponent) },
+  // ✅ Otras rutas comentadas temporalmente hasta que crees los archivos para evitar errores de compilación
+  // { path: 'mis-pedidos', loadComponent: () => import('./pages/mis-pedidos/mis-pedidos').then(m => m.MisPedidosComponent) },
+  // { path: 'favoritos', loadComponent: () => import('./pages/favoritos/favoritos').then(m => m.FavoritosComponent) },
+  // { path: 'metodos-pago', loadComponent: () => import('./pages/metodos-pago/metodos-pago').then(m => m.MetodosPagoComponent) },
+  // { path: 'promociones', loadComponent: () => import('./pages/promociones/promociones').then(m => m.PromocionesComponent) },
+  // { path: 'soporte', loadComponent: () => import('./pages/soporte/soporte').then(m => m.SoporteComponent) },
+  // { path: 'notificaciones', loadComponent: () => import('./pages/notificaciones/notificaciones').then(m => m.NotificacionesComponent) },
+  // { path: 'configuracion', loadComponent: () => import('./pages/configuracion/configuracion').then(m => m.ConfiguracionComponent) },
   { path: 'conductor', loadComponent: () => import('./pages/home-conductor/home-conductor').then(m => m.HomeConductorComponent) },
   { path: 'admin', loadComponent: () => import('./pages/home-admin/home-admin').then(m => m.HomeAdminComponent) },
 
