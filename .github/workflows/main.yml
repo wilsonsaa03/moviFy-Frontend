@@ -28,7 +28,7 @@ jobs:
       - name: 📁 Preparar archivos para deploy
         run: cp -r dist/browser deploy_output
 
-      # 🧹 Limpiar carpeta del servidor
+      # 🧹 Limpiar carpeta del servidor (borra todo incluyendo dotfiles)
       - name: 🧹 Limpiar servidor
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -36,7 +36,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           command_timeout: 5m
-          script: rm -rf /var/www/ds2/movify/movify-frontend/*
+          script: find /var/www/ds2/movify/movify-frontend -mindepth 1 -delete
 
       # 🚀 Subir build al servidor
       - name: 🚀 Deploy via SCP
@@ -49,11 +49,13 @@ jobs:
           target: "/var/www/ds2/movify/movify-frontend"
           strip_components: 1
 
-      # ✅ Verificar archivos en servidor
+      # ✅ Verificar deploy
       - name: ✅ Verificar deploy
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          script: ls -la /var/www/ds2/movify/movify-frontend/
+          script: |
+            echo "=== Archivos ===" && ls -la /var/www/ds2/movify/movify-frontend/
+            echo "=== .htaccess ===" && cat /var/www/ds2/movify/movify-frontend/.htaccess
