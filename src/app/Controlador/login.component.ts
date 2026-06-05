@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 
 import { UsuarioService } from '../Base_de_datos/usuario.service';
+import { AdminEmailDirective } from '../Directivas/admin-email.directive';
 import { Usuario } from '../Modelo/usuario.model';
 
 declare const google: any;
@@ -16,7 +17,8 @@ declare const FB: any;
   imports: [
     CommonModule,
     FormsModule,
-    RouterModule
+    RouterModule,
+    AdminEmailDirective
   ],
 
   templateUrl: './login.component.html',
@@ -355,58 +357,29 @@ export class LoginComponent implements OnInit {
   // =========================
 
   private handleLoginExitoso(res: any): void {
+    const id = res.id?.toString()
+             || res.user?.id?.toString()
+             || res.usuario?.id?.toString()
+             || res.userId?.toString()
+             || '';
 
-    // GUARDAR DATOS
+    localStorage.setItem('token',    res.token || '');
+    localStorage.setItem('id',       id);
+    localStorage.setItem('rol',      res.rol   || '');
+    localStorage.setItem('nombre',   res.nombre || '');
+    localStorage.setItem('foto',     res.foto   || '');
+    localStorage.setItem('correo',   res.correo || this.usuario.correo || '');
+    localStorage.setItem('telefono', res.telefono || '');
 
-    localStorage.setItem(
-      'token',
-      res.token
-    );
-
-    localStorage.setItem(
-      'id',
-      res.id?.toString() || res.user?.id?.toString() || ''
-    );
-
-    localStorage.setItem(
-      'rol',
-      res.rol
-    );
-
-    localStorage.setItem(
-      'nombre',
-      res.nombre
-    );
-
-    localStorage.setItem(
-      'foto',
-      res.foto || ''
-    );
-
-    // AGREGAR ESTO
-    // GUARDAR CORREO
-
-    localStorage.setItem(
-      'correo',
-      res.correo || this.usuario.correo
-    );
-
-    // REDIRECCION
-
-    if (res.rol === 'admin') {
-
+    // Navegar según rol (el backend usa 'cliente', no 'usuario')
+    const rol = res.rol || '';
+    if (rol === 'admin') {
       this.router.navigate(['/admin']);
-
-    } else if (res.rol === 'conductor') {
-
+    } else if (rol === 'conductor') {
       this.router.navigate(['/conductor']);
-
     } else {
-
+      // cliente u otro rol van al home
       this.router.navigate(['/home-usuario']);
-
     }
-
   }
-
 }

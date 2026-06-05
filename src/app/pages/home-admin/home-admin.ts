@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { UsuarioService } from '../../Base_de_datos/usuario.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-home-admin',
@@ -12,101 +14,187 @@ import { Router } from '@angular/router';
 })
 export class HomeAdminComponent implements OnInit {
 
-  // ── DATOS ADMIN ───────────────────────────────────
-  nombre       = '';
-  foto         = '';
-  notificaciones = 5;
-  seccionActiva  = 'dashboard';
+  // NAV
+  nombre = '';
+  foto = '';
+  notificaciones = 0;
+
+  // SECCIONES
+  seccionActiva = 'dashboard';
+
+  // CONDUCTORES
+  conductores: any[] = [];
   filtroConductor = 'todos';
+  conductorSeleccionado: any = null;
+  mostrarModal = false;
+  motivoRechazo = '';
 
-  // ── ESTADÍSTICAS GLOBALES ─────────────────────────
-  totalUsuarios   = 248;
-  totalConductores = 34;
-  totalServicios  = 87;
-  totalGanancias  = 4850000;
+  // USUARIOS
+  usuarios: any[] = [];
+  cargandoUsuarios = false;
+  errorUsuarios = '';
 
-  // ── REPORTES ──────────────────────────────────────
-  transportesMes      = 312;
-  domiciliosMes       = 198;
-  encomiendaMes       = 94;
-  calificacionPromedio = 4.7;
-  porcentajeTransporte = 52;
-  porcentajeDomicilio  = 33;
-  porcentajeEncomienda = 15;
+  // SERVICIOS
+  servicios: any[] = [];
 
-  // ── CONDUCTORES ───────────────────────────────────
-  conductores = [
-    { id: 1, nombre: 'Carlos Pérez',   correo: 'carlos@mail.com', placa: 'ABC12D', viajes: 45, calificacion: 4.9, estado: 'pendiente' },
-    { id: 2, nombre: 'Luis Ramírez',   correo: 'luis@mail.com',   placa: 'XYZ34F', viajes: 120, calificacion: 4.7, estado: 'pendiente' },
-    { id: 3, nombre: 'Pedro Gómez',    correo: 'pedro@mail.com',  placa: 'DEF56G', viajes: 88, calificacion: 4.8, estado: 'aprobado' },
-    { id: 4, nombre: 'Juan Torres',    correo: 'juan@mail.com',   placa: 'GHI78H', viajes: 33, calificacion: 4.5, estado: 'aprobado' },
-    { id: 5, nombre: 'Mario Salcedo',  correo: 'mario@mail.com',  placa: 'JKL90I', viajes: 0,  calificacion: 0,   estado: 'rechazado' }
-  ];
+  // STATS DASHBOARD
+  totalUsuarios = 0;
+  totalConductores = 0;
+  totalServicios = 0;
+  totalGanancias = 0;
+  conductoresPendientes = 0;
 
-  // ── USUARIOS ──────────────────────────────────────
-  usuarios = [
-    { id: 1, nombre: 'María López',    correo: 'maria@mail.com',  telefono: '3001234567', servicios: 12, estado: 'activo' },
-    { id: 2, nombre: 'Ana Martínez',   correo: 'ana@mail.com',    telefono: '3107654321', servicios: 8,  estado: 'activo' },
-    { id: 3, nombre: 'Sofía Castro',   correo: 'sofia@mail.com',  telefono: '3159876543', servicios: 3,  estado: 'activo' },
-    { id: 4, nombre: 'Diego Herrera',  correo: 'diego@mail.com',  telefono: '3201112233', servicios: 0,  estado: 'inactivo' }
-  ];
+  // STATS REPORTES
+  transportesMes = 0;
+  domiciliosMes = 0;
+  encomiendaMes = 0;
+  calificacionPromedio = 0;
+  porcentajeTransporte = 0;
+  porcentajeDomicilio = 0;
+  porcentajeEncomienda = 0;
 
-  // ── SERVICIOS ─────────────────────────────────────
-  servicios = [
-    { icono: '🏍️', tipo: 'Transporte',  destino: 'C.C. Unicentro',     conductor: 'Pedro Gómez',  cliente: 'María López',  precio: 8500,  fecha: '20 may, 9:00 AM', estado: 'completado' },
-    { icono: '🛵',  tipo: 'Domicilio',   destino: 'Rest. El Punto',      conductor: 'Juan Torres',  cliente: 'Ana Martínez', precio: 6200,  fecha: '20 may, 10:15 AM', estado: 'completado' },
-    { icono: '📦',  tipo: 'Encomienda',  destino: 'Universidad del Valle',conductor: 'Pedro Gómez', cliente: 'Sofía Castro', precio: 9000,  fecha: '20 may, 11:30 AM', estado: 'en curso' },
-    { icono: '🏍️', tipo: 'Transporte',  destino: 'Aeropuerto Bonilla',  conductor: 'Juan Torres',  cliente: 'Diego Herrera',precio: 15000, fecha: '20 may, 12:00 PM', estado: 'completado' },
-    { icono: '🛵',  tipo: 'Domicilio',   destino: 'Clínica Valle del Lili',conductor: 'Pedro Gómez',cliente: 'María López',  precio: 7500,  fecha: '20 may, 1:00 PM',  estado: 'cancelado' }
-  ];
+  cargando = true;
 
-  get conductoresPendientes(): number {
-    return this.conductores.filter(c => c.estado === 'pendiente').length;
-  }
-
-  constructor(private router: Router) {}
+  constructor(private router: Router, private usuarioService: UsuarioService) {}
 
   ngOnInit(): void {
     this.nombre = localStorage.getItem('nombre') || 'Admin';
-    this.foto   = localStorage.getItem('foto')   || '';
+    this.foto = localStorage.getItem('foto') || '';
+    this.cargarDatos();
+    this.cargarUsuarios();
   }
 
-  // ── FILTRAR CONDUCTORES ───────────────────────────
+  // ─── CONDUCTORES ───────────────────────────────
+  cargarDatos() {
+    this.cargando = true;
+    fetch(`${environment.apiUrl}/transporte/admin/conductores`)
+      .then(res => res.json())
+      .then(data => {
+        this.conductores = data;
+        this.totalConductores = data.filter((c: any) => c.estado === 'aprobado').length;
+        this.conductoresPendientes = data.filter((c: any) => c.estado === 'pendiente').length;
+        this.cargando = false;
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        this.cargando = false;
+      });
+  }
+
   conductoresFiltrados(): any[] {
     if (this.filtroConductor === 'todos') return this.conductores;
     return this.conductores.filter(c => c.estado === this.filtroConductor);
   }
 
-  // ── APROBAR CONDUCTOR ─────────────────────────────
-  aprobarConductor(conductor: any): void {
-    conductor.estado = 'aprobado';
-    this.totalConductores++;
+  aprobarConductor(c: any) { this.cambiarEstado(c.conductor_id, 'aprobado'); }
+  rechazarConductor(c: any) { this.conductorSeleccionado = c; this.mostrarModal = true; }
+  bloquearConductor(c: any) { this.cambiarEstado(c.conductor_id, 'suspendido'); }
+
+  async cambiarEstado(conductorId: number, nuevoEstado: string) {
+    if (nuevoEstado === 'rechazado' && !this.motivoRechazo) {
+      alert('Por favor ingrese un motivo de rechazo.');
+      return;
+    }
+    const adminId = localStorage.getItem('id');
+    try {
+      const resp = await fetch(`${environment.apiUrl}/transporte/admin/conductor/${conductorId}/estado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          estado: nuevoEstado,
+          motivo_rechazo: nuevoEstado === 'rechazado' ? this.motivoRechazo : '',
+          admin_id: adminId
+        })
+      });
+      if (resp.ok) {
+        alert(`Conductor ${nuevoEstado} con éxito.`);
+        this.cerrarModal();
+        this.cargarDatos();
+      }
+    } catch (err) {
+      console.error('Error al actualizar:', err);
+    }
   }
 
-  // ── RECHAZAR CONDUCTOR ────────────────────────────
-  rechazarConductor(conductor: any): void {
-    conductor.estado = 'rechazado';
+  // ─── USUARIOS ──────────────────────────────────
+  cargarUsuarios() {
+    this.cargandoUsuarios = true;
+    this.errorUsuarios = '';
+    this.usuarioService.obtenerTodos().subscribe({
+      next: (data: any[]) => {
+        this.usuarios = data;
+        this.totalUsuarios = data.length;
+        this.cargandoUsuarios = false;
+      },
+      error: (err: any) => {
+        console.error('Error cargando usuarios:', err);
+        this.errorUsuarios = 'No se pudieron cargar los usuarios.';
+        this.cargandoUsuarios = false;
+      }
+    });
   }
 
-  // ── BLOQUEAR CONDUCTOR ────────────────────────────
-  bloquearConductor(conductor: any): void {
-    conductor.estado = 'rechazado';
-    this.totalConductores--;
+  bloquearUsuario(u: any) {
+    if (confirm(`¿Estás seguro de bloquear al usuario ${u.nombre}?`)) {
+      this.cambiarEstadoUsuario(u.id, 'bloqueado');
+    }
   }
 
-  // ── BLOQUEAR USUARIO ──────────────────────────────
-  bloquearUsuario(usuario: any): void {
-    usuario.estado = 'inactivo';
+  activarUsuario(u: any) {
+    this.cambiarEstadoUsuario(u.id, 'activo');
   }
 
-  // ── ACTIVAR USUARIO ───────────────────────────────
-  activarUsuario(usuario: any): void {
-    usuario.estado = 'activo';
+  private async cambiarEstadoUsuario(id: number, nuevoEstado: string) {
+    try {
+      // Asumimos que has añadido este método al service o usamos fetch directamente
+      const resp = await fetch(`${environment.apiUrl}/auth/usuarios/${id}/estado`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ estado: nuevoEstado })
+      });
+
+      if (resp.ok) {
+        // Actualizamos localmente para no recargar todo
+        const user = this.usuarios.find(user => user.id === id);
+        if (user) user.estado = nuevoEstado;
+        
+        alert(`Usuario actualizado a: ${nuevoEstado}`);
+      } else {
+        alert('Error al actualizar el estado del usuario.');
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    }
   }
 
-  // ── CERRAR SESIÓN ─────────────────────────────────
-  cerrarSesion(): void {
+  // ─── SESIÓN ────────────────────────────────────
+  cerrarSesion() {
     localStorage.clear();
     this.router.navigate(['/login']);
+  }
+
+  cerrarModal() {
+    this.mostrarModal = false;
+    this.conductorSeleccionado = null;
+    this.motivoRechazo = '';
+  }
+
+  getEstadoClass(estado: string): string {
+    switch (estado?.toLowerCase()) {
+      case 'aprobado': return 'status-approved';
+      case 'rechazado': return 'status-rejected';
+      case 'suspendido': return 'status-suspended';
+      default: return 'status-pending';
+    }
+  }
+
+  getFriendlyDate(fecha: string): string {
+    if (!fecha) return 'Pendiente';
+    return new Date(fecha).toLocaleDateString('es-ES', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    });
   }
 }

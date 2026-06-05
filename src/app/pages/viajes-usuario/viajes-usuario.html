@@ -1,7 +1,7 @@
 <div class="vu-layout">
 
   <!-- ══════════════ SIDEBAR ══════════════ -->
-  <aside class="vu-sidebar" [class.visible]="sidebarVisible">
+  <aside class="vu-sidebar" [class.visible]="menuAbierto">
 
     <div class="sb-logo">
       <img src="/assets/movify.jpg" class="sb-logo-img" alt="MoviFY">
@@ -115,7 +115,7 @@
           <span class="hn-name">{{ nombre }}</span>
           <span class="hn-chevron">▾</span>
 
-          <div class="hn-dropdown" *ngIf="menuAbierto" (click)="$event.stopPropagation()">
+          <div class="hn-dropdown" *ngIf="dropdownAbierto" (click)="$event.stopPropagation()">
             <div class="dd-header">
               <div class="dd-av">{{ nombre.charAt(0).toUpperCase() }}</div>
               <div>
@@ -123,7 +123,7 @@
                 <p class="dd-role">Usuario MoviFY</p>
               </div>
             </div>
-            <button class="dd-item">👤 Ver perfil</button>
+            <button class="dd-item" (click)="verPerfil()">👤 Ver perfil</button>
             <button class="dd-item">✏️ Editar perfil</button>
             <button class="dd-item">⭐ Favoritos</button>
             <button class="dd-item">⚙️ Configuración</button>

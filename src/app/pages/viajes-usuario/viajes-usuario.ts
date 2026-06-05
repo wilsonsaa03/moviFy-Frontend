@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-viajes-usuario',
@@ -9,122 +10,176 @@ import { Router, RouterModule } from '@angular/router';
   templateUrl: './viajes-usuario.html',
   styleUrls: ['./viajes-usuario.css']
 })
-export class ViajesUsuarioComponent implements OnInit {
+export class ViajesUsuarioComponent implements OnInit, OnDestroy {
 
   nombre = '';
-  menuAbierto = false;
-  sidebarVisible = false;
+  menuAbierto = false;      // Unificado: controla el menú izquierdo
+  dropdownAbierto = false;  // Dropdown perfil
   filtroActivo = 'todos';
+  cargando = true;
+
+  private clickListener: any;
 
   // Stats del mes
   stats = {
-    viajes: 18,
-    gastado: 245000,
-    enCurso: 1,
-    favoritos: 4
+    viajes: 0,
+    gastado: 0,
+    enCurso: 0,
+    favoritos: 0
   };
 
   // Servicio en curso
-  servicioEnCurso = {
-    origen: 'Casa',
-    origenDir: 'Calle 45 #23-10',
-    destino: 'Centro Comercial Cacique',
-    destinoDir: 'Carrera 33 #45-67',
-    conductorNombre: 'Juan Pérez',
-    conductorFoto: '',
-    conductorRating: 4.9,
-    tiempoRestante: 8
-  };
+  servicioEnCurso: any = null;
 
   // Lista de viajes
-  viajes = [
-    {
-      id: 1,
-      tipo: 'transporte',
-      tipoLabel: 'Transporte',
-      tipoColor: 'green',
-      icono: '🚗',
-      origen: 'Barrio El Jardín',
-      destino: 'Universidad Industrial',
-      fecha: '01 Jun 2026',
-      hora: '3:45 PM',
-      pago: 'Visa •••• 4567',
-      precio: 12500,
-      estado: 'Completado',
-      estadoClass: 'completado',
-      accionLabel: 'Repetir viaje',
-      accionClass: 'btn-repetir'
-    },
-    {
-      id: 2,
-      tipo: 'domicilio',
-      tipoLabel: 'Domicilio',
-      tipoColor: 'orange',
-      icono: '🛵',
-      origen: 'Restaurante La Fogata',
-      destino: 'Burger Clásica + Papas + Gaseosa',
-      fecha: '01 Jun 2026',
-      hora: '1:15 PM',
-      pago: 'Nequi',
-      precio: 18000,
-      estado: 'Entregado',
-      estadoClass: 'entregado',
-      accionLabel: 'Ver detalle',
-      accionClass: 'btn-detalle-orange'
-    },
-    {
-      id: 3,
-      tipo: 'encomienda',
-      tipoLabel: 'Encomienda',
-      tipoColor: 'purple',
-      icono: '📦',
-      origen: 'Documentos importantes',
-      destino: 'Sobre manila mediano',
-      fecha: '31 May 2026',
-      hora: '11:20 AM',
-      pago: 'Visa •••• 4567',
-      precio: 9000,
-      estado: 'Entregado',
-      estadoClass: 'entregado',
-      accionLabel: 'Ver comprobante',
-      accionClass: 'btn-detalle-purple'
-    },
-    {
-      id: 4,
-      tipo: 'transporte',
-      tipoLabel: 'Transporte',
-      tipoColor: 'green',
-      icono: '🚗',
-      origen: 'Casa',
-      destino: 'Centro Comercial Cacique',
-      fecha: '30 May 2026',
-      hora: '6:30 PM',
-      pago: 'Efectivo',
-      precio: 0,
-      estado: 'Cancelado',
-      estadoClass: 'cancelado',
-      accionLabel: 'Ver detalle',
-      accionClass: 'btn-detalle-outline'
-    }
-  ];
+  viajes: any[] = [];
 
   get viajesFiltrados() {
     if (this.filtroActivo === 'todos') return this.viajes;
     return this.viajes.filter(v => v.tipo === this.filtroActivo);
   }
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.nombre = localStorage.getItem('nombre') || 'Usuario';
+    const usuarioId = localStorage.getItem('id');
+
+    if (usuarioId) {
+      this.cargarDatosDesdeDB(usuarioId);
+    } else {
+      this.cargando = false;
+    }
+
+    // ✅ Cerrar menús al hacer clic fuera
+    this.clickListener = () => {
+      this.dropdownAbierto = false;
+      this.menuAbierto = false;
+      this.cdr.detectChanges();
+    };
+    document.addEventListener('click', this.clickListener);
+  }
+
+  ngOnDestroy(): void {
+    if (this.clickListener) document.removeEventListener('click', this.clickListener);
+  }
+
+  cargarDatosDesdeDB(id: string) {
+    this.cargando = true;
+    
+    // 1. Cargar historial completo del usuario
+    fetch(`${environment.apiUrl}/transporte/servicios/usuario/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        // Invertimos para ver los más recientes arriba
+        const sorted = Array.isArray(data) ? data.reverse() : [];
+        this.viajes = sorted.map((item: any) => this.mapearViaje(item));
+        
+        // Detectar automáticamente si hay un servicio activo para la tarjeta superior
+        const activo = sorted.find((s: any) => 
+          !['FINALIZADO', 'CANCELADO', 'RECHAZADO'].includes(s.estado.toUpperCase())
+        );
+        
+        if (activo) {
+          this.cargarDetalleServicioActivo(activo.id);
+        } else {
+          this.servicioEnCurso = null;
+        }
+
+        // Actualizar estadísticas basadas en la carga real
+        this.stats.enCurso = sorted.filter((s: any) => !['FINALIZADO', 'CANCELADO'].includes(s.estado)).length;
+        
+        // Intentar obtener el conteo de favoritos (endpoint opcional)
+        fetch(`${environment.apiUrl}/usuario/favoritos-count/${id}`)
+          .then(r => r.json())
+          .then(fav => {
+            this.stats.favoritos = fav.total || 0;
+            this.cdr.detectChanges();
+          })
+          .catch(() => {
+            // Fallback si el endpoint no existe aún: contar los que vienen marcados en la lista si aplica
+            this.stats.favoritos = 0;
+          });
+
+        this.cargando = false;
+        this.cdr.detectChanges();
+      })
+      .catch(err => {
+        console.error('Error al cargar historial:', err);
+        this.cargando = false;
+        this.cdr.detectChanges();
+      });
+
+    // 2. Cargar estadísticas financieras del mes actual
+    fetch(`${environment.apiUrl}/transporte/servicios/usuario/${id}/mes-actual`)
+      .then(res => res.json())
+      .then(data => {
+        // Si el backend devuelve un objeto con totales
+        this.stats.viajes = data.total_servicios || (Array.isArray(data) ? data.length : 0);
+        this.stats.gastado = data.total_gasto || (Array.isArray(data) ? data.reduce((acc: number, v: any) => acc + (v.tarifa || 0), 0) : 0);
+        this.cdr.detectChanges();
+      })
+      .catch(err => console.warn('No se pudieron obtener stats del mes:', err));
+  }
+
+  private cargarDetalleServicioActivo(servicioId: number) {
+    fetch(`${environment.apiUrl}/transporte/servicio/${servicioId}`)
+      .then(res => res.json())
+      .then(s => {
+        this.servicioEnCurso = {
+          id: s.id,
+          origen: 'Tu ubicación',
+          origenDir: s.origen_direccion || 'Punto de recogida',
+          destino: s.destino_direccion || 'Destino',
+          destinoDir: s.destino_direccion || '',
+          conductorNombre: s.conductor_nombre || 'Asignando conductor...',
+          conductorFoto: s.conductor_foto || '',
+          conductorRating: 4.9,
+          tiempoRestante: 5
+        };
+        this.cdr.detectChanges();
+      });
+  }
+
+  private mapearViaje(item: any) {
+    const tipo = item.tipo?.toLowerCase() || 'transporte';
+    const estado = item.estado?.toUpperCase() || 'PENDIENTE';
+    
+    return {
+      id: item.id,
+      tipo: tipo,
+      tipoLabel: tipo.charAt(0).toUpperCase() + tipo.slice(1),
+      tipoColor: tipo === 'domicilio' ? 'orange' : (tipo === 'encomienda' ? 'purple' : 'green'),
+      icono: tipo === 'domicilio' ? '🛵' : (tipo === 'encomienda' ? '📦' : '🚗'),
+      origen: item.origen_direccion || 'Origen',
+      destino: item.destino_direccion || 'Destino',
+      fecha: item.fecha_solicitud ? new Date(item.fecha_solicitud).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : 'Hoy',
+      hora: new Date(item.fecha_solicitud).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      pago: item.metodo_pago || 'Efectivo',
+      precio: item.tarifa || 0,
+      estado: estado === 'FINALIZADO' ? 'Completado' : (estado === 'CANCELADO' ? 'Cancelado' : 'En curso'),
+      estadoClass: estado === 'FINALIZADO' ? 'completado' : (estado === 'CANCELADO' ? 'cancelado' : 'en-camino'),
+      accionLabel: estado === 'FINALIZADO' ? 'Repetir viaje' : 'Ver detalle',
+      accionClass: estado === 'FINALIZADO' ? 'btn-repetir' : 'btn-detalle-outline'
+    };
   }
 
   toggleMenu(): void {
-    this.sidebarVisible = !this.sidebarVisible;
+    this.menuAbierto = !this.menuAbierto;
+    this.cdr.detectChanges(); // Fuerza la actualización inmediata de la interfaz
   }
 
   toggleMenuPerfil(): void {
-    this.menuAbierto = !this.menuAbierto;
+    this.dropdownAbierto = !this.dropdownAbierto;
+  }
+
+  verPerfil(): void {
+    this.dropdownAbierto = false;
+    this.menuAbierto = false;
+    this.router.navigate(['/mi-perfil']);
   }
 
   setFiltro(filtro: string): void {
@@ -133,6 +188,31 @@ export class ViajesUsuarioComponent implements OnInit {
 
   verSeguimiento(): void {
     // navegar a mapa/seguimiento
+  }
+
+  async cancelarViajeEnCurso(): Promise<void> {
+    if (!this.servicioEnCurso || !this.servicioEnCurso.id) return;
+
+    const confirmar = confirm('¿Estás seguro de que deseas cancelar tu servicio actual?');
+    if (!confirmar) return;
+
+    try {
+      const resp = await fetch(`${environment.apiUrl}/transporte/servicio/${this.servicioEnCurso.id}/estado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'CANCELADO' })
+      });
+
+      if (resp.ok) {
+        alert('Servicio cancelado correctamente.');
+        const usuarioId = localStorage.getItem('id');
+        if (usuarioId) this.cargarDatosDesdeDB(usuarioId);
+      } else {
+        alert('No se pudo cancelar el servicio. Intenta de nuevo.');
+      }
+    } catch (err) {
+      console.error('Error al cancelar el viaje:', err);
+    }
   }
 
   solicitarDeNuevo(): void {

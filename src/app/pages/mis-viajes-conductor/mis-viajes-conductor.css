@@ -5,7 +5,8 @@
    ================================================================ */
 *, *::before, *::after { 
   box-sizing: border-box; 
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-family: 'Inter', -apple-system, sans-serif !important;
+  letter-spacing: -0.01em;
 }
 
 /* ================================================================
@@ -65,12 +66,35 @@
   display: flex; align-items: center; gap: 12px;
   transition: all 0.2s ease; white-space: nowrap;
 }
-.nav-link:hover { background: #f1f5f9; }
+.nav-link:hover { background: #f0fdf4; color: #16a34a; }
+
 .nav-link.activo {
-  color: #16a34a; font-weight: 700;
-  background: #f0fdf4;
+  color: #16a34a; 
+  font-weight: 800;
+  background: transparent;
 }
-.link-icon { font-size: 17px; min-width: 22px; text-align: center; flex-shrink: 0; }
+
+.nav-link.activo .link-icon {
+  background: rgba(22, 163, 74, 0.15);
+  box-shadow: 0 0 0 2px #16a34a;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.link-icon { 
+  font-size: 18px; 
+  min-width: 36px; 
+  text-align: center; 
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .link-text { display: inline; }
 
 /* Banner */
@@ -126,7 +150,7 @@
 .navbar-right { display: flex; align-items: center; gap: 12px; position: relative; }
 
 .navbar-greeting { display: flex; flex-direction: column; }
-.navbar-hello { font-size: 16px; font-weight: 700; color: #1e293b; }
+.navbar-hello { font-size: 17px; font-weight: 700; color: #1e293b; letter-spacing: -0.02em; }
 .navbar-rol   { font-size: 12px; color: #64748b; }
 
 .menu-toggle {
@@ -212,7 +236,7 @@
   justify-content: center; font-size: 24px;
   border: 1px solid #e2e8f0;
 }
-.page-header h1 { font-size: 22px; font-weight: 800; color: #1e293b; margin: 0; }
+.page-header h1 { font-size: 22px; font-weight: 800; color: #1e293b; margin: 0; letter-spacing: -0.03em; }
 .page-header p  { font-size: 13px; color: #64748b; margin: 2px 0 0; }
 
 .btn-export {

@@ -2,182 +2,165 @@
 
   <!-- NAVBAR -->
   <nav class="navbar">
-
     <div class="navbar-left">
-      <img src="/assets/movify.jpg" class="nav-logo">
-      <span class="nav-brand">MoviFY</span>
-      <span class="nav-rol">· Admin</span>
+      <img src="/assets/logo transparente.png" class="nav-logo">
+      <span class="nav-brand">Movi<span>FY</span></span>
+    </div>
+
+    <div class="navbar-center">
+      <span class="welcome-title">¡Bienvenido, {{ nombre }}! 👋</span>
+      <span class="welcome-sub">Aquí tienes un resumen general de la plataforma.</span>
     </div>
 
     <div class="navbar-right">
-
       <div class="nav-notif">
         🔔
-        <span class="notif-badge" *ngIf="notificaciones > 0">
-          {{ notificaciones }}
-        </span>
+        <span class="notif-badge" *ngIf="conductoresPendientes > 0">{{ conductoresPendientes }}</span>
       </div>
-
       <div class="nav-perfil">
         <img *ngIf="foto" [src]="foto" class="nav-avatar">
-        <div *ngIf="!foto" class="nav-avatar-placeholder">
-          {{ nombre.charAt(0).toUpperCase() }}
-        </div>
+        <div *ngIf="!foto" class="nav-avatar-placeholder">{{ nombre.charAt(0).toUpperCase() }}</div>
         <div class="nav-info">
           <span class="nav-nombre">{{ nombre }}</span>
           <span class="nav-sub">Administrador</span>
         </div>
       </div>
-
-      <button class="btn-cerrar" (click)="cerrarSesion()">
-        Salir →
-      </button>
-
+      <button class="btn-cerrar" (click)="cerrarSesion()">Salir →</button>
     </div>
-
   </nav>
 
-  <!-- SIDEBAR + CONTENIDO -->
   <div class="layout">
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-
       <nav class="sidebar-nav">
-
-        <button class="nav-item" [class.activo]="seccionActiva === 'dashboard'"
-          (click)="seccionActiva = 'dashboard'">
-          📊 Dashboard
+        <button class="nav-item" [class.activo]="seccionActiva === 'dashboard'" (click)="seccionActiva = 'dashboard'">
+          <span class="nav-icon">📊</span> Dashboard
         </button>
-
-        <button class="nav-item" [class.activo]="seccionActiva === 'conductores'"
-          (click)="seccionActiva = 'conductores'">
-          🏍️ Conductores
-          <span class="nav-badge" *ngIf="conductoresPendientes > 0">
-            {{ conductoresPendientes }}
-          </span>
+        <button class="nav-item" [class.activo]="seccionActiva === 'conductores'" (click)="seccionActiva = 'conductores'">
+          <span class="nav-icon">🏍️</span> Conductores
+          <span class="nav-badge" *ngIf="conductoresPendientes > 0">{{ conductoresPendientes }}</span>
         </button>
-
-        <button class="nav-item" [class.activo]="seccionActiva === 'usuarios'"
-          (click)="seccionActiva = 'usuarios'">
-          👥 Usuarios
+        <button class="nav-item" [class.activo]="seccionActiva === 'usuarios'" (click)="seccionActiva = 'usuarios'">
+          <span class="nav-icon">👥</span> Usuarios
         </button>
-
-        <button class="nav-item" [class.activo]="seccionActiva === 'servicios'"
-          (click)="seccionActiva = 'servicios'">
-          📋 Servicios
+        <button class="nav-item" [class.activo]="seccionActiva === 'servicios'" (click)="seccionActiva = 'servicios'">
+          <span class="nav-icon">📋</span> Servicios
         </button>
-
-        <button class="nav-item" [class.activo]="seccionActiva === 'reportes'"
-          (click)="seccionActiva = 'reportes'">
-          📈 Reportes
+        <button class="nav-item" [class.activo]="seccionActiva === 'reportes'" (click)="seccionActiva = 'reportes'">
+          <span class="nav-icon">📈</span> Reportes
         </button>
-
       </nav>
 
+      <div class="sidebar-footer">
+        <div class="sidebar-promo">
+          <div class="promo-icon">🛡️</div>
+          <p class="promo-title">Todo bajo control</p>
+          <p class="promo-sub">Monitorea y administra tu plataforma en tiempo real.</p>
+          <button class="promo-btn" (click)="seccionActiva = 'reportes'">Ver reportes</button>
+        </div>
+      </div>
     </aside>
 
     <!-- CONTENIDO -->
     <main class="contenido">
 
-      <!-- ══ DASHBOARD ══════════════════════════════ -->
+      <!-- ══ DASHBOARD ══ -->
       <div *ngIf="seccionActiva === 'dashboard'">
 
-        <h2 class="seccion-titulo">📊 Dashboard</h2>
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Dashboard</h2>
+            <p class="page-sub">Resumen general de la plataforma</p>
+          </div>
+        </div>
 
-        <!-- STATS -->
+        <!-- STATS CARDS -->
         <div class="stats-grid">
-
           <div class="stat-card azul">
-            <span class="stat-icono">👥</span>
-            <div>
+            <div class="stat-left">
               <span class="stat-valor">{{ totalUsuarios }}</span>
               <span class="stat-label">Usuarios registrados</span>
+              <span class="stat-trend up">↑ 12.5% vs semana anterior</span>
             </div>
+            <div class="stat-icon-wrap azul-light">👥</div>
           </div>
-
           <div class="stat-card verde">
-            <span class="stat-icono">🏍️</span>
-            <div>
+            <div class="stat-left">
               <span class="stat-valor">{{ totalConductores }}</span>
               <span class="stat-label">Conductores activos</span>
+              <span class="stat-trend up">↑ 8.7% vs semana anterior</span>
             </div>
+            <div class="stat-icon-wrap verde-light">🏍️</div>
           </div>
-
           <div class="stat-card naranja">
-            <span class="stat-icono">📋</span>
-            <div>
+            <div class="stat-left">
               <span class="stat-valor">{{ totalServicios }}</span>
               <span class="stat-label">Servicios hoy</span>
+              <span class="stat-trend down">↓ 4.3% vs semana anterior</span>
             </div>
+            <div class="stat-icon-wrap naranja-light">📋</div>
           </div>
-
           <div class="stat-card morado">
-            <span class="stat-icono">💰</span>
-            <div>
+            <div class="stat-left">
               <span class="stat-valor">${{ totalGanancias | number }}</span>
               <span class="stat-label">Ingresos del mes</span>
+              <span class="stat-trend up">↑ 18.6% vs mes anterior</span>
             </div>
+            <div class="stat-icon-wrap morado-light">💰</div>
           </div>
-
         </div>
 
-        <!-- CONDUCTORES PENDIENTES -->
-        <div class="card" *ngIf="conductoresPendientes > 0">
+        <!-- BOTTOM GRID -->
+        <div class="dashboard-grid">
 
-          <div class="card-header">
-            <h3>⏳ Conductores por aprobar</h3>
-            <span class="badge-alerta">{{ conductoresPendientes }} pendientes</span>
+          <!-- CONDUCTORES PENDIENTES -->
+          <div class="card" *ngIf="conductoresPendientes > 0">
+            <div class="card-header">
+              <h3>Conductores por aprobar</h3>
+              <span class="badge-alerta">{{ conductoresPendientes }} pendientes</span>
+            </div>
+            <div class="conductor-item" *ngFor="let c of conductores | slice:0:3">
+              <div class="conductor-avatar">{{ c.nombre?.charAt(0)?.toUpperCase() }}</div>
+              <div class="conductor-info">
+                <h4>{{ c.nombre }}</h4>
+                <p>{{ c.correo }}</p>
+                <p>{{ c.placa || '—' }}</p>
+              </div>
+              <div class="conductor-acciones">
+                <button class="btn-aprobar" (click)="aprobarConductor(c)">✓ Aprobar</button>
+                <button class="btn-rechazar" (click)="rechazarConductor(c)">✗ Rechazar</button>
+              </div>
+            </div>
+            <button class="btn-ver-todos" (click)="seccionActiva = 'conductores'">Ver todos →</button>
           </div>
 
-          <div class="conductor-item" *ngFor="let c of conductores | slice:0:3">
-
-            <div class="conductor-avatar">
-              {{ c.nombre.charAt(0).toUpperCase() }}
+          <div class="card" *ngIf="conductoresPendientes === 0">
+            <div class="card-header">
+              <h3>Conductores por aprobar</h3>
             </div>
-
-            <div class="conductor-info">
-              <h4>{{ c.nombre }}</h4>
-              <p>{{ c.correo }} · {{ c.placa }}</p>
-            </div>
-
-            <div class="conductor-acciones">
-              <button class="btn-aprobar" (click)="aprobarConductor(c)">
-                ✓ Aprobar
-              </button>
-              <button class="btn-rechazar" (click)="rechazarConductor(c)">
-                ✗ Rechazar
-              </button>
-            </div>
-
+            <p style="color:#94a3b8;padding:20px 0;text-align:center">✅ No hay conductores pendientes</p>
           </div>
 
-          <button class="btn-ver-todos"
-            (click)="seccionActiva = 'conductores'">
-            Ver todos →
-          </button>
-
-        </div>
-
-        <!-- ÚLTIMOS SERVICIOS -->
-        <div class="card">
-
-          <div class="card-header">
-            <h3>📋 Últimos servicios</h3>
-            <span (click)="seccionActiva = 'servicios'">Ver todos</span>
-          </div>
-
-          <div class="servicio-item" *ngFor="let s of servicios | slice:0:5">
-            <span class="servicio-icono">{{ s.icono }}</span>
-            <div class="servicio-info">
-              <p class="servicio-destino">{{ s.destino }}</p>
-              <p class="servicio-meta">{{ s.fecha }} · {{ s.conductor }}</p>
+          <!-- ÚLTIMOS USUARIOS -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Últimos usuarios registrados</h3>
+              <span (click)="seccionActiva = 'usuarios'">Ver todos</span>
             </div>
-            <div class="servicio-derecha">
-              <span class="servicio-precio">${{ s.precio | number }}</span>
-              <span class="servicio-estado" [class]="s.estado">
-                {{ s.estado }}
-              </span>
+            <div class="usuario-item" *ngFor="let u of usuarios | slice:0:4">
+              <div class="fila-avatar">
+                <img *ngIf="u.foto" [src]="u.foto" style="width:36px;height:36px;border-radius:50%;object-fit:cover">
+                <span *ngIf="!u.foto">{{ u.nombre?.charAt(0)?.toUpperCase() }}</span>
+              </div>
+              <div class="usuario-info">
+                <p class="fila-nombre">{{ u.nombre }}</p>
+                <p class="fila-correo">{{ u.correo }}</p>
+              </div>
+              <span class="rol-badge" [ngStyle]="{
+                'background': u.rol === 'admin' ? '#fef3c7' : u.rol === 'conductor' ? '#dbeafe' : '#dcfce7',
+                'color': u.rol === 'admin' ? '#92400e' : u.rol === 'conductor' ? '#1e40af' : '#166534'
+              }">{{ u.rol }}</span>
             </div>
           </div>
 
@@ -185,224 +168,169 @@
 
       </div>
 
-      <!-- ══ CONDUCTORES ════════════════════════════ -->
+      <!-- ══ CONDUCTORES ══ -->
       <div *ngIf="seccionActiva === 'conductores'">
-
-        <div class="seccion-header">
-          <h2 class="seccion-titulo">🏍️ Conductores</h2>
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Conductores</h2>
+            <p class="page-sub">Gestiona y aprueba conductores de la plataforma</p>
+          </div>
           <div class="filtros">
-            <button class="filtro-btn" [class.activo]="filtroConductor === 'todos'"
-              (click)="filtroConductor = 'todos'">Todos</button>
-            <button class="filtro-btn" [class.activo]="filtroConductor === 'pendiente'"
-              (click)="filtroConductor = 'pendiente'">Pendientes</button>
-            <button class="filtro-btn" [class.activo]="filtroConductor === 'aprobado'"
-              (click)="filtroConductor = 'aprobado'">Aprobados</button>
-            <button class="filtro-btn" [class.activo]="filtroConductor === 'rechazado'"
-              (click)="filtroConductor = 'rechazado'">Rechazados</button>
+            <button class="filtro-btn" [class.activo]="filtroConductor === 'todos'" (click)="filtroConductor = 'todos'">Todos</button>
+            <button class="filtro-btn" [class.activo]="filtroConductor === 'pendiente'" (click)="filtroConductor = 'pendiente'">Pendientes</button>
+            <button class="filtro-btn" [class.activo]="filtroConductor === 'aprobado'" (click)="filtroConductor = 'aprobado'">Aprobados</button>
+            <button class="filtro-btn" [class.activo]="filtroConductor === 'rechazado'" (click)="filtroConductor = 'rechazado'">Rechazados</button>
           </div>
         </div>
 
         <div class="card">
-          <div class="tabla-header">
+          <div class="tabla-header cols-6">
             <span>Conductor</span>
             <span>Placa</span>
-            <span>Viajes</span>
-            <span>Calificación</span>
+            <span>Modelo</span>
+            <span>Teléfono</span>
             <span>Estado</span>
             <span>Acciones</span>
           </div>
-
-          <div class="tabla-fila" *ngFor="let c of conductoresFiltrados()">
-
+          <div class="tabla-fila cols-6" *ngFor="let c of conductoresFiltrados()">
             <div class="fila-conductor">
-              <div class="fila-avatar">{{ c.nombre.charAt(0).toUpperCase() }}</div>
+              <div class="fila-avatar">{{ c.nombre?.charAt(0)?.toUpperCase() }}</div>
               <div>
                 <p class="fila-nombre">{{ c.nombre }}</p>
                 <p class="fila-correo">{{ c.correo }}</p>
               </div>
             </div>
-
-            <span class="fila-placa">{{ c.placa }}</span>
-            <span>{{ c.viajes }}</span>
-            <span>⭐ {{ c.calificacion }}</span>
-
-            <span class="estado-badge" [class]="c.estado">
-              {{ c.estado }}
-            </span>
-
+            <span class="fila-placa">{{ c.placa || '—' }}</span>
+            <span>{{ c.modelo || '—' }}</span>
+            <span>{{ c.telefono || '—' }}</span>
+            <span class="estado-badge {{ c.estado }}">{{ c.estado }}</span>
             <div class="fila-acciones">
-              <button class="btn-aprobar" (click)="aprobarConductor(c)"
-                *ngIf="c.estado === 'pendiente'">
-                ✓
-              </button>
-              <button class="btn-rechazar" (click)="rechazarConductor(c)"
-                *ngIf="c.estado === 'pendiente'">
-                ✗
-              </button>
-              <button class="btn-bloquear" (click)="bloquearConductor(c)"
-                *ngIf="c.estado === 'aprobado'">
-                🚫
-              </button>
+              <button class="btn-aprobar" (click)="aprobarConductor(c)" *ngIf="c.estado === 'pendiente'">✓ Aprobar</button>
+              <button class="btn-rechazar" (click)="rechazarConductor(c)" *ngIf="c.estado === 'pendiente'">✗ Rechazar</button>
+              <button class="btn-bloquear" (click)="bloquearConductor(c)" *ngIf="c.estado === 'aprobado'">🚫</button>
             </div>
-
           </div>
-
+          <p *ngIf="conductoresFiltrados().length === 0" style="text-align:center;color:#94a3b8;padding:30px">No hay conductores en esta categoría</p>
         </div>
-
       </div>
 
-      <!-- ══ USUARIOS ═══════════════════════════════ -->
+      <!-- ══ USUARIOS ══ -->
       <div *ngIf="seccionActiva === 'usuarios'">
-
-        <h2 class="seccion-titulo">👥 Usuarios</h2>
-
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Usuarios</h2>
+            <p class="page-sub">Total: {{ totalUsuarios }} usuarios registrados</p>
+          </div>
+        </div>
         <div class="card">
-
-          <div class="tabla-header">
+          <p *ngIf="cargandoUsuarios" style="color:#64748b;padding:20px">Cargando usuarios...</p>
+          <p *ngIf="errorUsuarios" style="color:#dc2626;padding:20px">{{ errorUsuarios }}</p>
+          <div class="tabla-header cols-6">
             <span>Usuario</span>
+            <span>Correo</span>
             <span>Teléfono</span>
-            <span>Servicios</span>
+            <span>Rol</span>
             <span>Estado</span>
             <span>Acciones</span>
           </div>
-
-          <div class="tabla-fila" *ngFor="let u of usuarios">
-
+          <div class="tabla-fila cols-6" *ngFor="let u of usuarios">
             <div class="fila-conductor">
-              <div class="fila-avatar">{{ u.nombre.charAt(0).toUpperCase() }}</div>
+              <div class="fila-avatar">
+                <img *ngIf="u.foto" [src]="u.foto" style="width:36px;height:36px;border-radius:50%;object-fit:cover">
+                <span *ngIf="!u.foto">{{ u.nombre?.charAt(0)?.toUpperCase() }}</span>
+              </div>
               <div>
                 <p class="fila-nombre">{{ u.nombre }}</p>
-                <p class="fila-correo">{{ u.correo }}</p>
               </div>
             </div>
-
-            <span>{{ u.telefono }}</span>
-            <span>{{ u.servicios }}</span>
-
-            <span class="estado-badge" [class]="u.estado">
-              {{ u.estado }}
-            </span>
-
+            <span style="font-size:13px;color:#64748b">{{ u.correo }}</span>
+            <span>{{ u.telefono || '—' }}</span>
+            <span class="rol-badge" [ngStyle]="{
+              'background': u.rol === 'admin' ? '#fef3c7' : u.rol === 'conductor' ? '#dbeafe' : '#dcfce7',
+              'color': u.rol === 'admin' ? '#92400e' : u.rol === 'conductor' ? '#1e40af' : '#166534'
+            }">{{ u.rol }}</span>
+            <span class="estado-badge {{ u.estado }}">{{ u.estado }}</span>
             <div class="fila-acciones">
-              <button class="btn-bloquear" (click)="bloquearUsuario(u)"
-                *ngIf="u.estado === 'activo'">
-                🚫 Bloquear
-              </button>
-              <button class="btn-aprobar" (click)="activarUsuario(u)"
-                *ngIf="u.estado !== 'activo'">
-                ✓ Activar
-              </button>
+              <button class="btn-rechazar" (click)="bloquearUsuario(u)" *ngIf="u.estado === 'activo' && u.rol !== 'admin'">🚫 Bloquear</button>
+              <button class="btn-aprobar" (click)="activarUsuario(u)" *ngIf="u.estado !== 'activo'">✓ Activar</button>
             </div>
-
           </div>
-
         </div>
-
       </div>
 
-      <!-- ══ SERVICIOS ══════════════════════════════ -->
+      <!-- ══ SERVICIOS ══ -->
       <div *ngIf="seccionActiva === 'servicios'">
-
-        <h2 class="seccion-titulo">📋 Servicios</h2>
-
-        <div class="card">
-
-          <div class="tabla-header">
-            <span>Tipo</span>
-            <span>Destino</span>
-            <span>Conductor</span>
-            <span>Cliente</span>
-            <span>Precio</span>
-            <span>Estado</span>
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Servicios</h2>
+            <p class="page-sub">Historial de servicios de la plataforma</p>
           </div>
-
-          <div class="tabla-fila" *ngFor="let s of servicios">
+        </div>
+        <div class="card">
+          <div class="tabla-header cols-6">
+            <span>Tipo</span><span>Destino</span><span>Conductor</span>
+            <span>Cliente</span><span>Precio</span><span>Estado</span>
+          </div>
+          <div class="tabla-fila cols-6" *ngFor="let s of servicios">
             <span>{{ s.icono }} {{ s.tipo }}</span>
             <span>{{ s.destino }}</span>
             <span>{{ s.conductor }}</span>
             <span>{{ s.cliente }}</span>
             <span>${{ s.precio | number }}</span>
-            <span class="estado-badge" [class]="s.estado">{{ s.estado }}</span>
+            <span class="estado-badge {{ s.estado }}">{{ s.estado }}</span>
           </div>
-
+          <p *ngIf="servicios.length === 0" style="text-align:center;color:#94a3b8;padding:30px">No hay servicios registrados aún</p>
         </div>
-
       </div>
 
-      <!-- ══ REPORTES ═══════════════════════════════ -->
+      <!-- ══ REPORTES ══ -->
       <div *ngIf="seccionActiva === 'reportes'">
-
-        <h2 class="seccion-titulo">📈 Reportes</h2>
-
-        <div class="stats-grid">
-
-          <div class="stat-card azul">
-            <span class="stat-icono">🏍️</span>
-            <div>
-              <span class="stat-valor">{{ transportesMes }}</span>
-              <span class="stat-label">Transportes este mes</span>
-            </div>
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Reportes</h2>
+            <p class="page-sub">Estadísticas generales de la plataforma</p>
           </div>
-
-          <div class="stat-card verde">
-            <span class="stat-icono">🛵</span>
-            <div>
-              <span class="stat-valor">{{ domiciliosMes }}</span>
-              <span class="stat-label">Domicilios este mes</span>
-            </div>
-          </div>
-
-          <div class="stat-card naranja">
-            <span class="stat-icono">📦</span>
-            <div>
-              <span class="stat-valor">{{ encomiendaMes }}</span>
-              <span class="stat-label">Encomiendas este mes</span>
-            </div>
-          </div>
-
-          <div class="stat-card morado">
-            <span class="stat-icono">⭐</span>
-            <div>
-              <span class="stat-valor">{{ calificacionPromedio }}</span>
-              <span class="stat-label">Calificación promedio</span>
-            </div>
-          </div>
-
         </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3>📊 Ingresos por tipo de servicio</h3>
+        <div class="stats-grid">
+          <div class="stat-card azul">
+            <div class="stat-left"><span class="stat-valor">{{ transportesMes }}</span><span class="stat-label">Transportes este mes</span></div>
+            <div class="stat-icon-wrap azul-light">🏍️</div>
           </div>
+          <div class="stat-card verde">
+            <div class="stat-left"><span class="stat-valor">{{ domiciliosMes }}</span><span class="stat-label">Domicilios este mes</span></div>
+            <div class="stat-icon-wrap verde-light">🛵</div>
+          </div>
+          <div class="stat-card naranja">
+            <div class="stat-left"><span class="stat-valor">{{ encomiendaMes }}</span><span class="stat-label">Encomiendas este mes</span></div>
+            <div class="stat-icon-wrap naranja-light">📦</div>
+          </div>
+          <div class="stat-card morado">
+            <div class="stat-left"><span class="stat-valor">{{ calificacionPromedio }}</span><span class="stat-label">Calificación promedio</span></div>
+            <div class="stat-icon-wrap morado-light">⭐</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>📊 Distribución por tipo de servicio</h3></div>
           <div class="reporte-barra">
             <div class="barra-item">
               <span class="barra-label">🏍️ Transporte</span>
-              <div class="barra-track">
-                <div class="barra-fill azul" [style.width]="porcentajeTransporte + '%'"></div>
-              </div>
+              <div class="barra-track"><div class="barra-fill azul" [style.width]="porcentajeTransporte + '%'"></div></div>
               <span class="barra-valor">{{ porcentajeTransporte }}%</span>
             </div>
             <div class="barra-item">
               <span class="barra-label">🛵 Domicilios</span>
-              <div class="barra-track">
-                <div class="barra-fill verde" [style.width]="porcentajeDomicilio + '%'"></div>
-              </div>
+              <div class="barra-track"><div class="barra-fill verde" [style.width]="porcentajeDomicilio + '%'"></div></div>
               <span class="barra-valor">{{ porcentajeDomicilio }}%</span>
             </div>
             <div class="barra-item">
               <span class="barra-label">📦 Encomiendas</span>
-              <div class="barra-track">
-                <div class="barra-fill naranja" [style.width]="porcentajeEncomienda + '%'"></div>
-              </div>
+              <div class="barra-track"><div class="barra-fill naranja" [style.width]="porcentajeEncomienda + '%'"></div></div>
               <span class="barra-valor">{{ porcentajeEncomienda }}%</span>
             </div>
           </div>
         </div>
-
       </div>
 
     </main>
-
   </div>
-
 </div>

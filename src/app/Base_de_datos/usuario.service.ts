@@ -32,6 +32,9 @@ export class UsuarioService {
   registro(datos: any): Observable<any> {
     return this.http.post(`${this.BASE_URL}/registro`, datos);
   }
+  registroAdmin(datos: any): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/registro-admin`, datos);
+  }
 
   loginGoogle(datos: any): Observable<any> {
     return this.http.post(`${this.BASE_URL}/login-google`, datos);
@@ -67,6 +70,12 @@ export class UsuarioService {
   // =========================
   // PERFIL DE USUARIO
   // =========================
+
+  obtenerTodos(): Observable<any[]> {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return this.http.get<any[]>(`${this.BASE_URL}/usuarios`, { headers });
+  }
 
   obtenerPerfil(): Observable<Usuario> {
 
@@ -135,3 +144,4 @@ export class UsuarioService {
     return usuario ? JSON.parse(usuario) : null;
   }
 }
+
