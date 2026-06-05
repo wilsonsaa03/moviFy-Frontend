@@ -11,12 +11,12 @@
 
   <div class="enc-grid">
 
-    <!-- PANEL IZQUIERDO -->
+    <!-- PANEL IZQUIERDO: FORMULARIO -->
     <div class="form-card">
 
       <div class="form-header">
         <h2>Solicitar Encomienda <span>📦</span></h2>
-        <p>Envía paquetes de forma rápida, segura y confiable.</p>
+        <p>Envía paquetes de forma rápida, segura y confiable con MoviFY.</p>
       </div>
 
       <!-- FILA 1: RECOGIDA + REMITENTE -->
@@ -47,8 +47,9 @@
           <div class="field-box" [class.active]="destinoMarker" style="cursor:pointer;">
             <span class="fi">🎯</span>
             <div class="ft">
-              <strong>{{ destinoMarker ? 'Destino seleccionado' : 'Toca el mapa para seleccionar el destino' }}</strong>
-              <small *ngIf="tarifaEstimada > 0">{{ distanciaViaje.toFixed(1) }} km calculados</small>
+              <strong>{{ destinoMarker ? 'Destino seleccionado' : 'Toca el mapa para elegir' }}</strong>
+              <small *ngIf="tarifaEstimada > 0">{{ distanciaViaje.toFixed(1) }} km · {{ tiempoEstimado }} min</small>
+              <small *ngIf="tarifaEstimada === 0">Haz clic sobre el mapa</small>
             </div>
             <span class="fi">🗺️</span>
           </div>
@@ -77,7 +78,7 @@
             </div>
             <label class="sub-label mt10">Peso aproximado</label>
             <div class="select-box">
-              <span>🔒</span>
+              <span>⚖️</span>
               <select [(ngModel)]="pesoAproximado" class="enc-select">
                 <option value="1">1 Kg</option>
                 <option value="2">2 Kg</option>
@@ -89,7 +90,8 @@
           </div>
           <div>
             <label class="sub-label">📝 Descripción del paquete</label>
-            <textarea class="enc-textarea" placeholder="Ej: Documentos importantes, ropa, libros, repuestos, etc."
+            <textarea class="enc-textarea"
+              placeholder="Ej: Documentos importantes, ropa, libros, repuestos..."
               [(ngModel)]="descripcion" maxlength="120" rows="4"></textarea>
             <small class="char-count">{{ descripcion.length }}/120</small>
           </div>
@@ -128,21 +130,26 @@
 
     <!-- PANEL MAPA -->
     <div class="map-card">
-      <div class="map-hint" *ngIf="!destinoMarker">
+
+      <!-- Hint cuando no hay destino -->
+      <div class="map-hint" *ngIf="!destinoMarker && !buscandoConductor">
         <span>ℹ️</span>
         <div>
           <strong>Selecciona el destino</strong>
           <p>Toca en el mapa el punto de entrega para calcular la ruta y el valor.</p>
         </div>
       </div>
+
       <div id="map" style="height:100%;width:100%;"></div>
+
+      <!-- Overlay radar buscando conductor -->
       <div class="map-overlay" *ngIf="buscandoConductor && !conductorInfo">
         <div class="radar"></div>
-        <p class="radar-label">Buscando domiciliario...</p>
+        <p class="radar-label">Buscando conductor...</p>
       </div>
 
-      <!-- RESUMEN DEL ENVÍO -->
-      <div class="resumen-box" *ngIf="tarifaEstimada > 0">
+      <!-- Resumen del envío -->
+      <div class="resumen-box" *ngIf="tarifaEstimada > 0 && !buscandoConductor">
         <div class="resumen-title">Resumen del envío</div>
         <div class="resumen-items">
           <div class="resumen-item">
@@ -160,8 +167,9 @@
             <div><small>Valor estimado</small><strong class="precio">${{ tarifaEstimada | number }}</strong></div>
           </div>
         </div>
-        <small class="resumen-nota">El valor puede variar según el tráfico y condiciones de la ruta.</small>
+        <small class="resumen-nota">El valor puede variar según tráfico y condiciones de la ruta.</small>
       </div>
+
     </div>
 
   </div>
@@ -170,31 +178,125 @@
   <div class="footer-bar">
     <button class="btn-solicitar"
       [disabled]="!puedeEnviar() || buscandoConductor"
-      [class.loading]="buscandoConductor"
+      [class.is-loading]="buscandoConductor"
       (click)="solicitarEncomienda()">
-      <span *ngIf="!buscandoConductor">🛵 SOLICITAR ENCOMIENDA</span>
-      <span *ngIf="buscandoConductor" class="btn-loading">
-        <span class="dot-spin"></span> Buscando conductor...
+      <span *ngIf="!buscandoConductor" class="btn-content">
+        🛵 SOLICITAR ENCOMIENDA
+      </span>
+      <span *ngIf="buscandoConductor" class="btn-content">
+        <div class="dot-spin"></div> Buscando conductor...
       </span>
     </button>
-    <p class="seguridad">🔒 Tus datos están protegidos</p>
+    <p class="seguridad">🔒 Tus datos están protegidos · MoviFY</p>
   </div>
 
-  <!-- PANEL CONDUCTOR -->
-  <div class="panel-conductor slide-up" *ngIf="conductorInfo">
-    <div class="progress-steps">
-      <div class="step" [class.active]="esPasoActivo('PENDIENTE')"><span>📩</span><small>Pedido</small></div>
-      <div class="step-line" [class.done]="esPasoActivo('ACEPTADO')"></div>
-      <div class="step" [class.active]="esPasoActivo('ACEPTADO')"><span>🛵</span><small>En camino</small></div>
-      <div class="step-line" [class.done]="esPasoActivo('PAQUETE_RECOGIDO')"></div>
-      <div class="step" [class.active]="esPasoActivo('PAQUETE_RECOGIDO')"><span>📦</span><small>Recogido</small></div>
-      <div class="step-line" [class.done]="esPasoActivo('FINALIZADO')"></div>
-      <div class="step" [class.active]="esPasoActivo('FINALIZADO')"><span>🏁</span><small>Entregado</small></div>
+  <!-- ═══════════════════════════════════════════════════
+       PANEL DEL CONDUCTOR — aparece cuando se acepta el servicio
+       ═══════════════════════════════════════════════════ -->
+  <div class="panel-conductor slide-up" *ngIf="conductorInfo && !buscandoConductor">
+
+    <!-- Barra de progreso con pasos -->
+    <div class="progress-section">
+      <div class="steps-icons">
+        <div class="step-item" [class.active]="esPasoActivo('PENDIENTE')">
+          <span class="step-icon">📩</span>
+          <span class="step-text">Pedido</span>
+        </div>
+        <div class="step-item" [class.active]="esPasoActivo('ACEPTADO')">
+          <span class="step-icon">🛵</span>
+          <span class="step-text">En camino</span>
+        </div>
+        <div class="step-item" [class.active]="esPasoActivo('PAQUETE_RECOGIDO')">
+          <span class="step-icon">📦</span>
+          <span class="step-text">Recogido</span>
+        </div>
+        <div class="step-item" [class.active]="esPasoActivo('FINALIZADO')">
+          <span class="step-icon">🏁</span>
+          <span class="step-text">Entregado</span>
+        </div>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar-fill"
+          [style.width.%]="getProgresoPorcentaje(conductorInfo.estado)">
+        </div>
+      </div>
     </div>
-    <div class="panel-footer">
-      <span class="estado-badge">{{ mensajeEstado }}</span>
-      <button class="btn-chat" (click)="enviarMensaje()">💬 Chat</button>
+
+    <!-- Info del conductor -->
+    <div class="conductor-header">
+      <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="foto-conductor">
+      <div class="info-texto">
+        <h3>{{ conductorInfo.conductor_nombre }}</h3>
+        <p>Conductor MoviFY · ⭐️ 4.9</p>
+      </div>
+      <div class="tarifa-tag">
+        ${{ conductorInfo.tarifa | number }}
+      </div>
+    </div>
+
+    <!-- Footer con estado y acciones -->
+    <div class="viaje-footer">
+      <span class="badge-estado">{{ mensajeEstado }}</span>
+      <div class="acciones-viaje">
+        <!-- Botón cancelar solo en estado ACEPTADO -->
+        <button class="btn-cancelar"
+          *ngIf="conductorInfo.estado === 'ACEPTADO'"
+          (click)="cancelarServicio()">
+          Cancelar
+        </button>
+        <button class="btn-accion" (click)="enviarMensaje()">💬</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL LLEGADA / CALIFICACIÓN
+       ═══════════════════════════════════════════════════ -->
+  <div class="modal-destino-overlay" *ngIf="mostrarModalDestino">
+    <div class="modal-destino-card">
+
+      <div class="modal-destino-icono">📦</div>
+      <h2 class="modal-destino-titulo">¡Paquete entregado!</h2>
+      <p class="modal-destino-sub">
+        Tu encomienda llegó a su destino exitosamente.<br>
+        ¡Gracias por confiar en <strong>MoviFY</strong>!
+      </p>
+
+      <div class="modal-destino-conductor" *ngIf="conductorInfo">
+        <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="modal-foto">
+        <div>
+          <strong>{{ conductorInfo.conductor_nombre }}</strong>
+          <small>Conductor MoviFY · ⭐ 4.9</small>
+        </div>
+        <div class="modal-destino-tarifa">${{ conductorInfo.tarifa | number }}</div>
+      </div>
+
+      <div class="modal-estrellas">
+        <p>¿Cómo calificarías el servicio?</p>
+        <div class="estrellas-row">
+          <span *ngFor="let e of estrellasArray" class="estrella"
+            [class.activa]="e <= calificacionSeleccionada"
+            (click)="seleccionarEstrella(e)">★</span>
+        </div>
+      </div>
+
+      <button class="modal-btn-confirmar" (click)="confirmarCalificacion()">
+        ✅ Calificar e ir al inicio
+      </button>
+      <button class="modal-btn-saltar" (click)="saltarCalificacion()">
+        Omitir y volver al inicio
+      </button>
+
     </div>
   </div>
+
+  <!-- BOTÓN DE PRUEBA — quítalo en producción -->
+  <button (click)="probarSimulacion()"
+    style="position:fixed;bottom:20px;right:20px;z-index:9999;background:#f97316;color:white;
+           padding:12px 20px;border:none;border-radius:12px;font-weight:700;cursor:pointer;
+           box-shadow:0 4px 16px rgba(249,115,22,0.4);">
+    🧪 Probar simulación
+  </button>
 
 </div>

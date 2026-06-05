@@ -28,6 +28,7 @@ export class HomeAdminComponent implements OnInit {
   conductorSeleccionado: any = null;
   mostrarModal = false;
   motivoRechazo = '';
+  procesandoConductor = false;
 
   // USUARIOS
   usuarios: any[] = [];
@@ -62,6 +63,7 @@ export class HomeAdminComponent implements OnInit {
     this.foto = localStorage.getItem('foto') || '';
     this.cargarDatos();
     this.cargarUsuarios();
+    this.cargarServicios();
   }
 
   // ─── CONDUCTORES ───────────────────────────────
@@ -95,7 +97,10 @@ export class HomeAdminComponent implements OnInit {
       alert('Por favor ingrese un motivo de rechazo.');
       return;
     }
-    const adminId = localStorage.getItem('id');
+
+    if (this.procesandoConductor) return;
+    this.procesandoConductor = true;
+    const adminId = localStorage.getItem('id') || '0';
     try {
       const resp = await fetch(`${environment.apiUrl}/transporte/admin/conductor/${conductorId}/estado`, {
         method: 'PATCH',
@@ -113,6 +118,8 @@ export class HomeAdminComponent implements OnInit {
       }
     } catch (err) {
       console.error('Error al actualizar:', err);
+    } finally {
+      this.procesandoConductor = false;
     }
   }
 
@@ -134,6 +141,37 @@ export class HomeAdminComponent implements OnInit {
     });
   }
 
+  cargarServicios() {
+    fetch(`${environment.apiUrl}/transporte/admin/servicios`)
+      .then(res => res.json())
+      .then((data: any[]) => {
+        this.servicios = data.map(s => ({
+          icono: s.tipo === 'TRANSPORTE' ? '🏍️' : s.tipo === 'DOMICILIO' ? '🛵' : '📦',
+          tipo: s.tipo,
+          destino: s.destino_direccion || `${s.destino_lat?.toFixed(4)}, ${s.destino_lng?.toFixed(4)}`,
+          conductor: s.conductor_nombre || 'Sin asignar',
+          cliente: s.usuario_nombre || 'Desconocido',
+          precio: s.tarifa || 0,
+          estado: s.estado?.toLowerCase() || 'pendiente'
+        }));
+
+        // Stats para reportes
+        const hoy = new Date();
+        const mesActual = data.filter(s => new Date(s.fecha_solicitud).getMonth() === hoy.getMonth());
+        this.totalServicios = data.filter(s => new Date(s.fecha_solicitud).toDateString() === hoy.toDateString()).length;
+        this.totalGanancias = data.filter(s => s.estado === 'FINALIZADO').reduce((acc, s) => acc + (s.tarifa || 0), 0);
+        this.transportesMes = mesActual.filter(s => s.tipo === 'TRANSPORTE').length;
+        this.domiciliosMes = mesActual.filter(s => s.tipo === 'DOMICILIO').length;
+        this.encomiendaMes = mesActual.filter(s => s.tipo === 'ENCOMIENDA').length;
+
+        const total = this.transportesMes + this.domiciliosMes + this.encomiendaMes || 1;
+        this.porcentajeTransporte = Math.round((this.transportesMes / total) * 100);
+        this.porcentajeDomicilio = Math.round((this.domiciliosMes / total) * 100);
+        this.porcentajeEncomienda = Math.round((this.encomiendaMes / total) * 100);
+      })
+      .catch(err => console.error('Error cargando servicios:', err));
+  }
+
   bloquearUsuario(u: any) {
     if (confirm(`¿Estás seguro de bloquear al usuario ${u.nombre}?`)) {
       this.cambiarEstadoUsuario(u.id, 'bloqueado');
@@ -146,12 +184,10 @@ export class HomeAdminComponent implements OnInit {
 
   private async cambiarEstadoUsuario(id: number, nuevoEstado: string) {
     try {
-      // Asumimos que has añadido este método al service o usamos fetch directamente
       const resp = await fetch(`${environment.apiUrl}/auth/usuarios/${id}/estado`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ estado: nuevoEstado })
       });
@@ -163,7 +199,8 @@ export class HomeAdminComponent implements OnInit {
         
         alert(`Usuario actualizado a: ${nuevoEstado}`);
       } else {
-        alert('Error al actualizar el estado del usuario.');
+        const err = await resp.json();
+        alert('Error: ' + (err.error || 'No se pudo actualizar'));
       }
     } catch (err) {
       console.error('Error:', err);

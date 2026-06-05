@@ -27,8 +27,9 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   conductorInfo: any = null;
   incluirFoto: boolean = false;
   entregaRapida: boolean = false;
+  totalConductoresActivos: number = 0;
 
-  // Modal fin
+  // Modal calificación
   mostrarModalFin: boolean = false;
   calificacionSeleccionada: number = 5;
   estrellasArray: number[] = [1, 2, 3, 4, 5];
@@ -37,15 +38,18 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
   private routingControl: any;
   destinoMarker?: L.Marker;
+  private usuarioMarker?: L.Marker;
   private conductorMarker?: L.Marker;
+  private conductoresMarkers: Map<number, L.Marker> = new Map();
   private pollingServicio: any;
+  private intervaloRefreshConductores: any;
   userLat: number = 0;
   userLng: number = 0;
   ubicacionEncontrada: boolean = false;
   private transicionFinalizada: boolean = false;
   private apiBase = `${environment.apiUrl}/transporte`;
 
-  // ✅ SIMULACIÓN
+  // Simulación
   private puntosRuta: L.LatLng[] = [];
   private indexSimulacion: number = 0;
   private intervaloSimulacion: any = null;
@@ -60,6 +64,7 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.detenerSimulacion();
     if (this.pollingServicio) clearInterval(this.pollingServicio);
+    if (this.intervaloRefreshConductores) clearInterval(this.intervaloRefreshConductores);
     if (this.map) this.map.remove();
   }
 
@@ -89,15 +94,21 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
     if (!container) { setTimeout(() => this.initMap(), 500); return; }
     if ((container as any)._leaflet_id) (container as any)._leaflet_id = null;
     try {
-      this.map = L.map('map').setView([3.88, -77.02], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+      this.map = L.map('map', { center: [4.5709, -74.2973], zoom: 5, zoomControl: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(this.map);
+      L.control.zoom({ position: 'bottomright' }).addTo(this.map);
       this.map.on('click', (e: L.LeafletMouseEvent) => this.establecerDestinoEnMapa(e.latlng.lat, e.latlng.lng));
       this.obtenerUbicacionGPS();
     } catch (e) { console.error('Error iniciando mapa:', e); }
   }
 
   establecerDestinoEnMapa(lat: number, lng: number): void {
-    if (!this.ubicacionEncontrada) return;
+    if (!this.ubicacionEncontrada) {
+      alert('Espera a que el GPS encuentre tu ubicación.');
+      return;
+    }
     const iconoPaquete = L.icon({
       iconUrl: 'https://cdn-icons-png.flaticon.com/512/679/679821.png',
       iconSize: [45, 45],
@@ -128,14 +139,18 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
       const url = `https://router.project-osrm.org/route/v1/driving/${this.userLng},${this.userLat};${dLng},${dLat}?overview=false`;
       const resp = await fetch(url);
       const data = await resp.json();
-      if (data.routes?.[0]) {
-        this.distanciaViaje = data.routes[0].distance / 1000;
-        this.duracionViaje = data.routes[0].duration / 60;
+      const route = data.routes?.[0];
+      if (route) {
+        const distM = route.distance ?? route.legs?.[0]?.distance;
+        const durS  = route.duration ?? route.legs?.[0]?.duration;
+        this.distanciaViaje = (distM ?? 0) / 1000;
+        this.duracionViaje  = (durS  ?? 0) / 60;
         let calculo = 3500 + (this.distanciaViaje * 1200);
         if (this.entregaRapida) calculo *= 1.20;
         this.tarifaEstimada = Math.ceil(calculo / 100) * 100;
       }
     } catch (e) {
+      console.warn('Fallback tarifa por error OSRM:', e);
       this.distanciaViaje = this.map.distance([this.userLat, this.userLng], [dLat, dLng]) / 1000;
       this.tarifaEstimada = this.entregaRapida ? 6000 : 5000;
     }
@@ -143,26 +158,88 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
 
   private obtenerUbicacionGPS() {
     if (!navigator.geolocation) { this.origen = 'GPS no soportado'; return; }
+
+    const timeoutAviso = setTimeout(() => {
+      if (!this.ubicacionEncontrada) this.origen = 'GPS tardando... activa permisos';
+    }, 5000);
+
     navigator.geolocation.getCurrentPosition(
       pos => {
+        clearTimeout(timeoutAviso);
         this.userLat = pos.coords.latitude;
         this.userLng = pos.coords.longitude;
         this.ubicacionEncontrada = true;
-        this.origen = "Ubicación actual";
+        this.origen = 'Ubicación actual';
         this.map.setView([this.userLat, this.userLng], 15);
-        L.marker([this.userLat, this.userLng]).addTo(this.map).bindPopup('Recoger aquí').openPopup();
+
+        const usuarioIcon = L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+          iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35]
+        });
+        this.usuarioMarker = L.marker([this.userLat, this.userLng], { icon: usuarioIcon })
+          .addTo(this.map).bindPopup('📍 Tú estás aquí').openPopup();
+
+        L.circleMarker([this.userLat, this.userLng], {
+          color: '#16a34a', radius: 10, fillOpacity: 0.4
+        }).addTo(this.map);
+
+        this.obtenerConductoresActivos();
+
+        this.intervaloRefreshConductores = setInterval(() => {
+          if (!this.buscandoConductor && !this.simulacionActiva) {
+            this.obtenerConductoresActivos();
+          }
+        }, 8000);
       },
-      err => { this.origen = 'Ubicación no disponible'; },
-      { enableHighAccuracy: true, timeout: 10000 }
+      err => {
+        clearTimeout(err as any);
+        switch ((err as GeolocationPositionError).code) {
+          case 1: this.origen = 'Permiso GPS denegado'; break;
+          case 2: this.origen = 'Señal GPS no disponible'; break;
+          case 3: this.origen = 'GPS tardó demasiado'; break;
+        }
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
   }
 
+  private async obtenerConductoresActivos(): Promise<void> {
+    try {
+      const resp = await fetch(`${this.apiBase}/conductores-activos`);
+      const conductores = await resp.json();
+      this.totalConductoresActivos = conductores.length;
+      this.dibujarConductoresEnMapa(conductores);
+    } catch (e) {
+      console.error('Error cargando conductores:', e);
+    }
+  }
+
+  private dibujarConductoresEnMapa(conductores: any[]): void {
+    const motoIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
+      iconSize: [35, 35], iconAnchor: [17, 35], popupAnchor: [0, -30]
+    });
+    conductores.forEach(c => {
+      const id = c.conductor_id || c.id;
+      if (this.conductoresMarkers.has(id)) {
+        this.conductoresMarkers.get(id)!.setLatLng([c.latitud, c.longitud]);
+      } else {
+        const m = L.marker([c.latitud, c.longitud], { icon: motoIcon })
+          .addTo(this.map).bindPopup(`<b>🛵 ${c.nombre}</b><br>Disponible`);
+        this.conductoresMarkers.set(id, m);
+      }
+    });
+  }
+
   async solicitarDomicilio() {
+    if (this.buscandoConductor) return;
     if (!this.descripcionEncargo) return alert('Describe qué debemos llevar');
     if (!this.destinoMarker) return alert('Por favor, selecciona el destino en el mapa');
+
     this.buscandoConductor = true;
+    this.transicionFinalizada = false;
     this.mensajeEstado = 'Estamos buscando el domiciliario más cercano...';
-    
+
     const destCoords = this.destinoMarker.getLatLng();
     const body = {
       usuario_id: parseInt(localStorage.getItem('id') || '1'),
@@ -170,17 +247,25 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
       destino_lat: destCoords.lat, destino_lng: destCoords.lng,
       distancia_km: this.distanciaViaje,
       tarifa: this.tarifaEstimada,
-      tipo: 'DOMICILIO', 
+      tipo: 'DOMICILIO',
       descripcion: this.descripcionEncargo,
-      incluir_foto: this.incluirFoto, // Enviamos el estado guardado
+      incluir_foto: this.incluirFoto,
       entrega_rapida: this.entregaRapida
     };
-    const resp = await fetch(`${this.apiBase}/solicitar`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-    });
-    const data = await resp.json();
-    this.comenzarPolling(data.id);
+
+    try {
+      const resp = await fetch(`${this.apiBase}/solicitar`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      });
+      if (!resp.ok) throw new Error(await resp.text());
+      const data = await resp.json();
+      this.comenzarPolling(data.id);
+    } catch (e) {
+      this.buscandoConductor = false;
+      alert('Error: ' + (e instanceof Error ? e.message : 'No se pudo contactar con el servidor'));
+    }
   }
+
   enviarMensajeConductor(): void {
     if (this.conductorInfo?.conductor_telefono) {
       const msg = encodeURIComponent(`Hola, soy tu cliente de MoviFY. Mi pedido es: ${this.descripcionEncargo}`);
@@ -189,19 +274,26 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private comenzarPolling(id: number) {
-    this.pollingServicio = setInterval(async () => {
-      try {
-        const resp = await fetch(`${this.apiBase}/servicio/${id}`);
-        if (resp.ok) { const s = await resp.json(); this.conductorInfo = s; this.procesarEstado(s); }
-      } catch (e) {
-        console.warn('Error en polling de domicilio');
-      }
+    // Delay igual que transporte para dar tiempo al backend
+    setTimeout(() => {
+      this.pollingServicio = setInterval(async () => {
+        try {
+          const resp = await fetch(`${this.apiBase}/servicio/${id}`);
+          if (resp.ok) {
+            const s = await resp.json();
+            this.conductorInfo = s;
+            this.procesarEstado(s);
+          }
+        } catch (e) {
+          console.warn('Error en polling de domicilio, reintentando...');
+        }
+      }, 3000);
     }, 3000);
   }
 
   private procesarEstado(s: any) {
     // ACEPTADO → simulación conductor → usuario (naranja)
-    if (s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO_AL_USUARIO') {
+    if ((s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO_AL_USUARIO') && !this.transicionFinalizada) {
       const condLat = s.conductor_lat ?? s.latitud;
       const condLng = s.conductor_lng ?? s.longitud;
       this.transicionFinalizada = true;
@@ -217,11 +309,18 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
       this.detenerSimulacion();
     }
 
-    // PAQUETE_RECOGIDO / EN_VIAJE → simulación usuario → destino (verde)
+    // EN_VIAJE → simulación usuario → destino (verde)
     if ((s.estado === 'PAQUETE_RECOGIDO' || s.estado === 'EN_VIAJE') && !this.simulacionActiva) {
       const dest = this.destinoMarker?.getLatLng();
       this.mensajeEstado = '🛣️ Pedido en camino al destino';
       if (dest) this.iniciarSimulacion(this.userLat, this.userLng, dest.lat, dest.lng, '#16a34a');
+    }
+
+    if (s.estado === 'CANCELADO') {
+      clearInterval(this.pollingServicio);
+      this.detenerSimulacion();
+      alert('🔴 El domiciliario ha cancelado el pedido.');
+      this.router.navigate(['/home-usuario']);
     }
 
     if (s.estado === 'FINALIZADO') {
@@ -232,7 +331,6 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // ✅ SIMULACIÓN — idéntica a solicitar-transporte
   public iniciarSimulacion(
     origenLat: number, origenLng: number,
     destinoLat: number, destinoLng: number,
@@ -263,7 +361,9 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
         if (!this.conductorMarker) {
           this.conductorMarker = L.marker(this.puntosRuta[0], { icon: motoIcon })
             .addTo(this.map).bindPopup('<b>🛵 Tu domiciliario</b>');
-        } else { this.conductorMarker.setLatLng(this.puntosRuta[0]); }
+        } else {
+          this.conductorMarker.setLatLng(this.puntosRuta[0]);
+        }
 
         this.intervaloSimulacion = setInterval(() => {
           if (this.indexSimulacion >= this.puntosRuta.length) { this.detenerSimulacion(); return; }
@@ -288,7 +388,9 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
             const zoomObjetivo = progreso < 0.3 ? 15 : progreso < 0.7 ? 16 : 17;
             if (Math.abs(this.map.getZoom() - zoomObjetivo) >= 1) {
               this.map.setView(punto, zoomObjetivo, { animate: true, duration: 1 });
-            } else { this.map.panTo(punto, { animate: true, duration: 0.6 }); }
+            } else {
+              this.map.panTo(punto, { animate: true, duration: 0.6 });
+            }
           }
           this.indexSimulacion++;
         }, 700);
@@ -312,7 +414,7 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
         servicio_id: servicioId,
         usuario_id: parseInt(localStorage.getItem('id') || '1'),
         puntos: parseInt(puntos) || 5,
-        comentario: 'Entrega finalizada'
+        comentario: 'Domicilio finalizado'
       })
     });
   }
@@ -325,15 +427,15 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getProgresoPorcentaje(estado: string): number {
-    const p: any = { 
-      'PENDIENTE': 10, 
-      'ACEPTADO': 30, 
+    const p: any = {
+      'PENDIENTE': 10,
+      'ACEPTADO': 30,
       'EN_CAMINO_AL_USUARIO': 40,
       'LLEGO_AL_ORIGEN': 50,
-      'PAQUETE_RECOGIDO': 70, 
+      'PAQUETE_RECOGIDO': 70,
       'EN_VIAJE': 85,
       'EN_CAMINO': 85,
-      'FINALIZADO': 100 
+      'FINALIZADO': 100
     };
     return p[estado] || 0;
   }
@@ -341,22 +443,21 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   seleccionarEstrella(n: number): void { this.calificacionSeleccionada = n; }
 
   async confirmarCalificacion(): Promise<void> {
-    // enviar calificación al backend
     await this.enviarCalificacion(this.idServicioFinal, String(this.calificacionSeleccionada));
     this.mostrarModalFin = false;
     this.reiniciarComponente();
   }
 
-  saltarCalificacion(): void { 
-    this.mostrarModalFin = false; 
+  saltarCalificacion(): void {
+    this.mostrarModalFin = false;
     this.reiniciarComponente();
   }
 
   private reiniciarComponente(): void {
-    // 1. Limpiar polling
+    this.detenerSimulacion();
     if (this.pollingServicio) clearInterval(this.pollingServicio);
+    if (this.intervaloRefreshConductores) clearInterval(this.intervaloRefreshConductores);
 
-    // 2. Resetear todas las variables
     this.conductorInfo = null;
     this.buscandoConductor = false;
     this.transicionFinalizada = false;
@@ -367,21 +468,9 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
     this.calificacionSeleccionada = 5;
     this.idServicioFinal = 0;
 
-    // 3. Limpiar marcadores del mapa
-    if (this.destinoMarker) {
-      this.map.removeLayer(this.destinoMarker);
-      this.destinoMarker = undefined;
-    }
-    if (this.conductorMarker) {
-      this.map.removeLayer(this.conductorMarker);
-      this.conductorMarker = undefined;
-    }
-    // 4. Limpiar ruta del mapa
-    if (this.routingControl) {
-      this.routingControl.setWaypoints([]);
-    }
+    if (this.destinoMarker) { this.map.removeLayer(this.destinoMarker); this.destinoMarker = undefined; }
+    if (this.conductorMarker) { this.map.removeLayer(this.conductorMarker); this.conductorMarker = undefined; }
 
-    // 5. Redirigir al home
     this.router.navigate(['/home-usuario']);
   }
 

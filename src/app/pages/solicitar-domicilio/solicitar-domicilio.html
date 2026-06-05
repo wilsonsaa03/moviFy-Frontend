@@ -124,4 +124,35 @@
       <button class="btn-chat" (click)="enviarMensajeConductor()">💬 Chat</button>
     </div>
   </div>
+
+  <!-- MODAL CALIFICACIÓN -->
+  <div class="modal-overlay" *ngIf="mostrarModalFin">
+    <div class="modal-card">
+      <div class="modal-confetti">🎉</div>
+      <h2 class="modal-titulo">¡Pedido entregado!</h2>
+      <p class="modal-sub">Esperamos que tu domicilio haya llegado perfecto.<br>¡Gracias por usar <strong>MoviFY</strong>!</p>
+      <div class="modal-conductor" *ngIf="conductorInfo">
+        <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="modal-foto">
+        <div>
+          <strong>{{ conductorInfo.conductor_nombre || 'Tu domiciliario' }}</strong>
+          <small>Domiciliario MoviFY · ⭐ 4.9</small>
+        </div>
+        <div class="modal-tarifa">${{ conductorInfo.tarifa | number }}</div>
+      </div>
+      <div class="modal-estrellas">
+        <p>¿Cómo calificarías el servicio?</p>
+        <div class="estrellas-row">
+          <span *ngFor="let e of estrellasArray" class="estrella"
+            [class.activa]="e <= calificacionSeleccionada"
+            (click)="seleccionarEstrella(e)">★</span>
+        </div>
+      </div>
+      <button class="modal-btn-confirmar" (click)="confirmarCalificacion()">
+        ✅ Calificar e ir al inicio
+      </button>
+      <button class="modal-btn-saltar" (click)="saltarCalificacion()">
+        Omitir y volver al inicio
+      </button>
+    </div>
+  </div>
 </div>
