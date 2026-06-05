@@ -25,15 +25,15 @@ jobs:
       - name: 🏗️ Build Angular (producción)
         run: npm run build -- --configuration production
 
-      # 🧹 Limpiar carpeta (sin borrar .htaccess)
+      # 🧹 Limpiar carpeta del servidor
       - name: 🧹 Limpiar servidor
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          script: |
-            find /var/www/ds2/movify/movify-frontend -mindepth 1 ! -name '.htaccess' -delete
+          command_timeout: 5m
+          script: rm -rf /var/www/ds2/movify/movify-frontend/*
 
       # 🚀 Subir build al servidor
       - name: 🚀 Deploy via SCP
@@ -42,6 +42,6 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "dist/browser/**"
+          source: "dist/browser/"
           target: "/var/www/ds2/movify/movify-frontend"
           strip_components: 2
