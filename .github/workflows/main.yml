@@ -25,6 +25,9 @@ jobs:
       - name: 🏗️ Build Angular (producción)
         run: npm run build -- --configuration production
 
+      - name: 📁 Preparar archivos para deploy
+        run: cp -r dist/browser deploy_output
+
       # 🧹 Limpiar carpeta del servidor
       - name: 🧹 Limpiar servidor
         uses: appleboy/ssh-action@v1.0.0
@@ -42,6 +45,15 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "dist/browser/"
+          source: "deploy_output/"
           target: "/var/www/ds2/movify/movify-frontend"
-          strip_components: 2
+          strip_components: 1
+
+      # ✅ Verificar archivos en servidor
+      - name: ✅ Verificar deploy
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: ls -la /var/www/ds2/movify/movify-frontend/
