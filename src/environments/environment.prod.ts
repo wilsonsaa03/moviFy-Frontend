@@ -1,4 +1,4 @@
 export const environment = {
-  production: true,
+  production: false,
   apiUrl: 'http://movify.ds2.eleueleo.com/api'
 };

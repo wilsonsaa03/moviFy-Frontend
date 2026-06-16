@@ -307,6 +307,14 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   async solicitarViaje(): Promise<void> {
     if (!this.origen || !this.destino || !this.ubicacionEncontrada || this.distanciaViaje === 0) return;
 
+    // ✅ Validar que el destino esté seleccionado
+    const destLat = this.destinoMarker?.getLatLng().lat;
+    const destLng = this.destinoMarker?.getLatLng().lng;
+    if (!destLat || !destLng) {
+      alert('Por favor selecciona un punto de destino en el mapa.');
+      return;
+    }
+
     this.buscandoConductor = true;
     this.transicionFinalizada = false;
     this.mensajeEstado = 'Estamos buscando conductores cerca de ti...';
@@ -315,8 +323,8 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       usuario_id: parseInt(localStorage.getItem('id') || '1'),
       origen_lat: this.userLat,
       origen_lng: this.userLng,
-      destino_lat: this.destinoMarker?.getLatLng().lat,
-      destino_lng: this.destinoMarker?.getLatLng().lng,
+      destino_lat: destLat,   //  ya validado
+      destino_lng: destLng,   //  ya validado
       distancia_km: this.distanciaViaje,
       tarifa: this.tarifaEstimada,
       tipo: 'TRANSPORTE',
