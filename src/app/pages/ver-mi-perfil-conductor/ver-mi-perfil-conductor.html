@@ -1,149 +1,336 @@
-<div class="conductor-layout">
-  <!-- Sidebar y Navbar irían aquí, como se define en el CSS -->
-  <div class="sidebar">
+<!-- Pantalla de carga para evitar datos predeterminados -->
+<div class="loading-overlay" *ngIf="cargando">
+  <div class="spinner"></div>
+  <p>Cargando tu perfil...</p>
+</div>
+
+<div class="conductor-layout" [class.sidebar-colapsado]="sidebarColapsado" *ngIf="!cargando">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" [class.sidebar-visible]="menuNavAbierto">
+
     <div class="sidebar-logo">
-      <img src="/assets/movify.jpg" alt="MoviFY Logo" class="sidebar-logo-img">
+      <img src="/assets/movify.jpg" class="sidebar-logo-img" alt="MoviFY Logo">
       <span class="sidebar-brand">MoviFY</span>
     </div>
+
     <div class="sidebar-menu">
-      <a routerLink="/mis-viajes" class="nav-link">
-        <span class="link-icon">🛣️</span>
-        <span class="link-text">Mis Viajes</span>
+      <a routerLink="/conductor" class="nav-link">
+        <span class="link-icon">🏠</span>
+        <span class="link-text">Inicio</span>
       </a>
-      <a routerLink="/mi-perfil" class="nav-link activo">
+      <a routerLink="/mis-viajes-conductor" class="nav-link">
+        <span class="link-icon">🛵</span>
+        <span class="link-text">Mis viajes</span>
+      </a>
+      <a routerLink="/ganancias-conductor" class="nav-link">
+        <span class="link-icon">💰</span>
+        <span class="link-text">Ganancias</span>
+      </a>
+      <a routerLink="/perfil-conductor" class="nav-link activo">
         <span class="link-icon">👤</span>
-        <span class="link-text">Mi Perfil</span>
+        <span class="link-text">Ver mi perfil</span>
       </a>
-      <!-- Otros enlaces de navegación -->
+      <a routerLink="/soporte" class="nav-link">
+        <span class="link-icon">🎧</span>
+        <span class="link-text">Soporte</span>
+      </a>
     </div>
+
+    <!-- Banner -->
+    <div class="sidebar-banner">
+      <img src="/assets/imagen home conductor.png"
+           class="banner-img-full"
+           alt="¡Más viajes, más ganancias!">
+    </div>
+
     <div class="sidebar-footer">
-      <button class="btn-cerrar-lateral" (click)="volver()">
-        <span>←</span> Volver
+      <button class="btn-cerrar-lateral" (click)="cerrarSesion()">
+        <span class="btn-icon">🚪</span>
+        <span class="link-text">Cerrar sesión</span>
       </button>
     </div>
-  </div>
+  </aside>
 
+  <!-- CONTENIDO PRINCIPAL -->
   <div class="main-container-wrapper">
-    <div class="navbar">
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
       <div class="navbar-left">
-        <button class="menu-toggle">☰</button>
+        <button class="menu-toggle" (click)="toggleSidebar()">☰</button>
         <div class="navbar-greeting">
-          <span class="navbar-hello">Hola, {{ nombre }}</span>
+          <span class="navbar-hello">¡Hola, {{ nombre }}! 👋</span>
           <span class="navbar-rol">Conductor</span>
         </div>
       </div>
+
       <div class="navbar-right">
-        <!-- Botón de estado en línea/fuera de línea -->
-        <button class="btn-estado en-linea">
-          <span class="estado-dot dot-verde"></span>
-          En línea
-          <span class="estado-chevron">▼</span>
+        <button class="btn-estado" [class.en-linea]="enLinea" (click)="toggleEnLinea()">
+          <span class="estado-dot" [class.dot-verde]="enLinea" [class.dot-rojo]="!enLinea"></span>
+          {{ enLinea ? 'En línea' : 'Desconectado' }}
+          <span class="estado-chevron">▾</span>
         </button>
-        <!-- Perfil de usuario en la navbar -->
-        <div class="nav-perfil">
-          <div class="nav-avatar-circle">
-            <img src="assets/default-avatar.png" alt="Avatar" class="nav-avatar">
+
+        <div class="nav-perfil" (click)="toggleMenu()">
+          <div class="nav-avatar-circle" *ngIf="!foto">
+            {{ nombre.charAt(0).toUpperCase() }}
           </div>
+          <img *ngIf="foto" [src]="foto" class="nav-avatar" alt="foto">
           <div class="nav-info">
             <span class="nav-nombre">{{ nombre }}</span>
-            <span class="nav-sub">Conductor</span>
+            <span class="nav-sub">Ver perfil ▾</span>
+          </div>
+
+          <div class="menu-perfil" *ngIf="menuAbierto" (click)="$event.stopPropagation()">
+            <div class="menu-header">
+              <div class="menu-avatar">{{ nombre.charAt(0).toUpperCase() }}</div>
+              <div class="menu-user">
+                <h3>{{ nombre }}</h3>
+                <p>Conductor MoviFY</p>
+              </div>
+            </div>
+            <button class="menu-item" (click)="irA('/conductor')"><span>🏠</span> Inicio</button>
+            <button class="menu-item" (click)="activarEdicion()"><span>✏️</span> Editar perfil</button>
+            <button class="menu-item" (click)="cerrarSesion()"><span>🚪</span> Cerrar sesión</button>
           </div>
         </div>
       </div>
-    </div>
+    </nav>
 
-    <div class="content-body">
+    <!-- CUERPO -->
+    <main class="content-body">
+
+      <!-- CABECERA -->
       <div class="page-header">
         <div class="page-header-left">
           <div class="page-header-icon">👤</div>
           <div>
-            <h1 class="page-title">Mi Perfil</h1>
+            <h1 class="page-title">Mi perfil</h1>
             <p class="page-sub">Gestiona tu información personal y documentos.</p>
           </div>
         </div>
         <div class="page-header-actions">
-          <button class="btn-editar">✏️ Editar</button>
+          <button class="btn-editar" (click)="activarEdicion()" *ngIf="!modoEdicion">
+            ✏️ Editar perfil
+          </button>
+          <button class="btn-cancelar" (click)="cancelarEdicion()" *ngIf="modoEdicion">
+            ✕ Cancelar
+          </button>
+          <button class="btn-guardar" (click)="guardarCambios()" *ngIf="modoEdicion">
+            💾 Guardar cambios
+          </button>
         </div>
       </div>
 
+      <!-- ALERTA ÉXITO / ERROR -->
+      <div class="alerta alerta-ok" *ngIf="mensajeOk">✅ {{ mensajeOk }}</div>
+      <div class="alerta alerta-err" *ngIf="mensajeErr">⚠️ {{ mensajeErr }}</div>
+
+      <!-- GRID PRINCIPAL -->
       <div class="perfil-grid">
-        <div class="left-column">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="col-left">
+
+          <!-- TARJETA FOTO + NOMBRE -->
           <div class="card card-foto">
             <div class="foto-wrap">
-              <img src="assets/default-avatar.png" alt="Foto de perfil" class="foto-avatar">
-              <button class="btn-cambiar-foto">📸</button>
+              <img *ngIf="foto" [src]="foto" class="foto-avatar" alt="avatar">
+              <div *ngIf="!foto" class="foto-placeholder">
+                {{ nombre.charAt(0).toUpperCase() }}
+              </div>
+              <button class="btn-cambiar-foto" (click)="cambiarFoto()" title="Cambiar foto">📷</button>
             </div>
+
             <h2 class="perfil-nombre">{{ nombre }}</h2>
             <p class="perfil-correo">{{ correo }}</p>
-            <div class="estado-chip chip-verde">
+
+            <div class="estado-chip" [ngClass]="estadoClase">
               <span class="estado-dot-chip"></span>
-              {{ estadoCuenta === 'aprobado' ? 'Aprobado' : 'Pendiente' }}
+              {{ estadoTexto }}
             </div>
+
+            <!-- MINI STATS -->
             <div class="mini-stats">
               <div class="mini-stat">
-                <span class="mini-stat-val">4.9</span>
+                <span class="mini-stat-val">{{ calificacion }}★</span>
                 <span class="mini-stat-label">Calificación</span>
               </div>
               <div class="mini-stat-divider"></div>
               <div class="mini-stat">
-                <span class="mini-stat-val">120</span>
-                <span class="mini-stat-label">Viajes</span>
+                <span class="mini-stat-val">{{ viajesTotal }}</span>
+                <span class="mini-stat-label">Viajes totales</span>
+              </div>
+              <div class="mini-stat-divider"></div>
+              <div class="mini-stat">
+                <span class="mini-stat-val">{{ miembroDesde }}</span>
+                <span class="mini-stat-label">Miembro desde</span>
               </div>
             </div>
           </div>
+
+          <!-- TARJETA VEHÍCULO -->
           <div class="card card-vehiculo">
             <div class="card-section-title">
               <span class="section-icon">🏍️</span>
-              <h3>Vehículo</h3>
+              <h3>Mi vehículo</h3>
             </div>
-            <div class="info-row"><span class="info-label">Placa</span><span class="info-val placa-badge">ABC-123</span></div>
-            <div class="info-row"><span class="info-label">Modelo</span><span class="info-val">Yamaha FZ-25</span></div>
+            <div class="info-row">
+              <span class="info-label">Placa</span>
+              <span class="info-val placa-badge">{{ placa }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Modelo</span>
+              <span class="info-val">{{ modelo }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Estado SOAT</span>
+              <span class="info-val" [class.chip-verde]="estadoSoat.includes('v') || estadoSoat.includes('día')">{{ estadoSoat }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Estado cuenta</span>
+              <span class="info-val" [ngClass]="estadoClase">{{ estadoTexto }}</span>
+            </div>
           </div>
+
         </div>
-        <div class="right-column">
+
+        <!-- COLUMNA DERECHA -->
+        <div class="col-right">
+
+          <!-- DATOS PERSONALES -->
           <div class="card">
             <div class="card-section-title">
-              <span class="section-icon"></span>
+              <span class="section-icon">📋</span>
+              <h3>Información personal</h3>
+            </div>
+
+            <!-- MODO VISUALIZACIÓN -->
+            <div *ngIf="!modoEdicion" class="info-list">
+              <div class="info-row">
+                <span class="info-label">Nombre completo</span>
+                <span class="info-val">{{ nombre }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Correo electrónico</span>
+                <span class="info-val">{{ correo }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Teléfono</span>
+                <span class="info-val">{{ telefono || 'No registrado' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Ciudad</span>
+                <span class="info-val">{{ ciudad || 'No registrada' }}</span>
+              </div>
+            </div>
+
+            <!-- MODO EDICIÓN -->
+            <div *ngIf="modoEdicion" class="form-edicion">
+              <div class="form-group">
+                <label class="form-label">Nombre completo</label>
+                <input type="text" class="form-input" [(ngModel)]="nombreEdit" placeholder="Tu nombre">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Correo electrónico</label>
+                <input type="email" class="form-input form-input-disabled" [(ngModel)]="correoEdit" disabled>
+                <small class="form-hint">El correo no se puede cambiar.</small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Teléfono</label>
+                <input type="tel" class="form-input" [(ngModel)]="telefonoEdit" placeholder="Ej. 3001234567">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ciudad</label>
+                <input type="text" class="form-input" [(ngModel)]="ciudadEdit" placeholder="Ej. Bucaramanga">
+              </div>
+            </div>
+          </div>
+
+          <!-- ESTADÍSTICAS -->
+          <div class="card card-stats">
+            <div class="card-section-title">
+              <span class="section-icon">📊</span>
+              <h3>Estadísticas de desempeño</h3>
+            </div>
+
+            <div class="stats-4">
+              <div class="stat-item" routerLink="/ganancias-conductor" style="cursor: pointer;">
+                <div class="stat-icon-wrap stat-green"><span>📈</span></div>
+                <div class="stat-data">
+                  <span class="stat-num">${{ gananciasHoy | number }}</span>
+                  <span class="stat-desc">Ganancias hoy</span>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-icon-wrap stat-orange"><span>💼</span></div>
+                <div class="stat-data">
+                  <span class="stat-num">{{ viajesHoy }}</span>
+                  <span class="stat-desc">Viajes hoy</span>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-icon-wrap stat-blue"><span>⭐</span></div>
+                <div class="stat-data">
+                  <span class="stat-num">{{ calificacion }}★</span>
+                  <span class="stat-desc">Calificación</span>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-icon-wrap stat-purple"><span>🏁</span></div>
+                <div class="stat-data">
+                  <span class="stat-num">{{ viajesTotal }}</span>
+                  <span class="stat-desc">Total viajes</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Barra calificación -->
+            <div class="rating-bar-wrap">
+              <div class="rating-bar-label">
+                <span>Calificación general</span>
+                <span class="rating-num">{{ calificacion }}/5.0</span>
+              </div>
+              <div class="rating-bar-bg">
+                <div class="rating-bar-fill" [style.width.%]="(calificacion / 5) * 100"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DOCUMENTOS -->
+          <div class="card card-docs">
+            <div class="card-section-title">
+              <span class="section-icon">📄</span>
               <h3>Documentos</h3>
             </div>
+
             <div class="doc-list">
               <div class="doc-item">
                 <div class="doc-icon">🪪</div>
                 <div class="doc-info">
                   <span class="doc-nombre">Cédula de ciudadanía</span>
-                  <span class="doc-estado" [ngClass]="estadoCuenta === 'aprobado' ? 'doc-ok' : 'doc-pending'">
-                    {{ estadoCuenta === 'aprobado' ? 'Verificado ✓' : 'En revisión' }}
-                  </span>
+                  <span class="doc-estado" [ngClass]="estadoCuenta === 'activo' ? 'doc-ok' : 'doc-pending'">{{ estadoCuenta === 'activo' ? 'Verificado ✓' : 'En revisión' }}</span>
                 </div>
-                <button class="btn-doc" (click)="verDocumento(cedula)" [disabled]="!cedula">
-                  {{ cedula ? 'Ver' : 'Sin archivo' }}
-                </button>
+                <button class="btn-doc">Ver</button>
               </div>
 
               <div class="doc-item">
                 <div class="doc-icon">📋</div>
                 <div class="doc-info">
                   <span class="doc-nombre">Licencia de conducción</span>
-                  <span class="doc-estado" [ngClass]="estadoCuenta === 'aprobado' ? 'doc-ok' : 'doc-pending'">
-                    {{ estadoCuenta === 'aprobado' ? 'Verificado ✓' : 'En revisión' }}
-                  </span>
+                  <span class="doc-estado" [ngClass]="estadoCuenta === 'activo' ? 'doc-ok' : 'doc-pending'">{{ estadoCuenta === 'activo' ? 'Verificado ✓' : 'En revisión' }}</span>
                 </div>
-                <button class="btn-doc" (click)="verDocumento(licenciaDoc)" [disabled]="!licenciaDoc">
-                  {{ licenciaDoc ? 'Ver' : 'Sin archivo' }}
-                </button>
+                <button class="btn-doc">Ver</button>
               </div>
 
               <div class="doc-item">
                 <div class="doc-icon">🛡️</div>
                 <div class="doc-info">
                   <span class="doc-nombre">SOAT</span>
-                  <span class="doc-estado" [ngClass]="estadoSoat.includes('día') ? 'doc-ok' : 'doc-pending'">
-                    {{ estadoSoat }}
-                  </span>
+                  <span class="doc-estado" [ngClass]="estadoSoat.includes('día') ? 'doc-ok' : 'doc-pending'">{{ estadoSoat }}</span>
                 </div>
-                <button class="btn-doc" (click)="verDocumento(soatDoc)" [disabled]="!soatDoc">
-                  {{ soatDoc ? 'Ver' : 'Sin archivo' }}
-                </button>
+                <button class="btn-doc">Ver</button>
               </div>
 
               <div class="doc-item">
@@ -152,15 +339,46 @@
                   <span class="doc-nombre">Tarjeta de propiedad</span>
                   <span class="doc-estado doc-ok">Verificado ✓</span>
                 </div>
-                <button class="btn-doc" (click)="verDocumento(tarjetaPropiedad)" [disabled]="!tarjetaPropiedad">
-                  {{ tarjetaPropiedad ? 'Ver' : 'Sin archivo' }}
-                </button>
+                <button class="btn-doc">Ver</button>
               </div>
             </div>
           </div>
-          <!-- Otras tarjetas como contraseña, etc. -->
+
+          <!-- CAMBIAR CONTRASEÑA -->
+          <div class="card card-password">
+            <div class="card-section-title">
+              <span class="section-icon">🔒</span>
+              <h3>Seguridad</h3>
+            </div>
+
+            <div *ngIf="!modoPassword" class="password-placeholder">
+              <p>Mantén tu cuenta segura actualizando tu contraseña periódicamente.</p>
+              <button class="btn-password" (click)="modoPassword = true">🔑 Cambiar contraseña</button>
+            </div>
+
+            <div *ngIf="modoPassword" class="form-edicion">
+              <div class="form-group">
+                <label class="form-label">Contraseña actual</label>
+                <input type="password" class="form-input" [(ngModel)]="passActual" placeholder="••••••••">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nueva contraseña</label>
+                <input type="password" class="form-input" [(ngModel)]="passNueva" placeholder="••••••••">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Confirmar nueva contraseña</label>
+                <input type="password" class="form-input" [(ngModel)]="passConfirm" placeholder="••••••••">
+              </div>
+              <div class="password-btns">
+                <button class="btn-cancelar" (click)="modoPassword = false">Cancelar</button>
+                <button class="btn-guardar" (click)="cambiarPassword()">Actualizar contraseña</button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
-    </div>
+
+    </main>
   </div>
 </div>
