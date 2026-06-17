@@ -53,7 +53,7 @@
         </small>
       </div>
 
-      <div class="tarifa-box slide-up" *ngIf="tarifaEstimada > 0 && !buscandoConductor">
+      <div class="tarifa-box slide-up" *ngIf="tarifaEstimada > 0 && !buscandoConductor && !conductorInfo">
         <div class="tarifa-item">
           <span class="label">💰 Tarifa estimada</span>
           <strong class="value highlight-text">${{ tarifaEstimada | number }}</strong>
@@ -65,15 +65,33 @@
         </div>
       </div>
 
-      <div class="info-mapa" *ngIf="tarifaEstimada === 0 && !buscandoConductor">
+      <div class="info-mapa" *ngIf="tarifaEstimada === 0 && !buscandoConductor && !conductorInfo">
         🗺️ Selecciona el destino en el mapa o escríbelo arriba
+      </div>
+
+      <!-- ESTADO DE BÚSQUEDA CON CONTADOR -->
+      <div class="busqueda-estado" *ngIf="buscandoConductor">
+        <div class="busqueda-pulso">
+          <div class="pulso-ring"></div>
+          <div class="pulso-ring pulso-ring-2"></div>
+          <span class="pulso-icon">🛵</span>
+        </div>
+        <p class="busqueda-texto">Buscando conductores cerca...</p>
+        <p class="busqueda-contador">{{ segundosBuscando }}s</p>
+        <div class="busqueda-barra">
+          <div class="busqueda-barra-fill" 
+               [style.width.%]="(segundosBuscando / TIMEOUT_BUSQUEDA_SEG) * 100">
+          </div>
+        </div>
+        <p class="busqueda-hint">Conectando con la red de conductores MoviFY</p>
       </div>
 
       <button 
         class="btn-solicitar" 
         [class.is-loading]="buscandoConductor"
-        [disabled]="distanciaViaje === 0 || buscandoConductor"
+        [disabled]="distanciaViaje === 0 || buscandoConductor || !!conductorInfo"
         (click)="solicitarViaje()"
+        *ngIf="!conductorInfo"
       >
         <span *ngIf="!buscandoConductor" class="btn-content">
           🏍️ Solicitar Moto
@@ -87,8 +105,21 @@
 
     <div class="map-panel">
       <div id="map"></div>
+
+      <!-- Overlay radar mientras busca -->
       <div class="map-overlay" *ngIf="buscandoConductor">
         <div class="radar"></div>
+      </div>
+
+      <!-- Indicador "Conductor en punto de recogida" (pausa 3s) -->
+      <div class="origen-aviso" *ngIf="conductorEnOrigen">
+        <div class="origen-aviso-inner">
+          <span class="origen-aviso-icon">📍</span>
+          <div>
+            <strong>¡Tu conductor llegó!</strong>
+            <span>Esperando en el punto de recogida...</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -136,10 +167,12 @@
     </div>
     
     <div class="viaje-footer">
-      <span class="badge-estado">{{ mensajeEstado }}</span>
+      <span class="badge-estado" [class.badge-origen]="conductorEnOrigen">{{ mensajeEstado }}</span>
       <div class="acciones-viaje">
-        <!-- BOTÓN CANCELAR: Solo visible si el estado es ACEPTADO -->
-        <button class="btn-cancelar" *ngIf="conductorInfo.estado === 'ACEPTADO'" (click)="cancelarViaje()">
+        <!-- BOTÓN CANCELAR: Solo visible antes de EN_VIAJE -->
+        <button class="btn-cancelar" 
+          *ngIf="conductorInfo.estado === 'ACEPTADO' || conductorInfo.estado === 'EN_CAMINO_AL_USUARIO'" 
+          (click)="cancelarViaje()">
           Cancelar Viaje
         </button>
         <button class="btn-accion chat" (click)="enviarMensajeConductor()">
@@ -180,11 +213,5 @@
       </button>
     </div>
   </div>
-
-  <!-- BOTÓN DE PRUEBA - quítalo después -->
-  <button (click)="probarSimulacion()" 
-    style="position:fixed;bottom:20px;right:20px;z-index:9999;background:#f59e0b;color:white;padding:12px 20px;border:none;border-radius:12px;font-weight:700;cursor:pointer;">
-    🧪 Probar simulación
-  </button>
 
 </div>

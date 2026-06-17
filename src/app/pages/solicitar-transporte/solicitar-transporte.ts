@@ -35,10 +35,17 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   totalConductoresActivos: number = 0;
   userLat: number = 0;
 
+  // Simulación automática — contador visible en pantalla
+  segundosBuscando: number = 0;
+  readonly TIMEOUT_BUSQUEDA_SEG = 15; // segundos antes de simular conductor
+
   // Modal calificación
-  mostrarModalDestino: boolean = false; // reemplaza mostrarModalFin
+  mostrarModalDestino: boolean = false;
   calificacionSeleccionada: number = 5;
   estrellasArray: number[] = [1, 2, 3, 4, 5];
+
+  // Estado visual al llegar al origen
+  conductorEnOrigen: boolean = false;
 
   /* ===================== VARIABLES PRIVADAS ===================== */
   private idServicioFinal: number = 0;
@@ -55,13 +62,18 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   private intervaloRefreshConductores: any;
   private apiBase = `${environment.apiUrl}/transporte`;
 
-  // Simulación
+  // Simulación de movimiento
   private puntosRuta: L.LatLng[] = [];
   private indexSimulacion: number = 0;
   private intervaloSimulacion: any = null;
   private simulacionActiva: boolean = false;
   private lineaSimulacion?: L.Polyline;
-  private lineaRecorrida?: L.Polyline; // ✅ Estela verde del recorrido ya hecho
+  private lineaRecorrida?: L.Polyline;
+
+  // Timeout y contador búsqueda automática
+  private timeoutBusqueda: any = null;
+  private intervaloCuentaBuscando: any = null;
+  private simulacionAutoActivada: boolean = false;
 
   constructor(private router: Router) {}
 
@@ -76,8 +88,8 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Limpieza completa al destruir el componente
     this.detenerSimulacion();
+    this._limpiarTimersBusqueda();
     if (this.pollingServicio) clearInterval(this.pollingServicio);
     if (this.intervaloRefreshConductores) clearInterval(this.intervaloRefreshConductores);
     if (this.map) this.map.remove();
@@ -183,7 +195,6 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
 
         this.obtenerConductoresReales();
 
-        // ✅ Guardar referencia del interval para limpiarlo en ngOnDestroy
         this.intervaloRefreshConductores = setInterval(() => {
           if (!this.buscandoConductor && !this.simulacionActiva) {
             this.obtenerConductoresReales();
@@ -307,7 +318,6 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   async solicitarViaje(): Promise<void> {
     if (!this.origen || !this.destino || !this.ubicacionEncontrada || this.distanciaViaje === 0) return;
 
-    // ✅ Validar que el destino esté seleccionado
     const destLat = this.destinoMarker?.getLatLng().lat;
     const destLng = this.destinoMarker?.getLatLng().lng;
     if (!destLat || !destLng) {
@@ -317,14 +327,30 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
 
     this.buscandoConductor = true;
     this.transicionFinalizada = false;
+    this.simulacionAutoActivada = false;
+    this.conductorEnOrigen = false;
     this.mensajeEstado = 'Estamos buscando conductores cerca de ti...';
+    this.segundosBuscando = 0;
+
+    // ── Contador visual de segundos ──
+    this.intervaloCuentaBuscando = setInterval(() => {
+      this.segundosBuscando++;
+    }, 1000);
+
+    // ── Timeout: si en TIMEOUT_BUSQUEDA_SEG segundos no llegó conductor real, simular ──
+    this.timeoutBusqueda = setTimeout(() => {
+      if (this.buscandoConductor && !this.transicionFinalizada) {
+        this._limpiarTimersBusqueda();
+        this._activarConductorSimulado();
+      }
+    }, this.TIMEOUT_BUSQUEDA_SEG * 1000);
 
     const body = {
       usuario_id: parseInt(localStorage.getItem('id') || '1'),
       origen_lat: this.userLat,
       origen_lng: this.userLng,
-      destino_lat: destLat,   //  ya validado
-      destino_lng: destLng,   //  ya validado
+      destino_lat: destLat,
+      destino_lng: destLng,
       distancia_km: this.distanciaViaje,
       tarifa: this.tarifaEstimada,
       tipo: 'TRANSPORTE',
@@ -341,9 +367,82 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       const data = await resp.json();
       this.comenzarPollingServicio(data.id);
     } catch (e) {
-      this.buscandoConductor = false;
-      alert('Error: ' + (e instanceof Error ? e.message : 'No se pudo contactar con el servidor'));
+      // Si el servidor no responde, igual mostramos búsqueda y activamos simulación al timeout
+      console.warn('Backend no disponible, modo demo activo:', e);
     }
+  }
+
+  /* ─── Limpia timers de búsqueda ─── */
+  private _limpiarTimersBusqueda(): void {
+    if (this.timeoutBusqueda) { clearTimeout(this.timeoutBusqueda); this.timeoutBusqueda = null; }
+    if (this.intervaloCuentaBuscando) { clearInterval(this.intervaloCuentaBuscando); this.intervaloCuentaBuscando = null; }
+    this.segundosBuscando = 0;
+  }
+
+  /* ─── Simulación automática cuando no hay conductor real ─── */
+  private _activarConductorSimulado(): void {
+    if (this.simulacionAutoActivada || this.transicionFinalizada) return;
+    this.simulacionAutoActivada = true;
+
+    const dest = this.destinoMarker?.getLatLng();
+    if (!dest) return;
+
+    // Conductor simulado: posición ~600m al noroeste del usuario (variación aleatoria)
+    const offsetLat = 0.004 + Math.random() * 0.003;
+    const offsetLng = 0.003 + Math.random() * 0.003;
+    const condLat = this.userLat + offsetLat;
+    const condLng = this.userLng - offsetLng;
+
+    // Nombres de conductores simulados
+    const nombresDemo = ['Carlos M.', 'Diego T.', 'Andrés V.', 'Felipe R.', 'Juan C.'];
+    const nombreAleatorio = nombresDemo[Math.floor(Math.random() * nombresDemo.length)];
+
+    this.conductorInfo = {
+      id: 0,
+      estado: 'EN_CAMINO_AL_USUARIO',
+      conductor_nombre: nombreAleatorio,
+      conductor_lat: condLat,
+      conductor_lng: condLng,
+      tarifa: this.tarifaEstimada,
+      conductor_foto: null
+    };
+
+    this.buscandoConductor = false;
+    this.transicionFinalizada = true;
+    this.mensajeEstado = '🛵 ¡Conductor encontrado! En camino hacia ti...';
+
+    // FASE 1: conductor → punto de recogida del usuario
+    this.iniciarSimulacion(
+      condLat, condLng,
+      this.userLat, this.userLng,
+      '#f59e0b',
+      () => {
+        // ── LLEGÓ AL PUNTO DE RECOGIDA ──
+        this.conductorInfo.estado = 'LLEGO_AL_ORIGEN';
+        this.conductorEnOrigen = true;
+        this.mensajeEstado = '📍 ¡Tu conductor llegó! Subiendo al vehículo...';
+
+        // Pausa de 3 segundos en el punto de recogida
+        setTimeout(() => {
+          this.conductorEnOrigen = false;
+          this.conductorInfo.estado = 'EN_VIAJE';
+          this.mensajeEstado = '🛣️ ¡Viajando hacia tu destino!';
+
+          // FASE 2: punto de recogida → destino
+          this.iniciarSimulacion(
+            this.userLat, this.userLng,
+            dest.lat, dest.lng,
+            '#16a34a',
+            () => {
+              // ── LLEGÓ AL DESTINO ──
+              this.conductorInfo.estado = 'FINALIZADO';
+              this.mensajeEstado = '🏁 ¡Llegaste a tu destino!';
+              this.mostrarModalDestino = true;
+            }
+          );
+        }, 3000); // 3 segundos de pausa en origen
+      }
+    );
   }
 
   /* ===================== POLLING ===================== */
@@ -363,42 +462,66 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     }, 3000);
   }
 
-  /* ===================== PROCESAR ESTADOS ===================== */
+  /* ===================== PROCESAR ESTADOS (conductor real del backend) ===================== */
   private procesarEstadoServicio(s: any): void {
 
     // ACEPTADO → simulación conductor hacia usuario
     if ((s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO_AL_USUARIO') && !this.transicionFinalizada) {
+      // El backend encontró conductor → cancelar timeout de simulación automática
+      this._limpiarTimersBusqueda();
+
       const condLat = s.conductor_lat ?? s.latitud;
       const condLng = s.conductor_lng ?? s.longitud;
 
       this.transicionFinalizada = true;
       this.buscandoConductor = false;
+      this.conductorEnOrigen = false;
       this.mensajeEstado = '🛵 ¡Conductor encontrado! En camino hacia ti.';
 
       if (condLat && condLng) {
-        this.iniciarSimulacion(condLat, condLng, this.userLat, this.userLng, '#f59e0b');
+        // FASE 1: conductor real → punto de recogida
+        this.iniciarSimulacion(
+          condLat, condLng,
+          this.userLat, this.userLng,
+          '#f59e0b',
+          () => {
+            // Al llegar al punto de recogida, esperar confirmación del backend (estado LLEGO_AL_ORIGEN / EN_VIAJE)
+            this.conductorEnOrigen = true;
+            this.mensajeEstado = '📍 ¡Tu conductor ha llegado a recogerte!';
+          }
+        );
       }
     }
 
     // LLEGÓ AL ORIGEN
     if (s.estado === 'LLEGO_AL_ORIGEN') {
       this.mensajeEstado = '📍 ¡Tu conductor ha llegado a recogerte!';
+      this.conductorEnOrigen = true;
       this.detenerSimulacion();
     }
 
     // EN VIAJE → simulación usuario hacia destino
     if (s.estado === 'EN_VIAJE' && !this.simulacionActiva) {
       this.mensajeEstado = '🛣️ ¡Viajando al destino!';
+      this.conductorEnOrigen = false;
       this.buscandoConductor = false;
       const dest = this.destinoMarker?.getLatLng();
       if (dest) {
-        this.iniciarSimulacion(this.userLat, this.userLng, dest.lat, dest.lng, '#16a34a');
+        this.iniciarSimulacion(
+          this.userLat, this.userLng,
+          dest.lat, dest.lng,
+          '#16a34a',
+          () => {
+            this.mensajeEstado = '🏁 ¡Llegaste a tu destino!';
+          }
+        );
       }
     }
 
     // CANCELADO
     if (s.estado === 'CANCELADO') {
       clearInterval(this.pollingServicio);
+      this._limpiarTimersBusqueda();
       this.detenerSimulacion();
       alert('🔴 El conductor ha cancelado el viaje.');
       this.router.navigate(['/home-usuario']);
@@ -407,23 +530,29 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     // FINALIZADO
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
+      this._limpiarTimersBusqueda();
       this.detenerSimulacion();
       this.idServicioFinal = s.id;
-      this.mostrarModalDestino = true; // ✅ abre el modal bonito
+      this.mostrarModalDestino = true;
     }
   }
 
   /* ===================== SIMULACIÓN DE MOVIMIENTO ===================== */
+  /**
+   * Inicia la animación del conductor sobre el mapa de origenLat/Lng → destinoLat/Lng.
+   * @param colorLinea  Color de la polilínea en el mapa
+   * @param onCompleted Callback ejecutado cuando la moto llega al destino
+   */
   public iniciarSimulacion(
     origenLat: number, origenLng: number,
     destinoLat: number, destinoLng: number,
-    colorLinea: string
+    colorLinea: string,
+    onCompleted?: () => void
   ): void {
     this.detenerSimulacion();
     this.simulacionActiva = true;
     this.indexSimulacion = 0;
 
-    // ✅ Usar fetch directo a OSRM en lugar de W.Routing.osrmv1
     const url = `https://router.project-osrm.org/route/v1/driving/${origenLng},${origenLat};${destinoLng},${destinoLat}?overview=full&geometries=geojson`;
 
     fetch(url)
@@ -431,7 +560,6 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       .then(data => {
         if (!data.routes?.length) { this.simulacionActiva = false; return; }
 
-        // Extraer coordenadas [lng, lat] y convertir a L.LatLng
         const coords = data.routes[0].geometry.coordinates;
         this.puntosRuta = coords.map((c: number[]) => L.latLng(c[1], c[0]));
 
@@ -442,7 +570,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
           try { this.routingControl.setWaypoints([]); } catch (e) {}
         }
 
-        // Línea que se va recortando
+        // Línea que se va recortando (pendiente)
         this.lineaSimulacion = L.polyline(this.puntosRuta, {
           color: colorLinea, weight: 6, opacity: 0.85
         }).addTo(this.map);
@@ -452,7 +580,6 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
           color: colorLinea, weight: 3, opacity: 0.35
         }).addTo(this.map);
 
-        // Ajustar cámara
         this.map.fitBounds((this.lineaSimulacion as L.Polyline).getBounds(), { padding: [60, 60] });
 
         // Marcador moto
@@ -463,7 +590,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
 
         if (!this.conductorMarker) {
           this.conductorMarker = L.marker(this.puntosRuta[0], { icon: motoIcon })
-            .addTo(this.map).bindPopup('<b>\ud83d\udef5 Tu conductor</b>');
+            .addTo(this.map).bindPopup('<b>🛵 Tu conductor</b>');
         } else {
           this.conductorMarker.setLatLng(this.puntosRuta[0]);
         }
@@ -471,7 +598,9 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
         // Mover punto a punto
         this.intervaloSimulacion = setInterval(() => {
           if (this.indexSimulacion >= this.puntosRuta.length) {
+            // ── Llegó al destino de esta fase ──
             this.detenerSimulacion();
+            if (onCompleted) onCompleted();
             return;
           }
 
@@ -545,6 +674,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
 
   /* ===================== CALIFICACIÓN ===================== */
   private async enviarCalificacion(servicioId: number, puntos: string): Promise<void> {
+    if (!servicioId) return; // modo demo → no enviar
     const body = {
       servicio_id: servicioId,
       usuario_id: parseInt(localStorage.getItem('id') || '1'),
@@ -574,11 +704,14 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   /* ===================== REINICIAR ===================== */
   private reiniciarComponente(): void {
     this.detenerSimulacion();
+    this._limpiarTimersBusqueda();
     if (this.pollingServicio) clearInterval(this.pollingServicio);
 
     this.conductorInfo = null;
     this.buscandoConductor = false;
     this.transicionFinalizada = false;
+    this.simulacionAutoActivada = false;
+    this.conductorEnOrigen = false;
     this.mensajeEstado = '';
     this.tarifaEstimada = 0;
     this.distanciaViaje = 0;
@@ -586,6 +719,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     this.destino = '';
     this.calificacionSeleccionada = 5;
     this.idServicioFinal = 0;
+    this.segundosBuscando = 0;
 
     if (this.destinoMarker) { this.map.removeLayer(this.destinoMarker); this.destinoMarker = undefined; }
     if (this.conductorMarker) { this.map.removeLayer(this.conductorMarker); this.conductorMarker = undefined; }
@@ -607,8 +741,19 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async cancelarViaje(): Promise<void> {
-    if (!this.conductorInfo?.id) return;
     if (!confirm('¿Estás seguro de que deseas cancelar el viaje?')) return;
+
+    // Modo demo (sin id real)
+    if (!this.conductorInfo?.id) {
+      this._limpiarTimersBusqueda();
+      this.detenerSimulacion();
+      this.buscandoConductor = false;
+      this.conductorInfo = null;
+      this.transicionFinalizada = false;
+      this.simulacionAutoActivada = false;
+      this.router.navigate(['/home-usuario']);
+      return;
+    }
 
     try {
       const resp = await fetch(`${this.apiBase}/servicio/${this.conductorInfo.id}/estado`, {
@@ -618,6 +763,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       });
       if (resp.ok) {
         clearInterval(this.pollingServicio);
+        this._limpiarTimersBusqueda();
         this.detenerSimulacion();
         this.buscandoConductor = false;
         this.conductorInfo = null;
@@ -668,39 +814,4 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       default: return 'text-muted';
     }
   }
-
-  // MÉTODO DE PRUEBA - quítalo después
-  probarSimulacion(): void {
-    const dest = this.destinoMarker?.getLatLng();
-    if (!dest) { alert('Primero selecciona un destino en el mapa'); return; }
-
-    // Simular que el conductor está 500m al norte del usuario
-    const condLat = this.userLat + 0.005;
-    const condLng = this.userLng + 0.005;
-
-    this.conductorInfo = {
-      id: 999,
-      estado: 'ACEPTADO',
-      conductor_nombre: 'Diego T',
-      conductor_lat: condLat,
-      conductor_lng: condLng,
-      tarifa: 12800
-    };
-
-    this.buscandoConductor = false;
-    this.transicionFinalizada = false;
-    this.mensajeEstado = '🛵 ¡Conductor encontrado! En camino hacia ti.';
-
-    // Fase 1: conductor → usuario
-    this.iniciarSimulacion(condLat, condLng, this.userLat, this.userLng, '#f59e0b');
-
-    // Fase 2: después de 15s, simular EN_VIAJE hacia destino
-    setTimeout(() => {
-      this.detenerSimulacion();
-      this.conductorInfo.estado = 'EN_VIAJE';
-      this.mensajeEstado = '🛣️ ¡Viajando al destino!';
-      this.iniciarSimulacion(this.userLat, this.userLng, dest.lat, dest.lng, '#16a34a');
-    }, 15000);
-  }
-
 }
