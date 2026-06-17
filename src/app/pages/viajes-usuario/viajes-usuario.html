@@ -62,11 +62,13 @@
           <span class="hn-badge">3</span>
         </div>
 
-        <div class="hn-profile" (click)="toggleMenuPerfil()">
+        <!-- Avatar + nombre -->
+        <div class="hn-profile" (click)="$event.stopPropagation(); toggleMenuPerfil()">
           <div class="hn-avatar">{{ nombre.charAt(0).toUpperCase() }}</div>
           <span class="hn-name">{{ nombre }}</span>
           <span class="hn-chevron">▾</span>
 
+          <!-- Dropdown -->
           <div class="hn-dropdown" *ngIf="dropdownAbierto" (click)="$event.stopPropagation()">
             <div class="dd-header">
               <div class="dd-av">{{ nombre.charAt(0).toUpperCase() }}</div>

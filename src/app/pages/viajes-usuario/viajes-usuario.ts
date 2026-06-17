@@ -174,6 +174,7 @@ export class ViajesUsuarioComponent implements OnInit, OnDestroy {
 
   toggleMenuPerfil(): void {
     this.dropdownAbierto = !this.dropdownAbierto;
+    this.cdr.detectChanges(); // ✅ Asegura que el menú responda al instante
   }
 
   verPerfil(): void {
