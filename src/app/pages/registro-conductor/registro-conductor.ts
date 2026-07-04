@@ -466,35 +466,15 @@ export class RegistroConductor {
       .subscribe({
 
         next: (res: any) => {
-
           this.cargando = false;
+          this.exito = '¡Registro exitoso! Tu cuenta está en revisión. Serás redirigido al login.';
 
-          this.exito =
-            '¡Registro exitoso! Tu cuenta está en revisión.';
-
-          localStorage.setItem(
-            'token',
-            res.token
-          );
-
-          localStorage.setItem(
-            'rol',
-            res.rol
-          );
-
-          localStorage.setItem(
-            'nombre',
-            res.nombre
-          );
+          // Limpiar cualquier sesión anterior
+          localStorage.clear();
 
           setTimeout(() => {
-
-            this.router.navigate([
-              '/conductor'
-            ]);
-
+            this.router.navigate(['/login']);
           }, 2000);
-
         },
 
         error: (err: any) => {
