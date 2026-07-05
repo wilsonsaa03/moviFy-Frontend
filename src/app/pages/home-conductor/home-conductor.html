@@ -315,21 +315,22 @@
     </div>
     <p class="sol-contador" *ngIf="solicitudes.length > 1">+{{ solicitudes.length - 1 }} solicitud(es) más en espera</p>
   </div>
-  <!-- MODAL: ESTADO DE CUENTA NO APROBADA -->
-    <div class="modal-estado-overlay" *ngIf="mostrarModalEstado">
-      <div class="modal-estado-box">
-        <div class="modal-estado-icono" [class.icono-rechazo]="mostrarBotonReenviarDocs">
-          {{ mostrarBotonReenviarDocs ? '❌' : '⏳' }}
-        </div>
-        <h2 class="modal-estado-titulo">{{ tituloModalEstado }}</h2>
-        <p class="modal-estado-mensaje">{{ mensajeModalEstado }}</p>
+</div>
 
-      <div class="modal-estado-botones">
-        <button class="btn-modal-cerrar" (click)="cerrarModalEstado()">Entendido</button>
-        <button class="btn-modal-reenviar" *ngIf="mostrarBotonReenviarDocs" (click)="irAReenviarDocumentos()">
-          📤 Reenviar documentos
-        </button>
-      </div>
+<!-- MODAL: ESTADO DE CUENTA NO APROBADA -->
+<div class="modal-estado-overlay" *ngIf="mostrarModalEstado">
+  <div class="modal-estado-box">
+    <div class="modal-estado-icono" [class.icono-rechazo]="mostrarBotonReenviarDocs">
+      {{ mostrarBotonReenviarDocs ? '❌' : '⏳' }}
+    </div>
+    <h2 class="modal-estado-titulo">{{ tituloModalEstado }}</h2>
+    <p class="modal-estado-mensaje">{{ mensajeModalEstado }}</p>
+
+    <div class="modal-estado-botones">
+      <button class="btn-modal-cerrar" (click)="cerrarModalEstado()">Entendido</button>
+      <button class="btn-modal-reenviar" *ngIf="mostrarBotonReenviarDocs" (click)="irAReenviarDocumentos()">
+        📤 Reenviar documentos
+      </button>
     </div>
   </div>
 </div>
