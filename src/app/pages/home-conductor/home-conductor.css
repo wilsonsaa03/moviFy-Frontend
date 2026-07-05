@@ -992,3 +992,79 @@ body {
   .stat-value { font-size: 16px; }
   .nav-info { display: none; }
 }
+/* ================================================================
+   MODAL ESTADO DE CUENTA
+   ================================================================ */
+.modal-estado-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 9500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.modal-estado-box {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 36px 32px;
+  width: 380px;
+  max-width: 90vw;
+  text-align: center;
+  animation: popIn 0.2s ease;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+
+.modal-estado-icono {
+  font-size: 52px;
+  margin-bottom: 16px;
+}
+
+.modal-estado-titulo {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.modal-estado-mensaje {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 26px;
+}
+
+.modal-estado-botones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-modal-cerrar {
+  border: 1.5px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-modal-cerrar:hover { background: #f9fafb; }
+
+.btn-modal-reenviar {
+  border: none;
+  background: #dc2626;
+  color: white;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-modal-reenviar:hover { background: #b91c1c; }

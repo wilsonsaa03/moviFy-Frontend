@@ -33,6 +33,11 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   mostrarMapa: boolean = false;
   mostrarAlerta: boolean = false;
   mensajeAlerta: string = '';
+  // MODAL DE ESTADO DE CUENTA
+  mostrarModalEstado: boolean = false;
+  tituloModalEstado: string = '';
+  mensajeModalEstado: string = '';
+  mostrarBotonReenviarDocs: boolean = false;
   mapa: any;
   watchId: any;
   markerUsuario: L.Marker | undefined;
@@ -265,6 +270,9 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   }
 
   toggleMapa(): void {
+    if (!this.mostrarMapa && !this.puedeActivarse()) {
+      return; // Bloqueado: conductor no aprobado
+    }
     this.mostrarMapa = !this.mostrarMapa;
     if (this.mostrarMapa) setTimeout(() => this.iniciarMapaBase(), 150);
     else this.pararRastreo();
@@ -282,6 +290,9 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
   }
 
   toggleMapaActivo(): void {
+    if (!this.enLinea && !this.puedeActivarse()) {
+      return; // Bloqueado: conductor no aprobado
+    }
     this.enLinea = !this.enLinea;
     this.mostrarAlerta = true;
     if (this.enLinea) {
@@ -722,6 +733,41 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
 
   getFriendlyEstado(estado: string): string {
     return estado.replace(/_/g, ' ');
+  }
+
+  /**
+   * Verifica si el conductor puede activarse. Si no puede, muestra el modal
+   * explicando la razón y retorna false.
+   */
+  private puedeActivarse(): boolean {
+    const estado = (this.estadoCuenta || '').toLowerCase();
+
+    if (estado === 'aprobado') {
+      return true;
+    }
+
+    this.mostrarBotonReenviarDocs = false;
+
+    if (estado === 'rechazado') {
+      this.tituloModalEstado = 'Documentación rechazada';
+      this.mensajeModalEstado = 'Tu documentación fue revisada y no cumple con los requisitos necesarios. Debes reenviar tus documentos actualizados para poder activarte y recibir viajes.';
+      this.mostrarBotonReenviarDocs = true;
+    } else {
+      this.tituloModalEstado = 'Cuenta en revisión';
+      this.mensajeModalEstado = 'Tu cuenta aún está siendo revisada por nuestro equipo. Te notificaremos apenas sea aprobada. Este proceso puede tardar hasta 24-48 horas hábiles.';
+    }
+
+    this.mostrarModalEstado = true;
+    return false;
+  }
+
+  cerrarModalEstado(): void {
+    this.mostrarModalEstado = false;
+  }
+
+  irAReenviarDocumentos(): void {
+    this.mostrarModalEstado = false;
+    this.router.navigate(['/reenviar-documentos-conductor']);
   }
 
   // =========================
