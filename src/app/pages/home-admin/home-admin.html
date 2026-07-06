@@ -244,8 +244,8 @@
                 <p class="fila-nombre">{{ u.nombre }}</p>
               </div>
             </div>
-            <span style="font-size:13px;color:#64748b">{{ u.correo }}</span>
-            <span>{{ u.telefono || '—' }}</span>
+            <span class="celda-truncada" style="font-size:13px;color:#64748b" [title]="u.correo">{{ u.correo }}</span>
+            <span class="celda-truncada" [title]="u.telefono || 'Sin teléfono'">{{ u.telefono || '—' }}</span>
             <span class="rol-badge" [ngStyle]="{
               'background': u.rol === 'admin' ? '#fef3c7' : u.rol === 'conductor' ? '#dbeafe' : '#dcfce7',
               'color': u.rol === 'admin' ? '#92400e' : u.rol === 'conductor' ? '#1e40af' : '#166534'

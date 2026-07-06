@@ -484,6 +484,17 @@ body, :host {
   color: #475569;
   transition: background 0.15s;
 }
+/* Evita que texto largo (correos, etc.) se desborde y se pegue con la siguiente columna */
+.tabla-fila > * {
+  min-width: 0;
+}
+
+.celda-truncada {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .tabla-fila:hover { background: #fafafa; }
 .tabla-fila:last-child { border-bottom: none; }
