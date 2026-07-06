@@ -484,16 +484,28 @@ body, :host {
   color: #475569;
   transition: background 0.15s;
 }
-/* Evita que texto largo (correos, etc.) se desborde y se pegue con la siguiente columna */
+
+/* Evita que texto largo (correos, placas, etc.) se desborde en CUALQUIER tabla del admin */
 .tabla-fila > * {
   min-width: 0;
 }
 
-.celda-truncada {
+.celda-truncada,
+.fila-correo,
+.tabla-fila > span {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.fila-conductor {
+  min-width: 0;
+}
+
+.fila-conductor > div {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .tabla-fila:hover { background: #fafafa; }
