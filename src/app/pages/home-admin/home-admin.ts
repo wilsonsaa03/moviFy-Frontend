@@ -30,6 +30,11 @@ export class HomeAdminComponent implements OnInit {
   motivoRechazo = '';
   procesandoConductor = false;
 
+  // MODAL DE DETALLE / DOCUMENTOS
+  mostrarModalDocumentos = false;
+  conductorDetalle: any = null;
+  cargandoDetalle = false;
+
   // USUARIOS
   usuarios: any[] = [];
   cargandoUsuarios = false;
@@ -91,6 +96,49 @@ export class HomeAdminComponent implements OnInit {
   aprobarConductor(c: any) { this.cambiarEstado(c.conductor_id, 'aprobado'); }
   rechazarConductor(c: any) { this.conductorSeleccionado = c; this.mostrarModal = true; }
   bloquearConductor(c: any) { this.cambiarEstado(c.conductor_id, 'suspendido'); }
+
+  verDocumentos(c: any) {
+    this.mostrarModalDocumentos = true;
+    this.cargandoDetalle = true;
+    this.conductorDetalle = null;
+
+    fetch(`${environment.apiUrl}/transporte/admin/conductor/${c.conductor_id}/detalle`)
+      .then(res => res.json())
+      .then(data => {
+        this.conductorDetalle = data;
+        this.cargandoDetalle = false;
+      })
+      .catch(err => {
+        console.error('Error cargando detalle del conductor:', err);
+        this.cargandoDetalle = false;
+      });
+  }
+
+  cerrarModalDocumentos() {
+    this.mostrarModalDocumentos = false;
+    this.conductorDetalle = null;
+  }
+
+  urlDocumento(nombreArchivo: string): string {
+    if (!nombreArchivo) return '';
+    return `${environment.apiUrl}/conductor/documento/${nombreArchivo}`;
+  }
+
+  esImagen(nombreArchivo: string): boolean {
+    if (!nombreArchivo) return false;
+    const ext = nombreArchivo.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
+  }
+
+  aprobarDesdeModal(c: any) {
+    this.aprobarConductor(c);
+    this.cerrarModalDocumentos();
+  }
+
+  rechazarDesdeModal(c: any) {
+    this.cerrarModalDocumentos();
+    this.rechazarConductor(c);
+  }
 
   async cambiarEstado(conductorId: number, nuevoEstado: string) {
     if (nuevoEstado === 'rechazado' && !this.motivoRechazo) {

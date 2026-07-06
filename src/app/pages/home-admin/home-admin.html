@@ -205,6 +205,7 @@
             <span>{{ c.telefono || '—' }}</span>
             <span class="estado-badge {{ c.estado }}">{{ c.estado }}</span>
             <div class="fila-acciones">
+              <button class="btn-ver" (click)="verDocumentos(c)">👁️ Ver</button>
               <button class="btn-aprobar" (click)="aprobarConductor(c)" *ngIf="c.estado === 'pendiente'">✓ Aprobar</button>
               <button class="btn-rechazar" (click)="rechazarConductor(c)" *ngIf="c.estado === 'pendiente'">✗ Rechazar</button>
               <button class="btn-bloquear" (click)="bloquearConductor(c)" *ngIf="c.estado === 'aprobado'">🚫</button>
@@ -332,5 +333,93 @@
       </div>
 
     </main>
+  </div>
+
+  <!-- MODAL: VER DOCUMENTOS Y DATOS DEL CONDUCTOR -->
+  <div class="modal-docs-overlay" *ngIf="mostrarModalDocumentos" (click)="cerrarModalDocumentos()">
+    <div class="modal-docs-box" (click)="$event.stopPropagation()">
+
+      <div class="modal-docs-header">
+        <h2>Detalle del conductor</h2>
+        <button class="btn-cerrar-modal" (click)="cerrarModalDocumentos()">✕</button>
+      </div>
+
+      <p *ngIf="cargandoDetalle" style="padding:30px;color:#64748b;text-align:center">Cargando información...</p>
+
+      <div *ngIf="!cargandoDetalle && conductorDetalle">
+
+        <!-- DATOS PERSONALES -->
+        <div class="modal-docs-seccion">
+          <h3>📋 Datos personales</h3>
+          <div class="modal-docs-grid">
+            <div><span class="dato-label">Nombre</span><span class="dato-valor">{{ conductorDetalle.nombre }}</span></div>
+            <div><span class="dato-label">Correo</span><span class="dato-valor">{{ conductorDetalle.correo }}</span></div>
+            <div><span class="dato-label">Teléfono</span><span class="dato-valor">{{ conductorDetalle.telefono || '—' }}</span></div>
+            <div>
+              <span class="dato-label">Estado actual</span>
+              <span class="estado-badge {{ conductorDetalle.estado }}">{{ conductorDetalle.estado }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- VEHICULO -->
+        <div class="modal-docs-seccion">
+          <h3>🏍️ Vehículo</h3>
+          <div class="modal-docs-grid">
+            <div><span class="dato-label">Placa</span><span class="dato-valor">{{ conductorDetalle.placa || '—' }}</span></div>
+            <div><span class="dato-label">Modelo</span><span class="dato-valor">{{ conductorDetalle.modelo || '—' }}</span></div>
+          </div>
+        </div>
+
+        <!-- MOTIVO DE RECHAZO -->
+        <div class="modal-docs-seccion" *ngIf="conductorDetalle.estado === 'rechazado' && conductorDetalle.motivo_rechazo">
+          <h3>❌ Motivo de rechazo</h3>
+          <p class="motivo-rechazo-texto">{{ conductorDetalle.motivo_rechazo }}</p>
+        </div>
+
+        <!-- DOCUMENTOS -->
+        <div class="modal-docs-seccion">
+          <h3>📎 Documentos enviados</h3>
+          <div class="documentos-grid">
+
+            <div class="documento-item" *ngIf="conductorDetalle.licencia">
+              <p class="documento-titulo">Licencia de conducción</p>
+              <img *ngIf="esImagen(conductorDetalle.licencia)" [src]="urlDocumento(conductorDetalle.licencia)" class="documento-preview">
+              <a [href]="urlDocumento(conductorDetalle.licencia)" target="_blank" class="btn-ver-doc">🔍 Ver documento completo</a>
+            </div>
+
+            <div class="documento-item" *ngIf="conductorDetalle.soat">
+              <p class="documento-titulo">SOAT</p>
+              <img *ngIf="esImagen(conductorDetalle.soat)" [src]="urlDocumento(conductorDetalle.soat)" class="documento-preview">
+              <a [href]="urlDocumento(conductorDetalle.soat)" target="_blank" class="btn-ver-doc">🔍 Ver documento completo</a>
+            </div>
+
+            <div class="documento-item" *ngIf="conductorDetalle.tarjeta_propiedad">
+              <p class="documento-titulo">Tarjeta de propiedad</p>
+              <img *ngIf="esImagen(conductorDetalle.tarjeta_propiedad)" [src]="urlDocumento(conductorDetalle.tarjeta_propiedad)" class="documento-preview">
+              <a [href]="urlDocumento(conductorDetalle.tarjeta_propiedad)" target="_blank" class="btn-ver-doc">🔍 Ver documento completo</a>
+            </div>
+
+            <div class="documento-item" *ngIf="conductorDetalle.cedula">
+              <p class="documento-titulo">Cédula</p>
+              <img *ngIf="esImagen(conductorDetalle.cedula)" [src]="urlDocumento(conductorDetalle.cedula)" class="documento-preview">
+              <a [href]="urlDocumento(conductorDetalle.cedula)" target="_blank" class="btn-ver-doc">🔍 Ver documento completo</a>
+            </div>
+
+            <p *ngIf="!conductorDetalle.licencia && !conductorDetalle.soat && !conductorDetalle.tarjeta_propiedad && !conductorDetalle.cedula"
+               style="color:#94a3b8;text-align:center;padding:20px;grid-column:1/-1">
+              ⚠️ Este conductor no tiene documentos guardados en el sistema (posiblemente se registró antes de la actualización de almacenamiento de archivos).
+            </p>
+          </div>
+        </div>
+
+        <!-- ACCIONES -->
+        <div class="modal-docs-acciones" *ngIf="conductorDetalle.estado === 'pendiente'">
+          <button class="btn-aprobar" (click)="aprobarDesdeModal(conductorDetalle)">✓ Aprobar conductor</button>
+          <button class="btn-rechazar" (click)="rechazarDesdeModal(conductorDetalle)">✗ Rechazar conductor</button>
+        </div>
+
+      </div>
+    </div>
   </div>
 </div>
