@@ -3,12 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { UsuarioService } from '../../Base_de_datos/usuario.service';
-import { AdminEmailDirective } from '../../Directivas/admin-email.directive';
 
 @Component({
   selector: 'app-registro-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AdminEmailDirective],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './registro-admin.html',
   styleUrls: ['./registro-admin.css']
 })

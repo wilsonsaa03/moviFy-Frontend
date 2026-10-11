@@ -1,61 +1,71 @@
-name: 🚀 Deploy Angular App
+name: 🚀 Frontend MoviFY
 
 on:
+  pull_request:
+    branches: [main]
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  build-and-deploy:
+  build:
+    name: Compilar
     runs-on: ubuntu-latest
-
     steps:
-      - name: 📥 Clonar repositorio
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 🟢 Instalar Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
-      - name: 📦 Instalar dependencias
-        run: npm install --legacy-peer-deps
+      - name: Instalar dependencias
+        run: npm ci --legacy-peer-deps
 
-      - name: 🏗️ Build Angular (producción)
+      - name: Build de producción
         run: npm run build -- --configuration production
 
-      - name: 📁 Preparar archivos para deploy
-        run: cp -r dist/browser deploy_output
-
-      # 🧹 Limpiar carpeta del servidor (borra todo incluyendo dotfiles)
-      - name: 🧹 Limpiar servidor
-        uses: appleboy/ssh-action@v1.0.0
+      - uses: actions/upload-artifact@v4
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          command_timeout: 5m
-          script: find /var/www/ds2/movify/movify-frontend -mindepth 1 -delete
+          name: web
+          path: dist/browser
+          include-hidden-files: true   # incluye el .htaccess
+          retention-days: 7
 
-      # 🚀 Subir build al servidor
-      - name: 🚀 Deploy via SCP
+  # Sube la versión nueva a una carpeta aparte y la cambia de un solo golpe:
+  # el sitio nunca queda vacío mientras se suben los archivos.
+  deploy:
+    name: Desplegar
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: web
+          path: nuevo
+
+      - name: Subir a carpeta temporal
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "deploy_output/"
-          target: "/var/www/ds2/movify/movify-frontend"
+          source: "nuevo/"
+          target: "/var/www/ds2/movify/movify-frontend-nuevo"
           strip_components: 1
+          rm: true
 
-      # ✅ Verificar deploy
-      - name: ✅ Verificar deploy
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Publicar (cambio atómico)
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            echo "=== Archivos ===" && ls -la /var/www/ds2/movify/movify-frontend/
-            echo "=== .htaccess ===" && cat /var/www/ds2/movify/movify-frontend/.htaccess
+            set -e
+            cd /var/www/ds2/movify
+            test -f movify-frontend-nuevo/index.html
+            rm -rf movify-frontend-anterior
+            [ -d movify-frontend ] && mv movify-frontend movify-frontend-anterior
+            mv movify-frontend-nuevo movify-frontend
+            echo "Publicado:" && ls -la movify-frontend | head

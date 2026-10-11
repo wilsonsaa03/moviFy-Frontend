@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UsuarioService } from '../../Base_de_datos/usuario.service';
-import { environment } from '../../../environments/environment';
+import { ApiService } from '../../core/api.service';
 
 @Component({
   selector: 'app-home-admin',
@@ -61,7 +61,11 @@ export class HomeAdminComponent implements OnInit {
 
   cargando = true;
 
-  constructor(private router: Router, private usuarioService: UsuarioService) {}
+  /** URLs locales (blob:) de los documentos: se descargan con el token del admin. */
+  docUrls: Record<string, string> = {};
+  docTipos: Record<string, string> = {};
+
+  constructor(private router: Router, private usuarioService: UsuarioService, private api: ApiService) {}
 
   ngOnInit(): void {
     this.nombre = localStorage.getItem('nombre') || 'Admin';
@@ -74,8 +78,7 @@ export class HomeAdminComponent implements OnInit {
   // ─── CONDUCTORES ───────────────────────────────
   cargarDatos() {
     this.cargando = true;
-    fetch(`${environment.apiUrl}/transporte/admin/conductores`)
-      .then(res => res.json())
+    this.api.get<any[]>('/transporte/admin/conductores')
       .then(data => {
         this.conductores = data;
         this.totalConductores = data.filter((c: any) => c.estado === 'aprobado').length;
@@ -102,11 +105,15 @@ export class HomeAdminComponent implements OnInit {
     this.cargandoDetalle = true;
     this.conductorDetalle = null;
 
-    fetch(`${environment.apiUrl}/transporte/admin/conductor/${c.conductor_id}/detalle`)
-      .then(res => res.json())
-      .then(data => {
+    this.liberarDocumentos();
+
+    this.api.get(`/transporte/admin/conductor/${c.conductor_id}/detalle`)
+      .then((data: any) => {
         this.conductorDetalle = data;
         this.cargandoDetalle = false;
+        for (const campo of ['licencia', 'soat', 'tarjeta_propiedad', 'cedula']) {
+          if (data[campo]) this.cargarDocumento(campo, data[campo]);
+        }
       })
       .catch(err => {
         console.error('Error cargando detalle del conductor:', err);
@@ -117,17 +124,36 @@ export class HomeAdminComponent implements OnInit {
   cerrarModalDocumentos() {
     this.mostrarModalDocumentos = false;
     this.conductorDetalle = null;
+    this.liberarDocumentos();
   }
 
-  urlDocumento(nombreArchivo: string): string {
-    if (!nombreArchivo) return '';
-    return `${environment.apiUrl}/conductor/documento/${nombreArchivo}`;
+  /**
+   * Los documentos ya no se abren con un enlace directo al backend: exigen el JWT del admin.
+   * Se descargan como Blob y se muestran con una URL local; el servidor valida el tipo real
+   * del archivo, así que un HTML disfrazado nunca se ejecuta en el dominio de MoviFY.
+   */
+  private cargarDocumento(campo: string, nombreArchivo: string) {
+    this.api.blob(`/conductor/documento/${encodeURIComponent(nombreArchivo)}`)
+      .then(blob => {
+        this.docTipos[campo] = blob.type;
+        this.docUrls[campo] = URL.createObjectURL(blob);
+      })
+      .catch(() => { this.docUrls[campo] = ''; });
   }
 
-  esImagen(nombreArchivo: string): boolean {
-    if (!nombreArchivo) return false;
-    const ext = nombreArchivo.split('.').pop()?.toLowerCase();
-    return ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
+  private liberarDocumentos() {
+    Object.values(this.docUrls).forEach(u => u && URL.revokeObjectURL(u));
+    this.docUrls = {};
+    this.docTipos = {};
+  }
+
+  esImagen(campo: string): boolean {
+    return (this.docTipos[campo] || '').startsWith('image/');
+  }
+
+  abrirDocumento(campo: string) {
+    const url = this.docUrls[campo];
+    if (url) window.open(url, '_blank', 'noopener');
   }
 
   aprobarDesdeModal(c: any) {
@@ -148,24 +174,16 @@ export class HomeAdminComponent implements OnInit {
 
     if (this.procesandoConductor) return;
     this.procesandoConductor = true;
-    const adminId = localStorage.getItem('id') || '0';
     try {
-      const resp = await fetch(`${environment.apiUrl}/transporte/admin/conductor/${conductorId}/estado`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          estado: nuevoEstado,
-          motivo_rechazo: nuevoEstado === 'rechazado' ? this.motivoRechazo : '',
-          admin_id: adminId
-        })
+      await this.api.patch(`/transporte/admin/conductor/${conductorId}/estado`, {
+        estado: nuevoEstado,
+        motivo_rechazo: nuevoEstado === 'rechazado' ? this.motivoRechazo : ''
       });
-      if (resp.ok) {
-        alert(`Conductor ${nuevoEstado} con éxito.`);
-        this.cerrarModal();
-        this.cargarDatos();
-      }
+      alert(`Conductor ${nuevoEstado} con éxito.`);
+      this.cerrarModal();
+      this.cargarDatos();
     } catch (err) {
-      console.error('Error al actualizar:', err);
+      alert(ApiService.mensaje(err, 'No se pudo actualizar el conductor.'));
     } finally {
       this.procesandoConductor = false;
     }
@@ -190,8 +208,7 @@ export class HomeAdminComponent implements OnInit {
   }
 
   cargarServicios() {
-    fetch(`${environment.apiUrl}/transporte/admin/servicios`)
-      .then(res => res.json())
+    this.api.get<any[]>('/transporte/admin/servicios')
       .then((data: any[]) => {
         this.servicios = data.map(s => ({
           icono: s.tipo === 'TRANSPORTE' ? '🏍️' : s.tipo === 'DOMICILIO' ? '🛵' : '📦',
@@ -232,26 +249,12 @@ export class HomeAdminComponent implements OnInit {
 
   private async cambiarEstadoUsuario(id: number, nuevoEstado: string) {
     try {
-      const resp = await fetch(`${environment.apiUrl}/auth/usuarios/${id}/estado`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ estado: nuevoEstado })
-      });
-
-      if (resp.ok) {
-        // Actualizamos localmente para no recargar todo
-        const user = this.usuarios.find(user => user.id === id);
-        if (user) user.estado = nuevoEstado;
-        
-        alert(`Usuario actualizado a: ${nuevoEstado}`);
-      } else {
-        const err = await resp.json();
-        alert('Error: ' + (err.error || 'No se pudo actualizar'));
-      }
+      await this.api.patch(`/auth/usuarios/${id}/estado`, { estado: nuevoEstado });
+      const user = this.usuarios.find(user => user.id === id);
+      if (user) user.estado = nuevoEstado;
+      alert(`Usuario actualizado a: ${nuevoEstado}`);
     } catch (err) {
-      console.error('Error:', err);
+      alert('Error: ' + ApiService.mensaje(err, 'No se pudo actualizar'));
     }
   }
 

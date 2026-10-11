@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { ApiService } from '../../core/api.service';
 
 @Component({
   selector: 'app-perfil-usuario',
@@ -42,7 +42,8 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private api: ApiService
   ) {}
 
   ngOnInit(): void {
@@ -51,17 +52,7 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
     this.email    = localStorage.getItem('correo')   || '';
     this.telefono = localStorage.getItem('telefono') || '';
 
-    const userId = localStorage.getItem('id');
-    const correo = localStorage.getItem('correo');
-
-    if (userId && userId !== '' && userId !== 'undefined') {
-      this.cargarPerfilDesdeDB(userId);
-    } else if (correo) {
-      // Buscar por correo como alternativa
-      this.cargarPerfilPorCorreo(correo);
-    } else {
-      this.cargando = false;
-    }
+    this.cargarPerfil();
 
     // Cierra el dropdown al hacer clic fuera
     this.clickListener = () => {
@@ -76,33 +67,11 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
     if (this.clickListener) document.removeEventListener('click', this.clickListener);
   }
 
-  cargarPerfilPorCorreo(correo: string) {
+  /** GET /api/usuarios/perfil: el backend identifica al usuario por el token. */
+  cargarPerfil() {
     this.cargando = true;
-    fetch(`${environment.apiUrl}/usuario/perfil/correo/${encodeURIComponent(correo)}`)
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        const u = data.usuario || data;
-        // Guardar el id ahora que lo tenemos
-        if (u.id) localStorage.setItem('id', u.id.toString());
-        this.poblarPerfil(u);
-      })
-      .catch(() => {
-        this.cargando = false;
-        this.cdr.detectChanges();
-      });
-  }
-
-  cargarPerfilDesdeDB(id: string) {
-    this.cargando = true;
-    fetch(`${environment.apiUrl}/usuario/perfil/${id}`)
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then(data => this.poblarPerfil(data.usuario || data))
+    this.api.get('/usuarios/perfil')
+      .then(u => this.poblarPerfil(u))
       .catch(() => {
         this.cargando = false;
         this.cdr.detectChanges();
@@ -120,7 +89,7 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
     this.calificacion         = Number(u.calificacion)    || 0;
     this.totalCalificaciones  = u.total_calificaciones    || 0;
     this.puntos               = u.puntos                  || 0;
-    this.viajesCompletados    = u.viajes_completados       || 0;
+    this.viajesCompletados    = Number(u.viajes_finalizados ?? u.viajes_completados) || 0;
     this.pedidosRealizados    = u.pedidos_realizados       || 0;
     this.lugaresFavoritos     = u.lugares_favoritos        || 0;
     this.metodosPago          = u.metodos_pago             || 0;
@@ -151,16 +120,35 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
     this.router.navigate(['/mi-perfil']);
   }
 
-  // ── Editar un campo específico ────────────────────────────────────────
+  // ── Editar nombre o teléfono (PUT /api/usuarios/perfil) ───────────────
   editarPerfil(): void {
     this.dropdownAbierto = false;
     this.menuAbierto = false;
-    this.router.navigate(['/editar-perfil']);
+    this.editarCampo('nombre');
   }
 
   editarCampo(campo: string): void {
-    // Puedes navegar a una pantalla de edición pasando el campo como queryParam
-    this.router.navigate(['/editar-perfil'], { queryParams: { campo } });
+    const editables: Record<string, { etiqueta: string; actual: string }> = {
+      nombre:   { etiqueta: 'tu nombre', actual: this.nombre },
+      telefono: { etiqueta: 'tu teléfono', actual: this.telefono }
+    };
+    const cfg = editables[campo];
+    if (!cfg) {
+      alert('Este dato todavía no se puede cambiar desde la app.');
+      return;
+    }
+    const valor = prompt(`Escribe ${cfg.etiqueta}:`, cfg.actual || '');
+    if (valor === null || valor.trim() === '' || valor.trim() === cfg.actual) return;
+
+    this.api.put('/usuarios/perfil', { [campo]: valor.trim() })
+      .then((u: any) => {
+        this.nombre = u.nombre || this.nombre;
+        this.telefono = u.telefono || '';
+        localStorage.setItem('nombre', this.nombre);
+        localStorage.setItem('telefono', this.telefono);
+        this.cdr.detectChanges();
+      })
+      .catch(err => alert(ApiService.mensaje(err, 'No se pudo guardar el cambio.')));
   }
 
   // ── Cerrar sesión ─────────────────────────────────────────────────────

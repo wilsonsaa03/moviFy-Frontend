@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ConductorService } from '../../Base_de_datos/conductor.service';
-import { environment } from '../../../environments/environment';
+import { ApiService } from '../../core/api.service';
 
 @Component({
   selector: 'app-ver-mi-perfil-conductor',
@@ -67,7 +67,8 @@ export class VerMiPerfilConductorComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private conductorService: ConductorService
+    private conductorService: ConductorService,
+    private api: ApiService
   ) {}
 
   ngOnInit(): void {
@@ -131,37 +132,21 @@ export class VerMiPerfilConductorComponent implements OnInit {
 
     this.cargando = true;
     try {
-      const resp = await fetch(`${environment.apiUrl}/conductor/perfil/actualizar`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          correo: this.correo,
-          nombre: this.nombreEdit.trim(),
-          telefono: this.telefonoEdit.trim(),
-          ciudad: this.ciudadEdit.trim(),
-          foto: this.foto
-        })
+      // El backend edita al conductor del token; el correo ya no se envía
+      await this.api.put('/conductor/perfil/actualizar', {
+        nombre: this.nombreEdit.trim(),
+        telefono: this.telefonoEdit.trim(),
+        ciudad: this.ciudadEdit.trim(),
+        foto: this.foto
       });
-
-      if (resp.ok) {
-        this.nombre = this.nombreEdit.trim();
-        this.telefono = this.telefonoEdit.trim();
-        this.ciudad = this.ciudadEdit.trim();
-        localStorage.setItem('nombre', this.nombre);
-        this.modoEdicion = false;
-        this.mostrarOk('Perfil actualizado en la base de datos.');
-      } else {
-        // Intentar leer el error solo si la respuesta es JSON
-        const contentType = resp.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await resp.json();
-          this.mensajeErr = errorData.details || errorData.error || 'Error en el servidor.';
-        } else {
-          this.mensajeErr = `Error del servidor (${resp.status}). Revisa la consola de Spring Boot.`;
-        }
-      }
+      this.nombre = this.nombreEdit.trim();
+      this.telefono = this.telefonoEdit.trim();
+      this.ciudad = this.ciudadEdit.trim();
+      localStorage.setItem('nombre', this.nombre);
+      this.modoEdicion = false;
+      this.mostrarOk('Perfil actualizado en la base de datos.');
     } catch (e) {
-      this.mensajeErr = 'Error de conexión con el servidor.';
+      this.mensajeErr = ApiService.mensaje(e, 'Error de conexión con el servidor.');
     } finally {
       this.cargando = false;
     }
@@ -179,17 +164,21 @@ export class VerMiPerfilConductorComponent implements OnInit {
       this.mensajeErr = 'Las contraseñas nuevas no coinciden.';
       return;
     }
-    if (this.passNueva.length < 6) {
-      this.mensajeErr = 'La contraseña debe tener al menos 6 caracteres.';
+    if (this.passNueva.length < 8) {
+      this.mensajeErr = 'La contraseña debe tener al menos 8 caracteres.';
       return;
     }
 
-    // Aquí iría la llamada al backend para actualizar la contraseña
-    this.modoPassword = false;
-    this.passActual   = '';
-    this.passNueva    = '';
-    this.passConfirm  = '';
-    this.mostrarOk('Contraseña actualizada correctamente.');
+    // Antes solo mostraba "actualizada" sin llamar al backend
+    this.api.put('/usuarios/password', { actual: this.passActual, nueva: this.passNueva })
+      .then(() => {
+        this.modoPassword = false;
+        this.passActual   = '';
+        this.passNueva    = '';
+        this.passConfirm  = '';
+        this.mostrarOk('Contraseña actualizada correctamente.');
+      })
+      .catch(err => this.mensajeErr = ApiService.mensaje(err, 'No se pudo cambiar la contraseña.'));
   }
 
   // ============================================================

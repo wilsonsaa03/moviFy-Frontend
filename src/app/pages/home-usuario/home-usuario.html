@@ -5,7 +5,7 @@
 
     <!-- Logo -->
     <div class="sb-logo">
-      <img src="/assets/movify.jpg" class="sb-logo-img" alt="MoviFY">
+      <img src="/assets/brand/movify-icono.png" class="sb-logo-img" alt="MoviFY">
       <span class="sb-brand">MoviFY</span>
     </div>
 
@@ -26,8 +26,51 @@
         <span class="sb-txt">Mis viajes</span>
       </a>
 
-      <!-- Mis pedidos, Favoritos, Métodos de pago, Promociones, Soporte, Notificaciones, Configuración: ocultos temporalmente -->
+      <a class="sb-link" routerLink="/mis-encomiendas">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </span>
+        <span class="sb-txt">Encomiendas</span>
+      </a>
 
+      <a class="sb-link" routerLink="/favoritos">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </span>
+        <span class="sb-txt">Favoritos</span>
+      </a>
+
+      <a class="sb-link" routerLink="/metodos-pago">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </span>
+        <span class="sb-txt">Métodos de pago</span>
+      </a>
+
+      <a class="sb-link" routerLink="/invitar">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+        </span>
+        <span class="sb-txt">Invita y gana</span>
+      </a>
+
+      <a class="sb-link" routerLink="/soporte">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>
+        </span>
+        <span class="sb-txt">Soporte</span>
+      </a>
+
+      <a class="sb-link" routerLink="/configuracion">
+        <span class="sb-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </span>
+        <span class="sb-txt">Configuración</span>
+      </a>
 
     </nav>
 
@@ -127,7 +170,7 @@
                 <path d="M11 6l1 5.5"/>
               </svg>
             </div>
-            <!-- Pin de ubicación naranja/verde -->
+            <!-- Pin de ubicación -->
             <span class="srv-pin">📍</span>
             <img src="/assets/transporte-home.png" class="srv-img" alt="Transporte">
           </div>
@@ -196,7 +239,7 @@
           </div>
 
           <div class="hist-item" *ngFor="let item of historial">
-            <div class="hi-icon" [ngClass]="'hi-' + item.statusClass">
+            <div class="hi-icon" [ngClass]="'hi-' + item.tipoClass">
               {{ item.icono }}
             </div>
             <div class="hi-info">
@@ -225,35 +268,40 @@
             <span class="bc-action">Editar</span>
           </div>
 
-          <div class="favs-grid">
-            <div class="fav-box fav-green">
-              <div class="fav-ico">🏠</div>
-              <div>
-                <strong>Casa</strong>
-                <span>Buenaventura</span>
-              </div>
+          <div class="fav-item">
+            <div class="fav-ico-circle fav-green">🏠</div>
+            <div class="fav-info">
+              <strong>Casa</strong>
+              <span>Buenaventura</span>
             </div>
-            <div class="fav-box fav-orange">
-              <div class="fav-ico">💼</div>
-              <div>
-                <strong>Trabajo</strong>
-                <span>Oficina principal</span>
-              </div>
+            <span class="fav-menu">⋮</span>
+          </div>
+
+          <div class="fav-item">
+            <div class="fav-ico-circle fav-orange">💼</div>
+            <div class="fav-info">
+              <strong>Trabajo</strong>
+              <span>Oficina principal</span>
             </div>
-            <div class="fav-box fav-purple">
-              <div class="fav-ico">🛍️</div>
-              <div>
-                <strong>Centro Comercial</strong>
-                <span>Cabecera del Llano</span>
-              </div>
+            <span class="fav-menu">⋮</span>
+          </div>
+
+          <div class="fav-item">
+            <div class="fav-ico-circle fav-purple">🛍️</div>
+            <div class="fav-info">
+              <strong>Centro Comercial</strong>
+              <span>Cabecera del Llano</span>
             </div>
-            <div class="fav-box fav-blue">
-              <div class="fav-ico">🎓</div>
-              <div>
-                <strong>Universidad</strong>
-                <span>Industrial de Santander</span>
-              </div>
+            <span class="fav-menu">⋮</span>
+          </div>
+
+          <div class="fav-item">
+            <div class="fav-ico-circle fav-blue">🎓</div>
+            <div class="fav-info">
+              <strong>Universidad</strong>
+              <span>Industrial de Santander</span>
             </div>
+            <span class="fav-menu">⋮</span>
           </div>
 
           <button class="btn-add-lugar">

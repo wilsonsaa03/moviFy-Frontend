@@ -3,7 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ConductorService } from '../../Base_de_datos/conductor.service';
-import { environment } from '../../../environments/environment';
+import { ApiService } from '../../core/api.service';
 
 // ─────────────────────────────────────────────
 // INTERFACES (tipos que llegan del backend)
@@ -96,7 +96,8 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
 
   constructor(
     private conductorService: ConductorService,
-    private router: Router
+    private router: Router,
+    private api: ApiService
   ) {}
 
   // ══════════════════════════════════════════
@@ -144,11 +145,7 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   }
 
   private fetchStats(): Promise<void> {
-    return fetch(`${environment.apiUrl}/transporte/stats-conductor/${this.conductorId}`)
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
+    return this.api.get<StatsViajes>(`/transporte/stats-conductor/${this.conductorId}`)
       .then((data: StatsViajes) => {
         this.stats = data;
       })
@@ -159,20 +156,12 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   }
 
   private fetchViajes(): Promise<void> {
-    const params = new URLSearchParams({
+    return this.api.get(`/transporte/historial-conductor/${this.conductorId}`, {
       filtro:   this.filtroActivo,
       busqueda: this.busqueda,
-      pagina:   String(this.paginaActual),
-      limite:   String(this.itemsPorPagina)
-    });
-
-    return fetch(
-      `${environment.apiUrl}/transporte/historial-conductor/${this.conductorId}?${params}`
-    )
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
+      pagina:   this.paginaActual,
+      limite:   this.itemsPorPagina
+    })
       .then((data: { viajes: ViajeItem[]; total: number; total_paginas: number; pagina_actual: number }) => {
         this.viajes          = data.viajes        || [];
         this.totalPaginas    = data.total_paginas || 1;
@@ -248,12 +237,18 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   // EXPORTAR
   // ══════════════════════════════════════════
 
+  /** El CSV exige el token: se descarga como Blob y se guarda con un enlace local. */
   exportarGanancias(): void {
-    const url = `${environment.apiUrl}/transporte/exportar-ganancias/${this.conductorId}`;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ganancias-${this.conductorId}-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
+    this.api.blob(`/transporte/exportar-ganancias/${this.conductorId}`)
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ganancias-${this.conductorId}-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch(() => alert('No se pudo descargar el archivo.'));
   }
 
   // ══════════════════════════════════════════
@@ -261,7 +256,9 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   // ══════════════════════════════════════════
 
   verDetalle(viajeId: number): void {
-    this.router.navigate(['/detalle-viaje', viajeId]);
+    // No existe pantalla de detalle: se abre el viaje en el mapa del conductor
+    const viaje = this.viajes.find(v => v.servicio_id === viajeId);
+    if (viaje) this.abrirMapa(viaje);
   }
 
   abrirMapa(viaje: ViajeItem): void {
@@ -345,12 +342,12 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
 
   editarPerfil(): void {
     this.menuAbierto = false;
-    this.router.navigate(['/editar-perfil']);
+    this.router.navigate(['/perfil-conductor']);
   }
 
   configuracion(): void {
     this.menuAbierto = false;
-    this.router.navigate(['/configuracion']);
+    this.router.navigate(['/perfil-conductor']);
   }
 
   cerrarSesion(): void {

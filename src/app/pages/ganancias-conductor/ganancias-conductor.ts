@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ConductorService } from '../../Base_de_datos/conductor.service';
-import { environment } from '../../../environments/environment';
+import { ApiService } from '../../core/api.service';
 
 // Declaramos Chart.js como global (se carga por CDN o se importa abajo)
 declare var Chart: any;
@@ -71,7 +71,8 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
 
   constructor(
     private conductorService: ConductorService,
-    private router: Router
+    private router: Router,
+    private api: ApiService
   ) {}
 
   // ════════════════════════════════════════════════════════════
@@ -143,8 +144,7 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
    */
   cargarStats(): Promise<void> {
     if (!this.conductorId) return Promise.resolve();
-    return fetch(`${environment.apiUrl}/transporte/ganancias-stats/${this.conductorId}?filtro=${this.filtro}`)
-      .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
+    return this.api.get(`/transporte/ganancias-stats/${this.conductorId}`, { filtro: this.filtro })
       .then((d: any) => {
         this.stats = {
           ganancias_hoy:    Number(d.ganancias_hoy)    || 0,
@@ -162,7 +162,7 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
           propinas:         Number(d.propinas)         || 0,
           incentivos:       Number(d.incentivos)       || 0
         };
-        this.ultimosCuatro = d.ultimos_cuatro || '4567';
+        this.ultimosCuatro = d.ultimos_cuatro || '';
         if (d.metodos_pago && Array.isArray(d.metodos_pago)) {
           this.metodosPago = d.metodos_pago.map((m: any) => ({
             icono:  m.nombre === 'Efectivo' ? '💵' : m.nombre === 'Tarjeta' ? '💳' : '📱',
@@ -196,9 +196,8 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
    */
   cargarTransacciones(pagina: number = 0): Promise<void> {
     if (!this.conductorId) return Promise.resolve();
-    const url = `${environment.apiUrl}/transporte/transacciones-conductor/${this.conductorId}?filtro=${this.filtro}&page=${pagina}&size=${this.PAGE_SIZE}`;
-    return fetch(url)
-      .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
+    return this.api.get<any[]>(`/transporte/transacciones-conductor/${this.conductorId}`,
+        { filtro: this.filtro, page: pagina, size: this.PAGE_SIZE })
       .then((data: any[]) => {
         const mapeadas = data.map(t => this.mapearTransaccion(t));
         this.transacciones = pagina === 0 ? mapeadas : [...this.transacciones, ...mapeadas];
@@ -218,8 +217,7 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
    */
   cargarGrafica(): Promise<void> {
     if (!this.conductorId) return Promise.resolve();
-    return fetch(`${environment.apiUrl}/transporte/grafica-conductor/${this.conductorId}?filtro=${this.filtro}`)
-      .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
+    return this.api.get(`/transporte/grafica-conductor/${this.conductorId}`, { filtro: this.filtro })
       .then((data: { dia: string; valor: number }[]) => {
         this.puntosGrafica = data;
       })
@@ -400,21 +398,14 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
     if (!this.conductorId || this.stats.saldo_disponible <= 0) return;
     this.retirando = true;
 
-    fetch(`${environment.apiUrl}/transporte/solicitar-retiro`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        conductor_id: this.conductorId,
-        monto: this.stats.saldo_disponible
-      })
-    })
-      .then(r => r.json())
-      .then(() => {
+    // El servidor valida el saldo; el conductor sale del token
+    this.api.post('/transporte/solicitar-retiro', { monto: this.stats.saldo_disponible })
+      .then((r: any) => {
         this.mostrarOk('Retiro solicitado exitosamente. Llegará en 1-2 días hábiles.');
-        this.stats.saldo_disponible = 0;
+        this.stats.saldo_disponible = Number(r?.saldo_restante) || 0;
         this.cargarTransacciones(0);
       })
-      .catch(() => this.mostrarErr('No se pudo procesar el retiro. Intenta más tarde.'))
+      .catch((err) => this.mostrarErr(ApiService.mensaje(err, 'No se pudo procesar el retiro. Intenta más tarde.')))
       .finally(() => this.retirando = false);
   }
 

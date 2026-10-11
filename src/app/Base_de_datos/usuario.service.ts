@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -40,10 +40,6 @@ export class UsuarioService {
     return this.http.post(`${this.BASE_URL}/login-google`, datos);
   }
 
-  loginFacebook(datos: any): Observable<any> {
-    return this.http.post(`${this.BASE_URL}/login-facebook`, datos);
-  }
-
   // =========================
   // CONDUCTOR
   // =========================
@@ -72,38 +68,15 @@ export class UsuarioService {
   // =========================
 
   obtenerTodos(): Observable<any[]> {
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    return this.http.get<any[]>(`${this.BASE_URL}/usuarios`, { headers });
+    return this.http.get<any[]>(`${this.BASE_URL}/usuarios`);
   }
 
   obtenerPerfil(): Observable<Usuario> {
-
-    const token = localStorage.getItem('token');
-
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${token}`
-    });
-
-    return this.http.get<Usuario>(
-      `${this.USUARIO_URL}/perfil`,
-      { headers }
-    );
+    return this.http.get<Usuario>(`${this.USUARIO_URL}/perfil`);
   }
 
   actualizarPerfil(usuario: Usuario): Observable<Usuario> {
-
-    const token = localStorage.getItem('token');
-
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${token}`
-    });
-
-    return this.http.put<Usuario>(
-      `${this.USUARIO_URL}/perfil`,
-      usuario,
-      { headers }
-    );
+    return this.http.put<Usuario>(`${this.USUARIO_URL}/perfil`, usuario);
   }
 
   // =========================

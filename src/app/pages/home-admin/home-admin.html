@@ -3,7 +3,7 @@
   <!-- NAVBAR -->
   <nav class="navbar">
     <div class="navbar-left">
-      <img src="/assets/logo transparente.png" class="nav-logo">
+      <img src="/assets/brand/movify-isotipo.svg" class="nav-logo" alt="MoviFY">
       <span class="nav-brand">Movi<span>FY</span></span>
     </div>
 
@@ -384,26 +384,26 @@
 
             <div class="documento-item" *ngIf="conductorDetalle.licencia">
               <p class="documento-titulo">Licencia de conducción</p>
-              <img *ngIf="esImagen(conductorDetalle.licencia)" [src]="urlDocumento(conductorDetalle.licencia)" class="documento-preview">
-              <a [href]="urlDocumento(conductorDetalle.licencia)" target="_blank" class="btn-ver-doc">🔍 Ver documento completo</a>
+              <img *ngIf="esImagen('licencia') && docUrls['licencia']" [src]="docUrls['licencia']" class="documento-preview" alt="Documento">
+              <button type="button" (click)="abrirDocumento('licencia')" [disabled]="!docUrls['licencia']" class="btn-ver-doc">🔍 Ver documento completo</button>
             </div>
 
             <div class="documento-item" *ngIf="conductorDetalle.soat">
               <p class="documento-titulo">SOAT</p>
-              <img *ngIf="esImagen(conductorDetalle.soat)" [src]="urlDocumento(conductorDetalle.soat)" class="documento-preview">
-              <a [href]="urlDocumento(conductorDetalle.soat)" target="_blank" class="btn-ver-doc">🔍 Ver documento completo</a>
+              <img *ngIf="esImagen('soat') && docUrls['soat']" [src]="docUrls['soat']" class="documento-preview" alt="Documento">
+              <button type="button" (click)="abrirDocumento('soat')" [disabled]="!docUrls['soat']" class="btn-ver-doc">🔍 Ver documento completo</button>
             </div>
 
             <div class="documento-item" *ngIf="conductorDetalle.tarjeta_propiedad">
               <p class="documento-titulo">Tarjeta de propiedad</p>
-              <img *ngIf="esImagen(conductorDetalle.tarjeta_propiedad)" [src]="urlDocumento(conductorDetalle.tarjeta_propiedad)" class="documento-preview">
-              <a [href]="urlDocumento(conductorDetalle.tarjeta_propiedad)" target="_blank" class="btn-ver-doc">🔍 Ver documento completo</a>
+              <img *ngIf="esImagen('tarjeta_propiedad') && docUrls['tarjeta_propiedad']" [src]="docUrls['tarjeta_propiedad']" class="documento-preview" alt="Documento">
+              <button type="button" (click)="abrirDocumento('tarjeta_propiedad')" [disabled]="!docUrls['tarjeta_propiedad']" class="btn-ver-doc">🔍 Ver documento completo</button>
             </div>
 
             <div class="documento-item" *ngIf="conductorDetalle.cedula">
               <p class="documento-titulo">Cédula</p>
-              <img *ngIf="esImagen(conductorDetalle.cedula)" [src]="urlDocumento(conductorDetalle.cedula)" class="documento-preview">
-              <a [href]="urlDocumento(conductorDetalle.cedula)" target="_blank" class="btn-ver-doc">🔍 Ver documento completo</a>
+              <img *ngIf="esImagen('cedula') && docUrls['cedula']" [src]="docUrls['cedula']" class="documento-preview" alt="Documento">
+              <button type="button" (click)="abrirDocumento('cedula')" [disabled]="!docUrls['cedula']" class="btn-ver-doc">🔍 Ver documento completo</button>
             </div>
 
             <p *ngIf="!conductorDetalle.licencia && !conductorDetalle.soat && !conductorDetalle.tarjeta_propiedad && !conductorDetalle.cedula"
