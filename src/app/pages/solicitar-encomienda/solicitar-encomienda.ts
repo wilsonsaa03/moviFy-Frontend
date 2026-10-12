@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import * as L from 'leaflet';
-import { environment } from '../../../environments/environment';
+import { cargarRoutingMachine } from '../../core/lrm-loader';
+import { ApiService } from '../../core/api.service';
 
 declare let window: any;
 
@@ -68,7 +69,9 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   private intervaloRefreshConductores: any;
   private transicionFinalizada: boolean = false;
   private conductoresMarkers: Map<number, L.Marker> = new Map();
-  private apiBase = `${environment.apiUrl}/transporte`;
+  private apiBase = '/transporte';
+  private servicioId: number | null = null;
+  private faseRuta: '' | 'recogida' | 'destino' = '';
 
   // Simulación
   private puntosRuta: L.LatLng[] = [];
@@ -78,7 +81,7 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   private lineaSimulacion?: L.Polyline;
   private lineaRecorrida?: L.Polyline;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private api: ApiService) {}
 
   /* ===================== LIFECYCLE ===================== */
   ngOnInit(): void {}
@@ -99,18 +102,7 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
 
   /* ===================== CARGAR LRM ===================== */
   private cargarLRM(): Promise<void> {
-    return new Promise(resolve => {
-      if (window.L?.Routing) { resolve(); return; }
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css';
-      document.head.appendChild(link);
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js';
-      script.onload = () => resolve();
-      script.onerror = () => { console.error('Error cargando LRM'); resolve(); };
-      document.head.appendChild(script);
-    });
+    return cargarRoutingMachine();
   }
 
   /* ===================== MAPA ===================== */
@@ -196,8 +188,7 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   /* ===================== CONDUCTORES ACTIVOS ===================== */
   private async obtenerConductoresReales(): Promise<void> {
     try {
-      const resp = await fetch(`${this.apiBase}/conductores-activos`);
-      const conductores = await resp.json();
+      const conductores = await this.api.get<any[]>(`${this.apiBase}/conductores-activos`);
       this.totalConductoresActivos = conductores.length;
       this.dibujarConductoresEnMapa(conductores);
     } catch (e) {
@@ -217,7 +208,7 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
         this.conductoresMarkers.get(id)!.setLatLng([c.latitud, c.longitud]);
       } else {
         const m = L.marker([c.latitud, c.longitud], { icon: motoIcon })
-          .addTo(this.map).bindPopup(`<b>🛵 ${c.nombre}</b><br>Disponible`);
+          .addTo(this.map).bindPopup('<b>🛵 Conductor disponible</b>');
         this.conductoresMarkers.set(id, m);
       }
     });
@@ -302,29 +293,32 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
 
     const dest = this.destinoMarker!.getLatLng();
     const body = {
-      usuario_id: parseInt(localStorage.getItem('id') || '1'),
       origen_lat: this.userLat,
       origen_lng: this.userLng,
       destino_lat: dest.lat,
       destino_lng: dest.lng,
-      distancia_km: this.distanciaViaje,
-      tarifa: this.tarifaEstimada,
       tipo: 'ENCOMIENDA',
-      descripcion: `${this.tipoPaquete} | ${this.pesoAproximado}kg | Para: ${this.nombreDestinatario} (${this.telefonoDestinatario}) | ${this.descripcion}`
+      descripcion: this.descripcion,
+      // Columnas propias de la encomienda (antes todo iba pegado en la descripción)
+      nombre_remitente: this.nombreRemitente,
+      telefono_remitente: this.telefonoRemitente,
+      nombre_destinatario: this.nombreDestinatario,
+      telefono_destinatario: this.telefonoDestinatario,
+      tipo_paquete: this.tipoPaquete,
+      peso_kg: String(this.pesoAproximado ?? '').slice(0, 10)
     };
 
     try {
-      const resp = await fetch(`${this.apiBase}/solicitar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (!resp.ok) throw new Error(await resp.text());
-      const data = await resp.json();
+      const data = await this.api.post(`${this.apiBase}/solicitar`, body);
+      this.servicioId = data.id;
+      if (data.tarifa) this.tarifaEstimada = Number(data.tarifa);
+      if (data.conductores_notificados === 0) {
+        this.mensajeEstado = 'No hay conductores en línea en este momento. Seguimos buscando...';
+      }
       this.comenzarPollingServicio(data.id);
     } catch (e) {
       this.buscandoConductor = false;
-      alert('Error: ' + (e instanceof Error ? e.message : 'No se pudo contactar con el servidor'));
+      alert(ApiService.mensaje(e, 'No se pudo contactar con el servidor'));
     }
   }
 
@@ -333,9 +327,7 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.pollingServicio = setInterval(async () => {
         try {
-          const resp = await fetch(`${this.apiBase}/servicio/${id}`);
-          if (!resp.ok) return;
-          const servicio = await resp.json();
+          const servicio = await this.api.get(`${this.apiBase}/servicio/${id}`);
           this.conductorInfo = servicio;
           this.procesarEstadoServicio(servicio);
         } catch (e) {
@@ -345,53 +337,61 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     }, 3000);
   }
 
-  /* ===================== PROCESAR ESTADOS ===================== */
+  /* ===================== PROCESAR ESTADOS (datos reales del backend) ===================== */
   private procesarEstadoServicio(s: any): void {
-
-    // ACEPTADO → simulación conductor hacia punto de recogida (naranja)
-    if ((s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO_AL_USUARIO') && !this.transicionFinalizada) {
-      const condLat = s.conductor_lat ?? s.latitud;
-      const condLng = s.conductor_lng ?? s.longitud;
-
+    const enCurso = ['ACEPTADO', 'EN_CAMINO_AL_USUARIO', 'LLEGO_AL_ORIGEN', 'EN_CAMINO', 'EN_VIAJE', 'PAQUETE_RECOGIDO'];
+    if (enCurso.includes(s.estado)) {
       this.transicionFinalizada = true;
       this.buscandoConductor = false;
-      this.mensajeEstado = '🛵 ¡Conductor encontrado! En camino a recoger el paquete.';
-
-      if (condLat && condLng) {
-        this.iniciarSimulacion(condLat, condLng, this.userLat, this.userLng, '#f59e0b');
+      if (s.conductor_lat != null && s.conductor_lng != null) {
+        this.moverConductor(Number(s.conductor_lat), Number(s.conductor_lng));
       }
     }
 
-    // LLEGÓ AL ORIGEN → conductor en punto de recogida
+    if ((s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO_AL_USUARIO') && this.faseRuta !== 'recogida') {
+      this.faseRuta = 'recogida';
+      this.mensajeEstado = '🛵 ¡Conductor encontrado! En camino a recoger el paquete.';
+      if (s.conductor_lat != null) {
+        this.iniciarSimulacion(Number(s.conductor_lat), Number(s.conductor_lng), this.userLat, this.userLng, '#f59e0b');
+      }
+    }
+
     if (s.estado === 'LLEGO_AL_ORIGEN') {
       this.mensajeEstado = '📍 ¡El conductor llegó al punto de recogida!';
-      this.detenerSimulacion();
     }
 
-    // PAQUETE RECOGIDO / EN_VIAJE → simulación hacia destino (naranja MoviFY)
-    if ((s.estado === 'PAQUETE_RECOGIDO' || s.estado === 'EN_VIAJE') && !this.simulacionActiva) {
+    if (['PAQUETE_RECOGIDO', 'EN_VIAJE', 'EN_CAMINO'].includes(s.estado) && this.faseRuta !== 'destino') {
+      this.faseRuta = 'destino';
       this.mensajeEstado = '📦 Paquete recogido — en camino al destino.';
-      this.buscandoConductor = false;
       const dest = this.destinoMarker?.getLatLng();
-      if (dest) {
-        this.iniciarSimulacion(this.userLat, this.userLng, dest.lat, dest.lng, '#f97316');
-      }
+      if (dest) this.iniciarSimulacion(this.userLat, this.userLng, dest.lat, dest.lng, '#f97316');
     }
 
-    // CANCELADO
     if (s.estado === 'CANCELADO') {
       clearInterval(this.pollingServicio);
       this.detenerSimulacion();
-      alert('🔴 El conductor ha cancelado el servicio.');
+      alert('🔴 El servicio fue cancelado.');
       this.router.navigate(['/home-usuario']);
     }
 
-    // FINALIZADO → mostrar modal de calificación
     if (s.estado === 'FINALIZADO') {
       clearInterval(this.pollingServicio);
       this.detenerSimulacion();
       this.idServicioFinal = s.id;
       this.mostrarModalDestino = true;
+    }
+  }
+
+  private moverConductor(lat: number, lng: number): void {
+    if (!this.map) return;
+    if (!this.conductorMarker) {
+      const motoIcon = L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
+        iconSize: [45, 45], iconAnchor: [22, 45]
+      });
+      this.conductorMarker = L.marker([lat, lng], { icon: motoIcon }).addTo(this.map).bindPopup('<b>🛵 Tu conductor</b>');
+    } else {
+      this.conductorMarker.setLatLng([lat, lng]);
     }
   }
 
@@ -430,69 +430,8 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
         // Ajustar cámara
         this.map.fitBounds((this.lineaSimulacion as L.Polyline).getBounds(), { padding: [60, 60] });
 
-        // Marcador moto
-        const motoIcon = L.icon({
-          iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
-          iconSize: [45, 45], iconAnchor: [22, 45]
-        });
-
-        if (!this.conductorMarker) {
-          this.conductorMarker = L.marker(this.puntosRuta[0], { icon: motoIcon })
-            .addTo(this.map).bindPopup('<b>🛵 Tu conductor</b>');
-        } else {
-          this.conductorMarker.setLatLng(this.puntosRuta[0]);
-        }
-
-        // Mover punto a punto
-        this.intervaloSimulacion = setInterval(() => {
-          if (this.indexSimulacion >= this.puntosRuta.length) {
-            this.detenerSimulacion();
-            return;
-          }
-
-          const punto = this.puntosRuta[this.indexSimulacion];
-          const anterior = this.indexSimulacion > 0
-            ? this.puntosRuta[this.indexSimulacion - 1] : punto;
-
-          if (this.conductorMarker) {
-            this.conductorMarker.setLatLng(punto);
-
-            // Rotación del ícono según dirección
-            const angulo = Math.atan2(
-              punto.lng - anterior.lng,
-              punto.lat - anterior.lat
-            ) * (180 / Math.PI);
-            const el = this.conductorMarker.getElement();
-            if (el) {
-              el.style.transition = 'transform 0.6s linear';
-              el.style.transformOrigin = 'center center';
-              const base = el.style.transform.split(' rotate')[0];
-              el.style.transform = `${base} rotate(${angulo}deg)`;
-            }
-
-            // Recortar línea restante
-            const restantes = this.puntosRuta.slice(this.indexSimulacion);
-            if (restantes.length > 1 && this.lineaSimulacion) {
-              this.lineaSimulacion.setLatLngs(restantes);
-            }
-
-            // Crecer estela
-            const recorridos = this.puntosRuta.slice(0, this.indexSimulacion + 1);
-            if (recorridos.length > 1 && this.lineaRecorrida) {
-              this.lineaRecorrida.setLatLngs(recorridos);
-            }
-
-            // Zoom progresivo
-            const progreso = this.indexSimulacion / this.puntosRuta.length;
-            const zoomObjetivo = progreso < 0.3 ? 15 : progreso < 0.7 ? 16 : 17;
-            if (Math.abs(this.map.getZoom() - zoomObjetivo) >= 1) {
-              this.map.setView(punto, zoomObjetivo, { animate: true, duration: 1 });
-            } else {
-              this.map.panTo(punto, { animate: true, duration: 0.6 });
-            }
-          }
-          this.indexSimulacion++;
-        }, 700);
+        // La moto la ubica moverConductor() con el GPS real del conductor
+        this.simulacionActiva = false;
       })
       .catch(e => {
         console.error('Error obteniendo ruta OSRM:', e);
@@ -520,17 +459,16 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
 
   /* ===================== CALIFICACIÓN ===================== */
   private async enviarCalificacion(servicioId: number, puntos: string): Promise<void> {
-    const body = {
-      servicio_id: servicioId,
-      usuario_id: parseInt(localStorage.getItem('id') || '1'),
-      puntos: parseInt(puntos) || 5,
-      comentario: 'Calificado desde Encomiendas'
-    };
-    await fetch(`${this.apiBase}/calificar`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    if (!servicioId) return;
+    try {
+      await this.api.post(`${this.apiBase}/calificar`, {
+        servicio_id: servicioId,
+        puntos: Math.min(5, Math.max(1, parseInt(puntos) || 5)),
+        comentario: 'Calificado desde Encomiendas'
+      });
+    } catch (e) {
+      alert(ApiService.mensaje(e, 'No se pudo guardar la calificación.'));
+    }
   }
 
   seleccionarEstrella(n: number): void { this.calificacionSeleccionada = n; }
@@ -566,6 +504,8 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     this.fotoSeleccionada = '';
     this.calificacionSeleccionada = 5;
     this.idServicioFinal = 0;
+    this.servicioId = null;
+    this.faseRuta = '';
 
     if (this.destinoMarker) { this.map.removeLayer(this.destinoMarker); this.destinoMarker = undefined; }
     if (this.conductorMarker) { this.map.removeLayer(this.conductorMarker); this.conductorMarker = undefined; }
@@ -586,26 +526,22 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async cancelarServicio(): Promise<void> {
-    if (!this.conductorInfo?.id) return;
+    const id = this.servicioId ?? this.conductorInfo?.id;
+    if (!id) return;
     if (!confirm('¿Estás seguro de que deseas cancelar el servicio?')) return;
 
     try {
-      const resp = await fetch(`${this.apiBase}/servicio/${this.conductorInfo.id}/estado`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: 'CANCELADO' })
-      });
-      if (resp.ok) {
-        clearInterval(this.pollingServicio);
-        this.detenerSimulacion();
-        this.buscandoConductor = false;
-        this.conductorInfo = null;
-        this.transicionFinalizada = false;
-        alert('Servicio cancelado correctamente.');
-        this.router.navigate(['/home-usuario']);
-      }
+      await this.api.patch(`${this.apiBase}/servicio/${id}/estado`, { estado: 'CANCELADO' });
+      clearInterval(this.pollingServicio);
+      this.detenerSimulacion();
+      this.buscandoConductor = false;
+      this.conductorInfo = null;
+      this.servicioId = null;
+      this.transicionFinalizada = false;
+      alert('Servicio cancelado correctamente.');
+      this.router.navigate(['/home-usuario']);
     } catch (e) {
-      alert('No se pudo cancelar el servicio en este momento.');
+      alert(ApiService.mensaje(e, 'No se pudo cancelar el servicio en este momento.'));
     }
   }
 
@@ -637,37 +573,5 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     return p >= (umbrales[paso] || 0);
   }
 
-  /* ===================== PRUEBA SIMULACIÓN ===================== */
-  probarSimulacion(): void {
-    const dest = this.destinoMarker?.getLatLng();
-    if (!dest) { alert('Primero selecciona un destino en el mapa'); return; }
 
-    const condLat = this.userLat + 0.005;
-    const condLng = this.userLng + 0.005;
-
-    this.conductorInfo = {
-      id: 999,
-      estado: 'ACEPTADO',
-      conductor_nombre: 'Diego T',
-      conductor_lat: condLat,
-      conductor_lng: condLng,
-      tarifa: this.tarifaEstimada || 8500,
-      conductor_foto: null
-    };
-
-    this.buscandoConductor = false;
-    this.transicionFinalizada = false;
-    this.mensajeEstado = '🛵 ¡Conductor encontrado! En camino a recoger el paquete.';
-
-    // Fase 1: conductor → punto de recogida (amarillo)
-    this.iniciarSimulacion(condLat, condLng, this.userLat, this.userLng, '#f59e0b');
-
-    // Fase 2: después de 15s, simular recogida y viaje al destino
-    setTimeout(() => {
-      this.detenerSimulacion();
-      this.conductorInfo.estado = 'PAQUETE_RECOGIDO';
-      this.mensajeEstado = '📦 Paquete recogido — en camino al destino.';
-      this.iniciarSimulacion(this.userLat, this.userLng, dest.lat, dest.lng, '#f97316');
-    }, 15000);
-  }
 }

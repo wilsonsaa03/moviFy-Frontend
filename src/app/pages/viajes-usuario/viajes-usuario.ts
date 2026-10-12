@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { ApiService } from '../../core/api.service';
 
 @Component({
   selector: 'app-viajes-usuario',
@@ -41,6 +41,7 @@ export class ViajesUsuarioComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
+    private api: ApiService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -71,11 +72,10 @@ export class ViajesUsuarioComponent implements OnInit, OnDestroy {
     this.cargando = true;
     
     // 1. Cargar historial completo del usuario
-    fetch(`${environment.apiUrl}/transporte/servicios/usuario/${id}`)
-      .then(res => res.json())
+    this.api.get<any[]>(`/transporte/servicios/usuario/${id}`)
       .then(data => {
-        // Invertimos para ver los más recientes arriba
-        const sorted = Array.isArray(data) ? data.reverse() : [];
+        // El backend ya los entrega del más reciente al más antiguo (antes se invertían y quedaban al revés)
+        const sorted = Array.isArray(data) ? data : [];
         this.viajes = sorted.map((item: any) => this.mapearViaje(item));
         
         // Detectar automáticamente si hay un servicio activo para la tarjeta superior
@@ -92,17 +92,8 @@ export class ViajesUsuarioComponent implements OnInit, OnDestroy {
         // Actualizar estadísticas basadas en la carga real
         this.stats.enCurso = sorted.filter((s: any) => !['FINALIZADO', 'CANCELADO'].includes(s.estado)).length;
         
-        // Intentar obtener el conteo de favoritos (endpoint opcional)
-        fetch(`${environment.apiUrl}/usuario/favoritos-count/${id}`)
-          .then(r => r.json())
-          .then(fav => {
-            this.stats.favoritos = fav.total || 0;
-            this.cdr.detectChanges();
-          })
-          .catch(() => {
-            // Fallback si el endpoint no existe aún: contar los que vienen marcados en la lista si aplica
-            this.stats.favoritos = 0;
-          });
+        // Favoritos todavía no existe en el backend: se muestra 0 sin llamar a un endpoint inexistente
+        this.stats.favoritos = 0;
 
         this.cargando = false;
         this.cdr.detectChanges();
@@ -114,9 +105,8 @@ export class ViajesUsuarioComponent implements OnInit, OnDestroy {
       });
 
     // 2. Cargar estadísticas financieras del mes actual
-    fetch(`${environment.apiUrl}/transporte/servicios/usuario/${id}/mes-actual`)
-      .then(res => res.json())
-      .then(data => {
+    this.api.get(`/transporte/servicios/usuario/${id}/mes-actual`)
+      .then((data: any) => {
         // Si el backend devuelve un objeto con totales
         this.stats.viajes = data.total_servicios || (Array.isArray(data) ? data.length : 0);
         this.stats.gastado = data.total_gasto || (Array.isArray(data) ? data.reduce((acc: number, v: any) => acc + (v.tarifa || 0), 0) : 0);
@@ -126,15 +116,14 @@ export class ViajesUsuarioComponent implements OnInit, OnDestroy {
   }
 
   private cargarDetalleServicioActivo(servicioId: number) {
-    fetch(`${environment.apiUrl}/transporte/servicio/${servicioId}`)
-      .then(res => res.json())
-      .then(s => {
+    this.api.get(`/transporte/servicio/${servicioId}`)
+      .then((s: any) => {
         this.servicioEnCurso = {
           id: s.id,
           origen: 'Tu ubicación',
-          origenDir: s.origen_direccion || 'Punto de recogida',
-          destino: s.destino_direccion || 'Destino',
-          destinoDir: s.destino_direccion || '',
+          origenDir: s.origen || 'Punto de recogida',
+          destino: s.destino || 'Destino',
+          destinoDir: s.destino || '',
           conductorNombre: s.conductor_nombre || 'Asignando conductor...',
           conductorFoto: s.conductor_foto || '',
           conductorRating: 4.9,
@@ -154,8 +143,8 @@ export class ViajesUsuarioComponent implements OnInit, OnDestroy {
       tipoLabel: tipo.charAt(0).toUpperCase() + tipo.slice(1),
       tipoColor: tipo === 'domicilio' ? 'orange' : (tipo === 'encomienda' ? 'purple' : 'green'),
       icono: tipo === 'domicilio' ? '🛵' : (tipo === 'encomienda' ? '📦' : '🚗'),
-      origen: item.origen_direccion || 'Origen',
-      destino: item.destino_direccion || 'Destino',
+      origen: item.origen || 'Origen',
+      destino: item.destino || 'Destino',
       fecha: item.fecha_solicitud ? new Date(item.fecha_solicitud).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : 'Hoy',
       hora: new Date(item.fecha_solicitud).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
       pago: item.metodo_pago || 'Efectivo',
@@ -198,21 +187,13 @@ export class ViajesUsuarioComponent implements OnInit, OnDestroy {
     if (!confirmar) return;
 
     try {
-      const resp = await fetch(`${environment.apiUrl}/transporte/servicio/${this.servicioEnCurso.id}/estado`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: 'CANCELADO' })
-      });
-
-      if (resp.ok) {
-        alert('Servicio cancelado correctamente.');
-        const usuarioId = localStorage.getItem('id');
-        if (usuarioId) this.cargarDatosDesdeDB(usuarioId);
-      } else {
-        alert('No se pudo cancelar el servicio. Intenta de nuevo.');
-      }
+      await this.api.patch(`/transporte/servicio/${this.servicioEnCurso.id}/estado`, { estado: 'CANCELADO' });
+      alert('Servicio cancelado correctamente.');
+      const usuarioId = localStorage.getItem('id');
+      if (usuarioId) this.cargarDatosDesdeDB(usuarioId);
     } catch (err) {
-      console.error('Error al cancelar el viaje:', err);
+      // 409: el viaje ya arrancó o terminó y no se puede cancelar
+      alert(ApiService.mensaje(err, 'No se pudo cancelar el servicio. Intenta de nuevo.'));
     }
   }
 

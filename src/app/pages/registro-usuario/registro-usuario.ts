@@ -27,6 +27,10 @@ export class RegistroUsuario {
       this.error = 'Las contraseñas no coinciden';
       return;
     }
+    if (this.datos.password.length < 8) {
+      this.error = 'La contraseña debe tener mínimo 8 caracteres';
+      return;
+    }
     this.cargando = true;
     this.error = '';
     this.usuarioService.registro(this.datos).subscribe({
@@ -36,7 +40,8 @@ export class RegistroUsuario {
       },
       error: (err) => {
         this.cargando = false;
-        this.error = err.error?.error || 'Error al registrar';
+        const campos = err.error?.campos ? Object.values(err.error.campos) : [];
+        this.error = (campos[0] as string) || err.error?.error || 'Error al registrar';
       }
     });
   }

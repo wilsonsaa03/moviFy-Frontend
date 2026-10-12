@@ -146,10 +146,10 @@ export class RegistroConductor {
 
       valido = false;
 
-    } else if (this.datos.password.length < 6) {
+    } else if (this.datos.password.length < 8) {
 
       this.errores.password =
-        'La contraseña debe tener mínimo 6 caracteres';
+        'La contraseña debe tener mínimo 8 caracteres';
 
       valido = false;
     }

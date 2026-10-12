@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { ApiService } from '../../core/api.service';
 
 @Component({
   selector: 'app-home-usuario',
@@ -24,6 +24,7 @@ export class HomeUsuarioComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
+    private api: ApiService,
     private cdr: ChangeDetectorRef // ✅ Inyectamos el detector de cambios
   ) {}
 
@@ -52,19 +53,29 @@ export class HomeUsuarioComponent implements OnInit, OnDestroy {
   cargarHistorialDesdeDB(id: string) {
     this.cargandoHistorial = true;
     // Usamos environment.apiUrl para que funcione en local y producción automáticamente
-    fetch(`${environment.apiUrl}/servicios/usuario/${id}`)
-      .then(res => res.json())
+    this.api.get<any[]>(`/servicios/usuario/${id}`)
       .then(data => {
-        // Tomamos los últimos 4 servicios para el historial rápido del Home
-        this.historial = data.reverse().slice(0, 4).map((item: any) => ({
-          icono: item.tipo === 'ENCOMIENDA' ? '📦' : '🛵',
-          destino: item.destino_direccion || 'Destino no especificado',
-          fecha: new Date(item.fecha_solicitud).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
-          hora: new Date(item.fecha_solicitud).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-          estado: this.formatearEstado(item.estado),
-          statusClass: this.obtenerClaseEstado(item.estado),
-          precio: item.tarifa || 0
-        }));
+        // El backend ya los entrega del más reciente al más antiguo
+        this.historial = (data || []).slice(0, 4).map((item: any) => {
+          const { icono, tipoClass, prefijo } = this.obtenerInfoTipo(item.tipo);
+          const statusClass = this.obtenerClaseEstado(item.estado);
+          // NOTA: la columna real en la tabla `servicios` es `destino`,
+          // no `destino_direccion` (ver aprendizajes del proyecto).
+          const lugar = item.destino || 'Destino no especificado';
+
+          return {
+            icono,
+            // El color del círculo refleja el tipo de servicio (verde/naranja/morado);
+            // si el servicio fue cancelado, se muestra en rojo independientemente del tipo.
+            tipoClass: statusClass === 'cancelado' ? 'cancelado' : tipoClass,
+            destino: prefijo ? `${prefijo} ${lugar}` : lugar,
+            fecha: new Date(item.fecha_solicitud).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+            hora: new Date(item.fecha_solicitud).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            estado: this.formatearEstado(item.estado),
+            statusClass,
+            precio: item.tarifa || 0
+          };
+        });
         this.cargandoHistorial = false;
         this.cdr.detectChanges(); // ✅ AVISAR A ANGULAR QUE LOS DATOS LLEGARON
       })
@@ -73,6 +84,19 @@ export class HomeUsuarioComponent implements OnInit, OnDestroy {
         this.cargandoHistorial = false;
         this.cdr.detectChanges();
       });
+  }
+
+  // Determina ícono, clase de color y prefijo de texto según el tipo de servicio
+  private obtenerInfoTipo(tipo: string): { icono: string; tipoClass: string; prefijo: string } {
+    const t = (tipo || '').toUpperCase();
+    if (t === 'DOMICILIO') {
+      return { icono: '🛍️', tipoClass: 'domicilio', prefijo: 'Domicilio -' };
+    }
+    if (t === 'ENCOMIENDA') {
+      return { icono: '📦', tipoClass: 'encomienda', prefijo: 'Encomienda a' };
+    }
+    // TRANSPORTE u otro por defecto
+    return { icono: '🛵', tipoClass: 'transporte', prefijo: 'Viaje a' };
   }
 
   private formatearEstado(estado: string): string {

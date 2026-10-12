@@ -41,8 +41,8 @@ export class RestablecerPasswordComponent implements OnInit {
     this.errores = { password: '', confirmar: '' };
     this.error = '';
 
-    if (!this.password || this.password.length < 6) {
-      this.errores.password = 'La contraseña debe tener mínimo 6 caracteres';
+    if (!this.password || this.password.length < 8) {
+      this.errores.password = 'La contraseña debe tener mínimo 8 caracteres';
       return;
     }
 
