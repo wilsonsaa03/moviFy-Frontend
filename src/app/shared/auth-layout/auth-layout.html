@@ -1,0 +1,105 @@
+<div #pagina class="au-pagina">
+
+  <!-- Capa de magia: polvo de estrellas -->
+  <canvas #lienzo class="au-lienzo" aria-hidden="true"></canvas>
+
+  <!-- Ola del Pacífico al fondo -->
+  <div class="au-fondo" aria-hidden="true">
+    <svg class="au-ola" width="2400" height="140" viewBox="0 0 2400 140" fill="none">
+      <path d="M0 60 C 150 0, 300 120, 450 60 S 750 0, 900 60 S 1200 120, 1350 60 S 1650 0, 1800 60 S 2100 120, 2250 60 S 2400 20, 2400 60 V140 H0 Z" fill="#02AAB4" opacity="0.14"/>
+    </svg>
+  </div>
+
+  <a [routerLink]="volverRuta" class="au-volver">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+    {{ volverTexto }}
+  </a>
+
+  <div class="au-contenido">
+
+    <!-- ============ IZQUIERDA: mensaje + escena 3D ============ -->
+    <section class="au-lado-escena">
+      <div appRevelar [rvRetraso]="0.05" class="au-chip">
+        <svg width="26" height="14" viewBox="0 0 26 14" fill="none" aria-hidden="true"><path d="M1 9c3 0 3-6 6-6s3 6 6 6 3-6 6-6 3 6 6 6" stroke="#02AAB4" stroke-width="2.2" stroke-linecap="round"/></svg>
+        {{ chip }}
+      </div>
+      <div appRevelar [rvRetraso]="0.15">
+        <h2 class="au-titulo magia-txt">{{ tituloInicio }} <span class="au-turquesa">{{ tituloResaltado }}</span><span class="au-naranja">.</span></h2>
+      </div>
+      @if (texto) {
+        <p appRevelar [rvRetraso]="0.3" class="au-texto">{{ texto }}</p>
+      }
+
+      <ul appRevelar [rvRetraso]="0.42" class="au-etiquetas">
+        @for (e of etiquetas; track e.texto) {
+          <li><span class="au-punto" [style.background]="e.color"></span>{{ e.texto }}</li>
+        }
+      </ul>
+
+      <!-- Escena 3D: el pin y las tarjetas salen de la "pantalla" -->
+      <div appRevelar="zoom" [rvRetraso]="0.25" rvRafaga="centro" class="au-escena-caja" aria-hidden="true">
+        <div class="au-escena">
+          <div #escena class="au-3d au-escena-mov">
+
+            <div class="au-pantalla">
+              <svg width="100%" height="100%" viewBox="0 0 460 240" fill="none" class="au-abs">
+                <path d="M-10 200 C 70 200, 100 130, 180 130 S 300 60, 350 90 S 430 40, 480 30" stroke="#02AAB4" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 14" opacity="0.75"/>
+                <circle cx="350" cy="90" r="7" fill="#FE7B13"/>
+                <circle cx="350" cy="90" r="16" stroke="#FE7B13" stroke-width="2" opacity="0.5"/>
+              </svg>
+            </div>
+
+            <div class="au-3d au-orbita-caja">
+              <div class="au-orbita"><div class="au-orbita-punto"></div></div>
+            </div>
+
+            <div class="au-3d au-pin">
+              <div class="au-3d au-pin-gira">
+                @for (capa of capasPin; track $index) {
+                  <img src="assets/brand/movify-isotipo.svg" alt="" class="au-pin-capa" [style.transform]="capa.transform" [style.filter]="capa.filtro">
+                }
+              </div>
+            </div>
+
+            <div class="au-3d au-flotante au-f-conductor">
+              <div class="au-flota au-card-blanca">
+                <div class="au-card-ico">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-7h5l5 7"/><path d="M14 10l2-4h3"/></svg>
+                </div>
+                <div>
+                  <div class="au-card-titulo">Tu conductor va en camino</div>
+                  <div class="au-card-sub">Verificado por MoviFY</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="au-3d au-flotante au-f-vivo">
+              <div class="au-flota d1 au-chip-blanco">
+                <span class="au-punto-vivo"><span class="au-pulso"></span><span></span></span>
+                Seguimiento en vivo
+              </div>
+            </div>
+
+            <div class="au-3d au-flotante au-f-tarifa">
+              <div class="au-flota d2 au-card-azul">
+                <div class="au-card-etiqueta">Tarifa estimada</div>
+                <div class="au-card-grande">Antes de confirmar</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DERECHA: tarjeta con el contenido de cada página ============ -->
+    <section class="au-lado-form">
+      <div appRevelar="voltea" [rvRetraso]="0.1" rvRafaga="centro">
+        <div #tarjeta class="au-tarjeta">
+          <ng-content />
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { UsuarioService } from '../../Base_de_datos/usuario.service';
+import { AuthLayoutComponent, EtiquetaAuth } from '../../shared/auth-layout/auth-layout';
 
 @Component({
   selector: 'app-registro-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, AuthLayoutComponent],
   templateUrl: './registro-admin.html',
   styleUrls: ['./registro-admin.css']
 })
@@ -25,6 +26,14 @@ export class RegistroAdminComponent {
   cargando = false;
   mostrarPassword = false;
   mostrarConfirmar = false;
+
+  /** Lo que hace un administrador (se muestra al lado izquierdo de la pantalla). */
+  readonly etiquetasAdmin: EtiquetaAuth[] = [
+    { texto: 'Validar conductores', color: '#02AAB4' },
+    { texto: 'Supervisar solicitudes', color: '#FE7B13' },
+    { texto: 'Gestionar tarifas', color: '#FFC93C' },
+    { texto: 'Reportes', color: '#5FD3D9' }
+  ];
 
   constructor(private usuarioService: UsuarioService, private router: Router) {}
 

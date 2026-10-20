@@ -1,103 +1,479 @@
-<header>
-  <div class="logo">
-    <img src="/assets/brand/movify-icono.png">
-    MoviFY
-  </div>
-  <div>
-    <button class="btn green" routerLink="/registro">
-      Registrarse
-    </button>
+<!-- Capa de magia: polvo de estrellas (canvas) y barra de progreso del scroll -->
+<canvas #lienzo class="mf-lienzo" aria-hidden="true"></canvas>
+<div #progreso class="mf-progreso" aria-hidden="true"></div>
 
-    <button class="btn blue" routerLink="/login">
-      Iniciar Sesión
-    </button>
-  </div>
+<!-- Íconos reutilizables de los servicios: toman el color del contenedor (currentColor) -->
+<ng-template #icono let-id>
+  @switch (id) {
+    @case ('moto') {
+      <svg class="mf-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-7h5l5 7"/><path d="M14 10l2-4h3"/><path d="M9 10H6"/></svg>
+    }
+    @case ('taxi') {
+      <svg class="mf-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17v-4l2.5-5h13l2.5 5v4z"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M10 5h4v3h-4z"/><path d="M3 13h18"/></svg>
+    }
+    @case ('domicilio') {
+      <svg class="mf-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+    }
+    @case ('encomienda') {
+      <svg class="mf-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5"/><path d="M12 12v9"/></svg>
+    }
+  }
+</ng-template>
+
+<ng-template #check>
+  <svg class="mf-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+</ng-template>
+
+<!-- ================= NAVEGACIÓN ================= -->
+<header class="mf-nav">
+  <nav class="mf-nav-in" aria-label="Principal">
+    <a href="#inicio" class="mf-marca" (click)="irA($event, 'inicio')">
+      <img src="assets/brand/movify-isotipo.svg" alt="" width="30" height="37">
+      <span class="mf-wordmark">Movi<span>FY</span></span>
+    </a>
+    <div class="mf-nav-links">
+      <a href="#servicios" (click)="irA($event, 'servicios')">Servicios</a>
+      <a href="#como" (click)="irA($event, 'como')">Cómo funciona</a>
+      <a href="#seguimiento" (click)="irA($event, 'seguimiento')">Seguimiento</a>
+      <a href="#conductores" (click)="irA($event, 'conductores')">Conductores</a>
+    </div>
+    <div class="mf-nav-acciones">
+      <a routerLink="/login" class="mf-nav-login mf-ocultar-movil">Iniciar sesión</a>
+      <a routerLink="/registro" class="mf-btn mf-btn-naranja mf-btn-sm">Crear cuenta</a>
+    </div>
+  </nav>
 </header>
 
-<section class="hero">
-  <img src="/assets/fondo.png" class="hero-bg">
+<!-- ================= HERO ================= -->
+<section id="inicio" #hero class="mf-hero">
+  <div class="mf-hero-in">
+    <div class="mf-hero-texto">
+      <div appRevelar [rvRetraso]="0.05" class="mf-chip">
+        <svg width="26" height="14" viewBox="0 0 26 14" fill="none" aria-hidden="true"><path d="M1 9c3 0 3-6 6-6s3 6 6 6 3-6 6-6 3 6 6 6" stroke="#02AAB4" stroke-width="2.2" stroke-linecap="round"/></svg>
+        Hecho en Buenaventura · Pacífico colombiano
+      </div>
+      <div appRevelar [rvRetraso]="0.2">
+        <h1 class="mf-h1 magia-txt">Tu ciudad,<br><span class="mf-turquesa">a un toque</span><span class="mf-naranja">.</span></h1>
+      </div>
+      <p appRevelar [rvRetraso]="0.45" class="mf-hero-p">
+        Pide moto o taxi, manda un domicilio o envía una encomienda. Ves la tarifa estimada antes de pedir y sigues a tu conductor en el mapa hasta el final.
+      </p>
+      <div appRevelar [rvRetraso]="0.6" class="mf-fila-botones">
+        <a routerLink="/login" class="mf-btn mf-btn-naranja mf-btn-lg">
+          Pedir un servicio
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a routerLink="/registro/conductor" class="mf-btn mf-btn-contorno mf-btn-lg">Quiero ser conductor</a>
+      </div>
+      <div appRevelar [rvRetraso]="0.75" class="mf-confianza">
+        <span><ng-container [ngTemplateOutlet]="check" />Conductores verificados</span>
+        <span><ng-container [ngTemplateOutlet]="check" />Tarifa antes de pedir</span>
+        <span><ng-container [ngTemplateOutlet]="check" />Historial de cada servicio</span>
+      </div>
+    </div>
 
-  <div class="hero-content">
-    <h1>Muévete mejor,<br>vive mejor.</h1>
-    <p>Con MoviFY solicita <b>transporte, envíos y domicilios</b> rápidamente desde tu celular.</p>
-    <button class="btn green">Descargar App</button>
-    <p class="login-link">
-      ¿Ya tienes cuenta?
-      <span routerLink="/login">Iniciar sesión</span>
-    </p>
+    <!-- Escena 3D: todo lo que "sale de la pantalla" -->
+    <div appRevelar="zoom" [rvRetraso]="0.3" rvRafaga="centro" class="mf-escena-caja">
+      <div class="mf-escena">
+        <div #escena class="mf-3d mf-escena-mov">
+
+          <!-- La "pantalla" de la que salen las cosas -->
+          <div class="mf-pantalla">
+            <svg width="100%" height="100%" viewBox="0 0 560 400" fill="none" aria-hidden="true" class="mf-abs">
+              <path d="M-10 330 C 90 330, 120 230, 220 230 S 360 140, 420 170 S 520 90, 580 80" stroke="#02AAB4" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 14" opacity="0.7"/>
+              <circle cx="420" cy="170" r="7" fill="#FE7B13"/>
+              <circle cx="420" cy="170" r="16" stroke="#FE7B13" stroke-width="2" opacity="0.5"/>
+            </svg>
+            <div class="mf-ola-caja">
+              <svg class="mf-ola" width="1120" height="70" viewBox="0 0 1120 70" fill="none" aria-hidden="true">
+                <path d="M0 30 C 70 0, 140 60, 210 30 S 350 0, 420 30 S 560 60, 630 30 S 770 0, 840 30 S 980 60, 1050 30 S 1120 10, 1120 30 V70 H0 Z" fill="#02AAB4" opacity="0.35"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="mf-3d mf-orbita-caja">
+            <div class="mf-orbita"><div class="mf-orbita-punto"></div></div>
+          </div>
+          <div class="mf-sombra-telefono"></div>
+
+          <!-- Teléfono con grosor 3D -->
+          <div class="mf-3d mf-telefono">
+            <div class="mf-3d mf-flota mf-abs-full">
+              @for (capa of capasTelefono; track $index) {
+                <div class="mf-telefono-capa" [style.transform]="capa.transform" [style.background]="capa.fondo"></div>
+              }
+              <div class="mf-telefono-frente">
+                <div class="mf-pantalla-app">
+                  <div class="mf-isla"></div>
+                  <div class="mf-app-top">
+                    <div class="mf-app-marca">
+                      <img src="assets/brand/movify-isotipo.svg" alt="" width="22" height="27">
+                      <span class="mf-wordmark mf-wordmark-sm mf-azul">Movi<span>FY</span></span>
+                    </div>
+                    <div class="mf-avatar">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#03274D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+                    </div>
+                  </div>
+                  <div class="mf-app-saludo">
+                    <div class="mf-app-hola">Hola, bienvenido</div>
+                    <div class="mf-app-pregunta">¿Qué necesitas hoy?</div>
+                  </div>
+                  <div class="mf-app-grid">
+                    @for (s of servicios; track s.id) {
+                      <button type="button" class="mf-app-tile" [class.activo]="servicioId() === s.id" (click)="elegir(s.id, $event)">
+                        <span class="mf-app-tile-ico"><ng-container [ngTemplateOutlet]="icono" [ngTemplateOutletContext]="{ $implicit: s.id }" /></span>
+                        <span>{{ s.id === 'domicilio' ? 'Domicilio' : s.id === 'encomienda' ? 'Encomienda' : s.nombre }}</span>
+                      </button>
+                    }
+                  </div>
+                  <div class="mf-app-mapa">
+                    <svg width="100%" height="100%" viewBox="0 0 230 104" fill="none" aria-hidden="true" class="mf-abs">
+                      <path d="M20 86 L70 86 L70 44 L150 44 L150 22 L210 22" stroke="#02AAB4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="20" cy="86" r="6" fill="#03274D"/>
+                      <circle cx="210" cy="22" r="6" fill="#FE7B13"/>
+                    </svg>
+                  </div>
+                  <div class="mf-app-buscar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#02AAB4" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                    {{ servicio().pregunta }}
+                  </div>
+                  <div class="mf-app-boton">Ver tarifa estimada</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarjetas flotantes a distintas profundidades -->
+          <div class="mf-3d mf-flotante mf-f-conductor">
+            <div class="mf-flota d1 mf-card-blanca">
+              <div class="mf-card-ico"><ng-container [ngTemplateOutlet]="icono" [ngTemplateOutletContext]="{ $implicit: 'moto' }" /></div>
+              <div>
+                <div class="mf-card-titulo">Tu conductor va en camino</div>
+                <div class="mf-card-sub"><ng-container [ngTemplateOutlet]="check" />Verificado por MoviFY</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mf-3d mf-flotante mf-f-tarifa">
+            <div class="mf-flota d2 mf-card-azul">
+              <div class="mf-card-etiqueta">Tarifa estimada</div>
+              <div class="mf-card-grande">Antes de confirmar</div>
+            </div>
+          </div>
+
+          <div class="mf-3d mf-flotante mf-f-vivo">
+            <div class="mf-flota mf-chip-blanco">
+              <span class="mf-punto-vivo"><span class="mf-pulso"></span><span></span></span>
+              Seguimiento en vivo
+            </div>
+          </div>
+
+          <!-- Pin del logo extruido en 3D -->
+          <div class="mf-3d mf-pin mf-pin-hero">
+            <div class="mf-3d mf-pin-gira mf-abs-full">
+              @for (capa of capasPin; track $index) {
+                <img src="assets/brand/movify-isotipo.svg" alt="" class="mf-pin-capa" [style.transform]="capa.transform" [style.filter]="capa.filtro">
+              }
+            </div>
+          </div>
+
+          <!-- Caja de encomienda en 3D -->
+          <div class="mf-3d mf-cubo-caja">
+            <div class="mf-3d mf-cubo">
+              <div class="mf-cara mf-cara-frente"><div class="mf-cinta-h"></div></div>
+              <div class="mf-cara mf-cara-atras"></div>
+              <div class="mf-cara mf-cara-der"><img src="assets/brand/movify-isotipo.svg" alt="" width="30" height="37" class="mf-logo-blanco"></div>
+              <div class="mf-cara mf-cara-izq"></div>
+              <div class="mf-cara mf-cara-arriba"><div class="mf-cinta-v"></div></div>
+              <div class="mf-cara mf-cara-abajo"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<div class="container">
+<!-- ================= MARQUESINA ================= -->
+<div class="mf-marquesina" aria-hidden="true">
+  <div class="mf-marquee">
+    @for (vuelta of [1, 2]; track vuelta) {
+      <span>Moto</span><i>●</i><span>Taxi</span><i>●</i><span>Domicilios</span><i>●</i><span>Encomiendas</span><i>●</i><span>Buenaventura se mueve</span><i>●</i>
+    }
+  </div>
+</div>
 
-  <section class="section">
-    <h2>¿Qué es MoviFY?</h2>
-
-    <div class="cards">
-      <div class="card">
-        <b>Transporte</b>
-        <p class="parrafo">Solicita una moto rápidamente.</p>
-        <img src="/assets/conductor verde.png">
+<!-- ================= SERVICIOS ================= -->
+<section id="servicios" class="mf-seccion mf-arena mf-servicios">
+  <div class="mf-contenedor">
+    <div appRevelar class="mf-encabezado">
+      <div class="mf-max-640">
+        <div class="mf-kicker">Cuatro servicios · una sola app</div>
+        <h2 class="mf-h2 magia-txt">Elige cómo te mueves hoy</h2>
       </div>
-
-      <div class="card">
-        <h3>Domicilios</h3>
-        <p class="parrafo">Recibe pedidos en casa.</p>
-        <img src="/assets/conductor naranja.png">
-      </div>
-
-      <div class="card">
-        <h3>Envíos</h3>
-        <p class="parrafo">Envía paquetes fácilmente.</p>
-        <img src="/assets/conductor azul.png">
-      </div>
-    </div>
-  </section>
-
-  <section class="bottom">
-
-    <div class="benefits">
-      <h2>¿Por qué elegir MoviFY?</h2>
-
-      <div class="benefit">
-        <img src="/assets/rayo.png" class="benefit-icon">
-        <div>
-          <b>Rápido y fácil</b>
-          <p>Pide en segundos desde tu celular</p>
-        </div>
-      </div>
-
-      <div class="benefit">
-        <img src="/assets/verificado.png" class="benefit-icon">
-        <div>
-          <b>Seguro</b>
-          <p>Conductores verificados</p>
-        </div>
-      </div>
-
-      <div class="benefit">
-        <img src="/assets/dinero.jpg" class="benefit-icon">
-        <div>
-          <b>Económico</b>
-          <p>Precios accesibles</p>
-        </div>
-      </div>
-
+      <p class="mf-lead">Pasa el cursor sobre cada tarjeta y tócala para ver qué puedes hacer con ese servicio.</p>
     </div>
 
-    <div class="register">
-      <h3>Regístrate</h3>
-      <input placeholder="Correo">
-      <input placeholder="Contraseña">
-      <button class="btn green" routerLink="/registro">
-        Registrarse
+    <div class="mf-grid-servicios">
+      @for (s of servicios; track s.id; let i = $index) {
+        <div appRevelar="voltea" [rvRetraso]="i * 0.14">
+          <button #tarjeta type="button" class="mf-tarjeta mf-3d" [class.activa]="servicioId() === s.id"
+                  [attr.aria-pressed]="servicioId() === s.id" (click)="elegir(s.id, $event)">
+            <span class="mf-tarjeta-ico" [style.background]="s.fondoIcono" [style.color]="s.trazoIcono"
+                  [style.box-shadow]="'0 22px 34px -14px ' + s.sombraIcono">
+              <ng-container [ngTemplateOutlet]="icono" [ngTemplateOutletContext]="{ $implicit: s.id }" />
+            </span>
+            <span class="mf-tarjeta-cuerpo">
+              <span class="mf-tarjeta-nombre">{{ s.nombre }}</span>
+              <span class="mf-tarjeta-texto">{{ s.resumen }}</span>
+              @if (servicioId() === s.id) {
+                <span class="mf-seleccionado">Seleccionado</span>
+              }
+            </span>
+          </button>
+        </div>
+      }
+    </div>
+
+    <div appRevelar="portal" [rvRetraso]="0.1" rvRafaga="centro" class="mf-detalle">
+      <div class="mf-detalle-texto">
+        <div class="mf-kicker mf-kicker-claro">Con este servicio puedes</div>
+        <h3 class="mf-h3">{{ servicio().titulo }}</h3>
+        <p>Cada servicio tiene sus propias reglas de cobro, configuradas por separado. Siempre ves la tarifa estimada antes de confirmar.</p>
+        <a [routerLink]="servicio().ruta" class="mf-btn mf-btn-naranja">{{ servicio().accion }}</a>
+      </div>
+      <ul class="mf-detalle-lista">
+        @for (item of servicio().detalle; track item; let i = $index) {
+          <li><span class="mf-num">{{ i + 1 }}</span><span>{{ item }}</span></li>
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CÓMO FUNCIONA ================= -->
+<section id="como" class="mf-seccion mf-arena mf-como">
+  <div class="mf-contenedor">
+    <div appRevelar class="mf-centrado">
+      <div class="mf-kicker">Cómo funciona</div>
+      <h2 class="mf-h2 magia-txt">Tres pasos y vas en camino</h2>
+    </div>
+    <div class="mf-grid-pasos">
+      <div appRevelar="zoom" class="mf-paso-card">
+        <div class="mf-numero-3d mf-n1" aria-hidden="true">1</div>
+        <h3>Elige el servicio</h3>
+        <p>Moto, taxi, domicilio o encomienda. Lo primero es decirnos qué necesitas.</p>
+      </div>
+      <div appRevelar="zoom" [rvRetraso]="0.18" class="mf-paso-card">
+        <div class="mf-numero-3d mf-n2" aria-hidden="true">2</div>
+        <h3>Marca el recorrido</h3>
+        <p>Indica recogida y destino en el mapa y revisa la tarifa estimada antes de confirmar.</p>
+      </div>
+      <div appRevelar="zoom" [rvRetraso]="0.36" class="mf-paso-card">
+        <div class="mf-numero-3d mf-n3" aria-hidden="true">3</div>
+        <h3>Síguelo hasta el final</h3>
+        <p>Un conductor acepta, ves sus datos y sigues cada estado del servicio en tiempo real.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SEGUIMIENTO ================= -->
+<section id="seguimiento" class="mf-seccion mf-oscuro">
+  <div class="mf-contenedor mf-fila-seguimiento">
+    <div appRevelar="izq" class="mf-seg-texto">
+      <div class="mf-kicker mf-kicker-claro">Seguimiento</div>
+      <h2 class="mf-h2 mf-blanco magia-txt">Sabes en qué va tu servicio, siempre</h2>
+      <p class="mf-lead mf-lead-oscuro">Toca cada estado para verlo en el mapa. Los domicilios y las encomiendas suman pasos de recogida y entrega.</p>
+      <ol class="mf-estados">
+        @for (e of estados; track e.nombre; let i = $index) {
+          <li>
+            <button type="button" class="mf-estado" [class.actual]="paso() === i" [class.hecho]="i < paso()"
+                    [attr.aria-current]="paso() === i ? 'step' : null" (click)="irAPaso(i)">
+              <span class="mf-estado-num">{{ i + 1 }}</span>
+              <span>{{ e.nombre }}</span>
+            </button>
+          </li>
+        }
+      </ol>
+      <button type="button" class="mf-btn mf-btn-contorno mf-btn-sm mf-mt-22" (click)="alternarAutomatico()">
+        @if (automatico()) {
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+          Pausar recorrido
+        } @else {
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>
+          Ver recorrido automático
+        }
       </button>
     </div>
 
-  </section>
+    <div appRevelar="der" [rvRetraso]="0.2" rvRafaga="centro" class="mf-seg-mapa">
+      <div class="mf-3d mf-mapa-inclinado">
+        <div class="mf-mapa">
+          <svg width="100%" height="100%" viewBox="0 0 600 360" fill="none" role="img" aria-label="Mapa con el recorrido del conductor" class="mf-abs">
+            <rect x="110" y="40" width="90" height="70" rx="10" fill="rgba(255,255,255,0.05)"/>
+            <rect x="270" y="200" width="110" height="80" rx="10" fill="rgba(255,255,255,0.05)"/>
+            <rect x="440" y="180" width="110" height="110" rx="10" fill="rgba(255,255,255,0.05)"/>
+            <path d="M0 330 C 120 300, 200 350, 330 320 S 520 300, 600 330" stroke="rgba(2,170,180,0.35)" stroke-width="16" stroke-linecap="round"/>
+            <path d="M70 300 L230 150 L400 150 L540 60" stroke="rgba(255,255,255,0.14)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+            <path class="mf-ruta" d="M70 300 L230 150 L400 150 L540 60" pathLength="100" stroke="#02AAB4" stroke-width="6"
+                  stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="100 100" [attr.stroke-dashoffset]="desfaseRuta()"/>
+            <circle cx="70" cy="300" r="8" fill="#9BE6EA"/>
+            <circle cx="230" cy="150" r="9" fill="#FFFFFF" stroke="#02AAB4" stroke-width="4"/>
+            <circle cx="540" cy="60" r="10" fill="#FE7B13" stroke="#FFFFFF" stroke-width="3"/>
+          </svg>
+          <div class="mf-etiqueta-mapa mf-et-recogida">Recogida</div>
+          <div class="mf-etiqueta-mapa mf-et-destino">Destino</div>
+          <div class="mf-3d mf-marcador" [style.left]="marcador().left" [style.top]="marcador().top">
+            @if (paso() === 0) {
+              <span class="mf-pulso mf-marcador-pulso"></span>
+            }
+            <div class="mf-marcador-moto"><ng-container [ngTemplateOutlet]="icono" [ngTemplateOutletContext]="{ $implicit: 'moto' }" /></div>
+          </div>
+        </div>
+      </div>
+      <div class="mf-estado-info" aria-live="polite">
+        <span class="mf-luz"></span>
+        <div>
+          <div class="mf-estado-info-titulo">{{ estadoActual().nombre }}</div>
+          <div class="mf-estado-info-texto">{{ estadoActual().descripcion }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <footer>
-    © 2026 MoviFY
-  </footer>
+<!-- ================= CONFIANZA (bento) ================= -->
+<section class="mf-seccion mf-arena">
+  <div class="mf-contenedor">
+    <div appRevelar class="mf-max-680">
+      <div class="mf-kicker">Confianza</div>
+      <h2 class="mf-h2 magia-txt">Pensado para que te sientas seguro</h2>
+    </div>
+    <div class="mf-bento">
+      <div appRevelar class="mf-bento-card mf-bento-azul">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#02AAB4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+        <div>
+          <h3>Conductores verificados</h3>
+          <p>Nuestro equipo revisa los documentos de cada conductor antes de activarlo, con requisitos distintos para moto y para taxi.</p>
+        </div>
+      </div>
+      <div appRevelar [rvRetraso]="0.12" class="mf-bento-card">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#FE7B13" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+        <div>
+          <h3>Ubicación solo cuando hace falta</h3>
+          <p>La ubicación del conductor se comparte durante el servicio, no antes ni después.</p>
+        </div>
+      </div>
+      <div appRevelar [rvRetraso]="0.24" class="mf-bento-card">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#02AAB4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>
+        <div>
+          <h3>Entras con tu celular</h3>
+          <p>Ingresas con tu número y un código de verificación, o con tu cuenta de Google.</p>
+        </div>
+      </div>
+      <div appRevelar [rvRetraso]="0.36" class="mf-bento-card mf-bento-turquesa">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#03274D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 7v5l3 2"/></svg>
+        <div>
+          <h3>Todo queda en tu historial</h3>
+          <p>Cada viaje, domicilio y encomienda queda registrado para que lo consultes cuando quieras.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-</div>
+<!-- ================= CONDUCTORES ================= -->
+<section id="conductores" class="mf-seccion mf-oscuro">
+  <div class="mf-contenedor">
+    <div appRevelar class="mf-encabezado">
+      <div class="mf-max-680">
+        <div class="mf-kicker mf-kicker-claro">Para conductores</div>
+        <h2 class="mf-h2 mf-blanco magia-txt">Conduce con MoviFY en tu ciudad</h2>
+      </div>
+      <p class="mf-lead mf-lead-oscuro">Te registras, subes tus documentos y, cuando el equipo los aprueba, recibes solicitudes desde la app móvil.</p>
+    </div>
+    <div class="mf-grid-conductores">
+      <div appRevelar="izq" class="mf-conductor-card">
+        <div class="mf-conductor-head">
+          <div class="mf-conductor-ico mf-bg-turquesa"><ng-container [ngTemplateOutlet]="icono" [ngTemplateOutletContext]="{ $implicit: 'moto' }" /></div>
+          <h3>Si tienes moto</h3>
+        </div>
+        <ul class="mf-lista-check mf-check-turquesa">
+          <li><ng-container [ngTemplateOutlet]="check" />Registra tu perfil y los datos de tu moto</li>
+          <li><ng-container [ngTemplateOutlet]="check" />Sube la documentación que se exige para moto</li>
+          <li><ng-container [ngTemplateOutlet]="check" />Recibe carreras, domicilios y encomiendas autorizadas</li>
+        </ul>
+      </div>
+      <div appRevelar="der" [rvRetraso]="0.15" class="mf-conductor-card mf-borde-amarillo">
+        <div class="mf-conductor-head">
+          <div class="mf-conductor-ico mf-bg-amarillo"><ng-container [ngTemplateOutlet]="icono" [ngTemplateOutletContext]="{ $implicit: 'taxi' }" /></div>
+          <h3>Si manejas taxi</h3>
+        </div>
+        <ul class="mf-lista-check mf-check-amarillo">
+          <li><ng-container [ngTemplateOutlet]="check" />Registra tu perfil y los datos de tu taxi</li>
+          <li><ng-container [ngTemplateOutlet]="check" />Sube los documentos y requisitos que aplican para taxi</li>
+          <li><ng-container [ngTemplateOutlet]="check" />Recibe solicitudes de transporte en taxi</li>
+        </ul>
+      </div>
+    </div>
+    <div appRevelar [rvRetraso]="0.1" class="mf-fila-botones mf-mt-32">
+      <a routerLink="/registro/conductor" class="mf-btn mf-btn-turquesa mf-btn-lg">Quiero conducir</a>
+      <span class="mf-nota">Trabajas desde la app móvil de MoviFY.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LLAMADO FINAL ================= -->
+<section class="mf-seccion mf-oscuro mf-cta-seccion">
+  <div appRevelar="portal" rvRafaga="centro" class="mf-contenedor mf-cta-caja">
+    <div class="mf-cta">
+      <div class="mf-3d mf-pin mf-pin-cta">
+        <div class="mf-3d mf-pin-gira mf-abs-full">
+          @for (capa of capasPin; track $index) {
+            <img src="assets/brand/movify-isotipo.svg" alt="" class="mf-pin-capa mf-pin-sombra" [style.transform]="capa.transform" [style.filter]="capa.filtro">
+          }
+        </div>
+      </div>
+      <h2 class="mf-cta-titulo magia-txt">Muévete con MoviFY en Buenaventura</h2>
+      <p>Moto, taxi, domicilios y encomiendas desde un mismo lugar. Empieza desde la web.</p>
+      <div class="mf-fila-botones mf-centro">
+        <a routerLink="/registro" class="mf-btn mf-btn-azul mf-btn-lg">Crear mi cuenta</a>
+        <a routerLink="/login" class="mf-btn mf-btn-contorno-azul mf-btn-lg">Ya tengo cuenta</a>
+      </div>
+      <div class="mf-proximamente">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>
+        App móvil: próximamente
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PIE DE PÁGINA ================= -->
+<footer class="mf-footer">
+  <div appRevelar class="mf-contenedor mf-footer-fila">
+    <div class="mf-max-340">
+      <div class="mf-marca">
+        <img src="assets/brand/movify-isotipo.svg" alt="" width="30" height="37">
+        <span class="mf-wordmark">Movi<span>FY</span></span>
+      </div>
+      <p>Movilidad y entregas para Buenaventura, Valle del Cauca. Un proyecto de Dabliu Soluciones.</p>
+    </div>
+    <div class="mf-footer-cols">
+      <div>
+        <div class="mf-footer-titulo">Servicios</div>
+        @for (s of servicios; track s.id) {
+          <a href="#servicios" (click)="irA($event, 'servicios'); elegir(s.id)">{{ s.nombre }}</a>
+        }
+      </div>
+      <div>
+        <div class="mf-footer-titulo">MoviFY</div>
+        <a href="#conductores" (click)="irA($event, 'conductores')">Conductores</a>
+        <a routerLink="/login">Iniciar sesión</a>
+        <a routerLink="/privacidad">Política de privacidad</a>
+      </div>
+    </div>
+  </div>
+  <div class="mf-contenedor mf-copy">© 2026 MoviFY · Dabliu Soluciones</div>
+</footer>

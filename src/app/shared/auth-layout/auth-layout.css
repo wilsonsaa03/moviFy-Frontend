@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+@import '../efectos/efectos.css';
+
+/* =========================================================
+   LAYOUT DE ACCESO (login, recuperar contraseña, registros)
+   Prefijo "au-" para no chocar con styles.css
+   ========================================================= */
+
+:host {
+  --au-azul: #03274D;
+  --au-noche: #021B36;
+  --au-turquesa: #02AAB4;
+  --au-turquesa-claro: #5FD3D9;
+  --au-naranja: #FE7B13;
+  --au-texto: #E8F1F8;
+  --au-gris: #B7C9DA;
+  --au-gris-form: #4C6680;
+
+  display: block;
+  font-family: 'Nunito', system-ui, sans-serif;
+}
+
+:host *,
+:host *::before,
+:host *::after { box-sizing: border-box; }
+
+a:focus-visible { outline: 3px solid var(--au-turquesa-claro); outline-offset: 3px; }
+
+.au-3d { transform-style: preserve-3d; }
+.au-abs { position: absolute; inset: 0; }
+.au-turquesa { color: var(--au-turquesa); }
+.au-naranja { color: var(--au-naranja); }
+
+/* ---------- Página y fondo ---------- */
+.au-pagina {
+  position: relative;
+  min-height: 100vh;
+  background-color: var(--au-noche);
+  background-image:
+    linear-gradient(rgba(95, 211, 217, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(95, 211, 217, 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  color: var(--au-texto);
+  overflow: hidden;
+}
+.au-lienzo { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 80; }
+.au-fondo { position: absolute; left: 0; right: 0; bottom: 0; height: 140px; overflow: hidden; pointer-events: none; }
+.au-ola { display: block; animation: au-ola 18s linear infinite; }
+
+.au-volver {
+  position: absolute; top: 24px; left: 24px; z-index: 5;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: 999px;
+  color: var(--au-texto); text-decoration: none; font-weight: 700; font-size: 14px;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(95, 211, 217, 0.22);
+  transition: background-color .2s ease;
+}
+.au-volver:hover { background: rgba(255, 255, 255, 0.12); }
+
+.au-contenido {
+  position: relative; z-index: 2;
+  max-width: 1240px; margin: 0 auto; min-height: 100vh;
+  padding: 96px 24px 72px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 56px;
+}
+
+/* ---------- Izquierda ---------- */
+.au-lado-escena { flex: 1 1 480px; min-width: 0; }
+.au-chip {
+  display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px 8px 10px; border-radius: 999px;
+  background: rgba(2, 170, 180, 0.12); border: 1px solid rgba(2, 170, 180, 0.35);
+  font-weight: 700; font-size: 14px; color: #9BE6EA;
+}
+.au-titulo {
+  margin: 22px 0 0; max-width: 560px; font-family: 'Baloo 2', sans-serif; font-weight: 800;
+  font-size: clamp(44px, 5.4vw, 80px); line-height: 0.94; letter-spacing: -1.5px; color: #FFFFFF;
+}
+.au-titulo .au-turquesa { white-space: nowrap; } /* la parte resaltada no se parte en dos líneas */
+.au-texto { margin: 20px 0 0; max-width: 470px; font-size: 18px; line-height: 1.6; color: var(--au-gris); }
+.au-etiquetas { margin: 26px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 10px; }
+.au-etiquetas li {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+  font-weight: 700; font-size: 14px;
+}
+.au-punto { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Escena 3D */
+.au-escena-caja { margin-top: 28px; display: flex; }
+.au-escena { flex: none; width: 460px; height: 360px; perspective: 1400px; perspective-origin: 50% 30%; }
+.au-escena-mov {
+  position: relative; width: 100%; height: 100%;
+  transform: rotateX(calc(10deg + var(--rx, 0deg))) rotateY(calc(-14deg + var(--ry, 0deg)));
+  transition: transform .3s ease-out;
+}
+.au-pantalla {
+  position: absolute; left: 0; right: 0; bottom: 10px; height: 240px; border-radius: 34px;
+  transform: translateZ(-60px);
+  background-color: #04305C;
+  background-image: linear-gradient(rgba(95, 211, 217, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(95, 211, 217, 0.1) 1px, transparent 1px);
+  background-size: 30px 30px;
+  border: 2px solid rgba(2, 170, 180, 0.55);
+  box-shadow: 0 50px 80px -40px rgba(0, 0, 0, 0.85), inset 0 0 50px rgba(2, 170, 180, 0.18);
+  overflow: hidden;
+}
+.au-orbita-caja { position: absolute; left: 50%; bottom: 0; width: 300px; height: 300px; margin-left: -150px; transform: translateZ(-20px); }
+.au-orbita { position: absolute; inset: 0; border-radius: 50%; border: 2px dashed rgba(2, 170, 180, 0.7); transform: rotateX(78deg); animation: au-orbita 18s linear infinite; }
+.au-orbita-punto { position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--au-naranja); box-shadow: 0 0 16px var(--au-naranja); }
+
+.au-pin { position: absolute; left: 50%; top: 10px; width: 150px; height: 185px; margin-left: -75px; transform: translateZ(130px); }
+.au-pin-gira { position: absolute; inset: 0; animation: au-pin 7s ease-in-out infinite; }
+.au-pin-capa { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.au-flotante { position: absolute; }
+.au-f-conductor { left: -30px; top: 70px; transform: translateZ(100px); }
+.au-f-vivo { right: -30px; top: 150px; transform: translateZ(150px); }
+.au-f-tarifa { right: 10px; bottom: 40px; transform: translateZ(80px); }
+.au-flota { animation: au-flota 5s ease-in-out infinite; }
+.au-flota.d1 { animation-delay: -1.7s; }
+.au-flota.d2 { animation-delay: -3.2s; }
+.au-card-blanca { width: 210px; padding: 12px; border-radius: 18px; background: #FFFFFF; color: var(--au-azul); box-shadow: 0 30px 56px -22px rgba(0, 0, 0, 0.7); display: flex; align-items: center; gap: 10px; }
+.au-card-ico { width: 40px; height: 40px; flex: none; border-radius: 12px; background: var(--au-turquesa); color: var(--au-azul); padding: 9px; }
+.au-card-ico svg { width: 100%; height: 100%; display: block; }
+.au-card-titulo { font-weight: 800; font-size: 13px; line-height: 1.2; }
+.au-card-sub { margin-top: 2px; font-size: 12px; font-weight: 700; color: var(--au-gris-form); }
+.au-chip-blanco { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 999px; background: #FFFFFF; color: var(--au-azul); font-weight: 800; font-size: 13px; white-space: nowrap; box-shadow: 0 30px 56px -20px rgba(0, 0, 0, 0.65); }
+.au-punto-vivo { position: relative; width: 11px; height: 11px; display: inline-block; }
+.au-punto-vivo span { position: absolute; inset: 0; border-radius: 50%; background: var(--au-turquesa); }
+.au-pulso { animation: au-pulso 1.8s ease-out infinite; }
+.au-card-azul { padding: 12px 16px; border-radius: 18px; background: var(--au-azul); border: 1px solid rgba(95, 211, 217, 0.4); box-shadow: 0 30px 56px -22px rgba(0, 0, 0, 0.7); }
+.au-card-etiqueta { font-size: 11px; font-weight: 700; color: #9BE6EA; text-transform: uppercase; letter-spacing: 1.2px; }
+.au-card-grande { margin-top: 2px; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 19px; color: #FFFFFF; line-height: 1.1; }
+
+/* ---------- Derecha: tarjeta ---------- */
+.au-lado-form { flex: 0 1 460px; min-width: 0; perspective: 1400px; }
+.au-tarjeta {
+  position: relative; width: 100%;
+  background: #FFFFFF; color: var(--au-azul);
+  border-radius: 32px; padding: 40px 36px 32px;
+  transform: rotateX(var(--trx, 0deg)) rotateY(var(--try, 0deg));
+  transition: transform .35s ease-out;
+  box-shadow:
+    0 0 0 1px rgba(2, 170, 180, 0.35),
+    0 0 60px -10px rgba(2, 170, 180, 0.45),
+    0 60px 100px -40px rgba(0, 0, 0, 0.85);
+}
+
+/* ---------- Animaciones ---------- */
+@keyframes au-flota { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@keyframes au-pin { 0%, 100% { transform: translateY(0) rotateY(-30deg); } 50% { transform: translateY(-16px) rotateY(30deg); } }
+@keyframes au-orbita { from { transform: rotateX(78deg) rotateZ(0deg); } to { transform: rotateX(78deg) rotateZ(360deg); } }
+@keyframes au-pulso { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(2.6); opacity: 0; } }
+@keyframes au-ola { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1080px) {
+  .au-escena { transform: scale(.85); transform-origin: top left; margin-bottom: -54px; }
+}
+/* Laptops con poca altura (ej. 1366 x 768): la escena se achica para que todo quepa */
+@media (max-height: 860px) and (min-width: 901px) {
+  .au-contenido { padding-top: 76px; padding-bottom: 40px; }
+  .au-titulo { font-size: clamp(40px, 4.6vw, 64px); }
+  .au-texto { font-size: 16px; }
+  .au-escena-caja { margin-top: 18px; }
+  .au-escena { transform: scale(.72); transform-origin: top left; margin-bottom: -100px; }
+  .au-tarjeta { padding: 30px 32px 24px; }
+}
+@media (max-width: 900px) {
+  /* En pantallas pequeñas solo se muestra la tarjeta: es lo que la persona vino a hacer */
+  .au-lado-escena { display: none; }
+  .au-contenido { justify-content: center; padding-top: 88px; }
+  .au-lado-form { flex-basis: 100%; max-width: 480px; }
+}
+@media (max-width: 480px) {
+  .au-tarjeta { padding: 32px 22px 26px; border-radius: 26px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .au-flota, .au-pin-gira, .au-orbita, .au-pulso, .au-ola { animation: none; }
+  .au-escena-mov, .au-tarjeta { transition: none; }
+}

@@ -1,54 +1,69 @@
-<div class="registro-wrapper">
+<div #pagina class="rg-pagina">
 
-  <div class="registro-header">
-    <h1>¿Cómo quieres registrarte?</h1>
-    <p>Elige el tipo de cuenta que mejor se adapte a ti</p>
+  <canvas #lienzo class="rg-lienzo" aria-hidden="true"></canvas>
+
+  <div class="rg-fondo" aria-hidden="true">
+    <svg class="rg-ola" width="2400" height="140" viewBox="0 0 2400 140" fill="none">
+      <path d="M0 60 C 150 0, 300 120, 450 60 S 750 0, 900 60 S 1200 120, 1350 60 S 1650 0, 1800 60 S 2100 120, 2250 60 S 2400 20, 2400 60 V140 H0 Z" fill="#02AAB4" opacity="0.14"/>
+    </svg>
   </div>
 
-  <div class="cards-grid">
+  <a routerLink="/" class="rg-volver">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+    Volver al inicio
+  </a>
 
-    <!-- USUARIO -->
-    <div class="card card-usuario">
-      <div class="card-icon-wrapper icon-verde">
-        <img src="/assets/usuario.png" class="card-icon">
+  <main class="rg-contenido">
+    <header class="rg-encabezado">
+      <div appRevelar [rvRetraso]="0.05" class="rg-chip">
+        <img src="assets/brand/movify-isotipo.svg" alt="" width="18" height="22">
+        Crea tu cuenta en MoviFY
       </div>
-      <h2 class="card-title title-verde">Usuario</h2>
-      <div class="card-line line-verde"></div>
-      <p class="card-desc">Solicita transporte y domicilios de forma fácil y segura.</p>
-      <div class="card-wave wave-verde"></div>
-      <button class="btn-card btn-verde" routerLink="/registro/usuario">
-        Continuar →
-      </button>
+      <div appRevelar [rvRetraso]="0.15">
+        <h1 class="rg-titulo magia-txt">¿Cómo quieres <span class="rg-turquesa">registrarte</span><span class="rg-naranja">?</span></h1>
+      </div>
+      <p appRevelar [rvRetraso]="0.3" class="rg-texto">Elige el tipo de cuenta que mejor se adapte a ti.</p>
+    </header>
+
+    <div class="rg-grid">
+      @for (t of tipos; track t.id; let i = $index) {
+        <div appRevelar="voltea" [rvRetraso]="0.2 + i * 0.15">
+          <a #tarjeta [routerLink]="t.ruta" class="rg-tarjeta" [class.destacada]="t.id === 'usuario'">
+            <span class="rg-icono" [style.background]="t.fondoIcono" [style.color]="t.trazoIcono"
+                  [style.box-shadow]="'0 22px 34px -14px ' + t.sombraIcono">
+              @switch (t.id) {
+                @case ('usuario') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+                }
+                @case ('conductor') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-7h5l5 7"/><path d="M14 10l2-4h3"/><path d="M9 10H6"/></svg>
+                }
+                @case ('admin') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+                }
+              }
+            </span>
+            <span class="rg-cuerpo">
+              <span class="rg-nombre">{{ t.titulo }}</span>
+              <span class="rg-desc">{{ t.descripcion }}</span>
+              <span class="rg-puntos">
+                @for (p of t.puntos; track p) {
+                  <span class="rg-punto">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                    {{ p }}
+                  </span>
+                }
+              </span>
+              <span class="rg-accion">
+                {{ t.accion }}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </span>
+            </span>
+          </a>
+        </div>
+      }
     </div>
 
-    <!-- CONDUCTOR -->
-    <div class="card card-conductor">
-      <div class="card-icon-wrapper icon-naranja">
-        <img src="/assets/conductor.png" class="card-icon">
-      </div>
-      <h2 class="card-title title-naranja">Conductor</h2>
-      <div class="card-line line-naranja"></div>
-      <p class="card-desc">Gana dinero haciendo viajes y maneja tu propio tiempo.</p>
-      <div class="card-wave wave-naranja"></div>
-      <button class="btn-card btn-naranja" routerLink="/registro/conductor">
-        Continuar →
-      </button>
-    </div>
-
-    <!-- ADMINISTRADOR -->
-    <div class="card card-admin">
-      <div class="card-icon-wrapper icon-azul">
-        <img src="/assets/admin.png" class="card-icon">
-      </div>
-      <h2 class="card-title title-azul">Administrador</h2>
-      <div class="card-line line-azul"></div>
-      <p class="card-desc">Gestiona usuarios, conductores y controla la plataforma.</p>
-      <div class="card-wave wave-azul"></div>
-      <button class="btn-card btn-azul" routerLink="/registro/admin">
-        Entrar →
-      </button>
-    </div>
-
-  </div>
-
+    <p appRevelar [rvRetraso]="0.7" class="rg-pie">¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a></p>
+  </main>
 </div>

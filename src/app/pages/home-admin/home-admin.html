@@ -1,425 +1,627 @@
-<div class="admin-wrapper">
+<!-- Íconos reutilizables (trazo de 24px que toma el color del texto) -->
+<ng-template #ico let-n>
+  <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    @switch (n) {
+      @case ('dashboard') { <rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/> }
+      @case ('conductores') { <circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-7h5l5 7"/><path d="M14 10l2-4h3"/> }
+      @case ('usuarios') { <circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.6-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.8c1.8.7 3 2.4 3.5 5.2"/> }
+      @case ('servicios') { <path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="M8 12h8M8 16h5"/> }
+      @case ('reportes') { <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/> }
+      @case ('catalogos') { <path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/> }
+      @case ('campana') { <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/> }
+      @case ('salir') { <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/> }
+      @case ('reloj') { <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/> }
+      @case ('dinero') { <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/> }
+      @case ('alerta') { <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/> }
+      @case ('ojo') { <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z"/><circle cx="12" cy="12" r="3"/> }
+      @case ('check') { <path d="M20 6 9 17l-5-5"/> }
+      @case ('x') { <path d="M18 6 6 18M6 6l12 12"/> }
+      @case ('bloquear') { <circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/> }
+      @case ('buscar') { <circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/> }
+      @case ('flecha') { <path d="M5 12h14M13 6l6 6-6 6"/> }
+      @case ('documento') { <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/> }
+      @case ('estrella') { <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/> }
+      @case ('transporte') { <circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-7h5l5 7"/><path d="M14 10l2-4h3"/> }
+      @case ('domicilio') { <path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/> }
+      @case ('encomienda') { <path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5"/><path d="M12 12v9"/> }
+    }
+  </svg>
+</ng-template>
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <div class="navbar-left">
-      <img src="/assets/brand/movify-isotipo.svg" class="nav-logo" alt="MoviFY">
-      <span class="nav-brand">Movi<span>FY</span></span>
+<div class="adm">
+
+  <!-- ═══════════════ BARRA LATERAL ═══════════════ -->
+  <aside class="adm-side">
+    <div class="adm-marca">
+      <img src="assets/brand/movify-isotipo.svg" alt="" width="30" height="37">
+      <div>
+        <span class="adm-wordmark">Movi<span>FY</span></span>
+        <span class="adm-marca-sub">Panel de gestión</span>
+      </div>
     </div>
 
-    <div class="navbar-center">
-      <span class="welcome-title">¡Bienvenido, {{ nombre }}! 👋</span>
-      <span class="welcome-sub">Aquí tienes un resumen general de la plataforma.</span>
+    <nav class="adm-nav" aria-label="Secciones del panel">
+      @for (s of secciones; track s.id) {
+        <button type="button" class="adm-nav-item" [class.activo]="seccionActiva === s.id"
+                [attr.aria-current]="seccionActiva === s.id ? 'page' : null" (click)="irA(s.id)">
+          <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: s.id }" />
+          <span>{{ s.titulo }}</span>
+          @if (s.id === 'conductores' && conductoresPendientes > 0) {
+            <span class="adm-nav-badge" [attr.aria-label]="conductoresPendientes + ' pendientes'">{{ conductoresPendientes }}</span>
+          }
+        </button>
+      }
+    </nav>
+
+    <div class="adm-side-pie">
+      <div class="adm-perfil">
+        @if (foto) {
+          <img [src]="foto" alt="" class="adm-avatar">
+        } @else {
+          <div class="adm-avatar adm-avatar-letra">{{ inicial(nombre) }}</div>
+        }
+        <div class="adm-perfil-txt">
+          <span class="adm-perfil-nombre">{{ nombre }}</span>
+          <span class="adm-perfil-rol">{{ rolEtiqueta }}</span>
+        </div>
+      </div>
+      <button type="button" class="adm-salir" (click)="cerrarSesion()">
+        <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'salir' }" />
+        Cerrar sesión
+      </button>
     </div>
+  </aside>
 
-    <div class="navbar-right">
-      <div class="nav-notif">
-        🔔
-        <span class="notif-badge" *ngIf="conductoresPendientes > 0">{{ conductoresPendientes }}</span>
+  <!-- ═══════════════ CONTENIDO ═══════════════ -->
+  <div class="adm-main">
+
+    <header class="adm-top">
+      <div>
+        <h1 class="adm-titulo">{{ seccion.titulo }}</h1>
+        <p class="adm-subtitulo">{{ seccion.subtitulo }}</p>
       </div>
-      <div class="nav-perfil">
-        <img *ngIf="foto" [src]="foto" class="nav-avatar">
-        <div *ngIf="!foto" class="nav-avatar-placeholder">{{ nombre.charAt(0).toUpperCase() }}</div>
-        <div class="nav-info">
-          <span class="nav-nombre">{{ nombre }}</span>
-          <span class="nav-sub">Administrador</span>
-        </div>
+      <div class="adm-top-der">
+        <span class="adm-fecha">{{ hoyTexto }}</span>
+        <button type="button" class="adm-campana" (click)="irA('conductores', 'pendiente')"
+                [attr.aria-label]="conductoresPendientes ? conductoresPendientes + ' conductores por validar' : 'Sin conductores por validar'">
+          <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'campana' }" />
+          @if (conductoresPendientes > 0) { <span class="adm-campana-num">{{ conductoresPendientes }}</span> }
+        </button>
       </div>
-      <button class="btn-cerrar" (click)="cerrarSesion()">Salir →</button>
-    </div>
-  </nav>
+    </header>
 
-  <div class="layout">
+    <main class="adm-contenido">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <nav class="sidebar-nav">
-        <button class="nav-item" [class.activo]="seccionActiva === 'dashboard'" (click)="seccionActiva = 'dashboard'">
-          <span class="nav-icon">📊</span> Dashboard
-        </button>
-        <button class="nav-item" [class.activo]="seccionActiva === 'conductores'" (click)="seccionActiva = 'conductores'">
-          <span class="nav-icon">🏍️</span> Conductores
-          <span class="nav-badge" *ngIf="conductoresPendientes > 0">{{ conductoresPendientes }}</span>
-        </button>
-        <button class="nav-item" [class.activo]="seccionActiva === 'usuarios'" (click)="seccionActiva = 'usuarios'">
-          <span class="nav-icon">👥</span> Usuarios
-        </button>
-        <button class="nav-item" [class.activo]="seccionActiva === 'servicios'" (click)="seccionActiva = 'servicios'">
-          <span class="nav-icon">📋</span> Servicios
-        </button>
-        <button class="nav-item" [class.activo]="seccionActiva === 'reportes'" (click)="seccionActiva = 'reportes'">
-          <span class="nav-icon">📈</span> Reportes
-        </button>
-      </nav>
+      <!-- ══════════ RESUMEN ══════════ -->
+      @if (seccionActiva === 'dashboard') {
 
-      <div class="sidebar-footer">
-        <div class="sidebar-promo">
-          <div class="promo-icon">🛡️</div>
-          <p class="promo-title">Todo bajo control</p>
-          <p class="promo-sub">Monitorea y administra tu plataforma en tiempo real.</p>
-          <button class="promo-btn" (click)="seccionActiva = 'reportes'">Ver reportes</button>
-        </div>
-      </div>
-    </aside>
-
-    <!-- CONTENIDO -->
-    <main class="contenido">
-
-      <!-- ══ DASHBOARD ══ -->
-      <div *ngIf="seccionActiva === 'dashboard'">
-
-        <div class="page-header">
-          <div>
-            <h2 class="page-title">Dashboard</h2>
-            <p class="page-sub">Resumen general de la plataforma</p>
-          </div>
-        </div>
-
-        <!-- STATS CARDS -->
-        <div class="stats-grid">
-          <div class="stat-card azul">
-            <div class="stat-left">
-              <span class="stat-valor">{{ totalUsuarios }}</span>
-              <span class="stat-label">Usuarios registrados</span>
-              <span class="stat-trend up">↑ 12.5% vs semana anterior</span>
+        @if (conductoresPendientes > 0) {
+          <div class="adm-aviso">
+            <div class="adm-aviso-ico"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'alerta' }" /></div>
+            <div class="adm-aviso-txt">
+              <strong>{{ conductoresPendientes }} {{ conductoresPendientes === 1 ? 'conductor espera' : 'conductores esperan' }} validación.</strong>
+              Revisa sus documentos para que puedan empezar a recibir servicios.
             </div>
-            <div class="stat-icon-wrap azul-light">👥</div>
+            <button type="button" class="adm-btn adm-btn-primario" (click)="irA('conductores', 'pendiente')">Revisar ahora</button>
           </div>
-          <div class="stat-card verde">
-            <div class="stat-left">
-              <span class="stat-valor">{{ totalConductores }}</span>
-              <span class="stat-label">Conductores activos</span>
-              <span class="stat-trend up">↑ 8.7% vs semana anterior</span>
-            </div>
-            <div class="stat-icon-wrap verde-light">🏍️</div>
-          </div>
-          <div class="stat-card naranja">
-            <div class="stat-left">
-              <span class="stat-valor">{{ totalServicios }}</span>
-              <span class="stat-label">Servicios hoy</span>
-              <span class="stat-trend down">↓ 4.3% vs semana anterior</span>
-            </div>
-            <div class="stat-icon-wrap naranja-light">📋</div>
-          </div>
-          <div class="stat-card morado">
-            <div class="stat-left">
-              <span class="stat-valor">${{ totalGanancias | number }}</span>
-              <span class="stat-label">Ingresos del mes</span>
-              <span class="stat-trend up">↑ 18.6% vs mes anterior</span>
-            </div>
-            <div class="stat-icon-wrap morado-light">💰</div>
-          </div>
-        </div>
+        }
 
-        <!-- BOTTOM GRID -->
-        <div class="dashboard-grid">
+        <!-- Indicadores -->
+        <section class="adm-kpis" aria-label="Indicadores">
+          <article class="adm-kpi">
+            <div class="adm-kpi-ico k-turquesa"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'usuarios' }" /></div>
+            <span class="adm-kpi-label">Clientes registrados</span>
+            <span class="adm-kpi-valor">{{ totalClientes }}</span>
+            <span class="adm-kpi-pie">{{ totalUsuarios }} cuentas en total</span>
+          </article>
+          <article class="adm-kpi">
+            <div class="adm-kpi-ico k-azul"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'conductores' }" /></div>
+            <span class="adm-kpi-label">Conductores aprobados</span>
+            <span class="adm-kpi-valor">{{ totalConductores }}</span>
+            <span class="adm-kpi-pie" [class.pie-alerta]="conductoresPendientes > 0">{{ conductoresPendientes }} por validar</span>
+          </article>
+          <article class="adm-kpi">
+            <div class="adm-kpi-ico k-naranja"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'servicios' }" /></div>
+            <span class="adm-kpi-label">Servicios hoy</span>
+            <span class="adm-kpi-valor">{{ totalServicios }}</span>
+            <span class="adm-kpi-pie">{{ serviciosEnCurso }} en curso · {{ serviciosPendientes }} sin conductor</span>
+          </article>
+          <article class="adm-kpi">
+            <div class="adm-kpi-ico k-verde"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'dinero' }" /></div>
+            <span class="adm-kpi-label">Servicios finalizados este mes</span>
+            <span class="adm-kpi-valor">${{ totalGanancias | number:'1.0-0' }}</span>
+            <span class="adm-kpi-pie">Suma de tarifas estimadas · aún sin pagos</span>
+          </article>
+        </section>
 
-          <!-- CONDUCTORES PENDIENTES -->
-          <div class="card" *ngIf="conductoresPendientes > 0">
-            <div class="card-header">
-              <h3>Conductores por aprobar</h3>
-              <span class="badge-alerta">{{ conductoresPendientes }} pendientes</span>
-            </div>
-            <div class="conductor-item" *ngFor="let c of conductores | slice:0:3">
-              <div class="conductor-avatar">{{ c.nombre?.charAt(0)?.toUpperCase() }}</div>
-              <div class="conductor-info">
-                <h4>{{ c.nombre }}</h4>
-                <p>{{ c.correo }}</p>
-                <p>{{ c.placa || '—' }}</p>
-              </div>
-              <div class="conductor-acciones">
-                <button class="btn-aprobar" (click)="aprobarConductor(c)">✓ Aprobar</button>
-                <button class="btn-rechazar" (click)="rechazarConductor(c)">✗ Rechazar</button>
-              </div>
-            </div>
-            <button class="btn-ver-todos" (click)="seccionActiva = 'conductores'">Ver todos →</button>
-          </div>
-
-          <div class="card" *ngIf="conductoresPendientes === 0">
-            <div class="card-header">
-              <h3>Conductores por aprobar</h3>
-            </div>
-            <p style="color:#94a3b8;padding:20px 0;text-align:center">✅ No hay conductores pendientes</p>
-          </div>
-
-          <!-- ÚLTIMOS USUARIOS -->
-          <div class="card">
-            <div class="card-header">
-              <h3>Últimos usuarios registrados</h3>
-              <span (click)="seccionActiva = 'usuarios'">Ver todos</span>
-            </div>
-            <div class="usuario-item" *ngFor="let u of usuarios | slice:0:4">
-              <div class="fila-avatar">
-                <img *ngIf="u.foto" [src]="u.foto" style="width:36px;height:36px;border-radius:50%;object-fit:cover">
-                <span *ngIf="!u.foto">{{ u.nombre?.charAt(0)?.toUpperCase() }}</span>
-              </div>
-              <div class="usuario-info">
-                <p class="fila-nombre">{{ u.nombre }}</p>
-                <p class="fila-correo">{{ u.correo }}</p>
-              </div>
-              <span class="rol-badge" [ngStyle]="{
-                'background': u.rol === 'admin' ? '#fef3c7' : u.rol === 'conductor' ? '#dbeafe' : '#dcfce7',
-                'color': u.rol === 'admin' ? '#92400e' : u.rol === 'conductor' ? '#1e40af' : '#166534'
-              }">{{ u.rol }}</span>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-      <!-- ══ CONDUCTORES ══ -->
-      <div *ngIf="seccionActiva === 'conductores'">
-        <div class="page-header">
-          <div>
-            <h2 class="page-title">Conductores</h2>
-            <p class="page-sub">Gestiona y aprueba conductores de la plataforma</p>
-          </div>
-          <div class="filtros">
-            <button class="filtro-btn" [class.activo]="filtroConductor === 'todos'" (click)="filtroConductor = 'todos'">Todos</button>
-            <button class="filtro-btn" [class.activo]="filtroConductor === 'pendiente'" (click)="filtroConductor = 'pendiente'">Pendientes</button>
-            <button class="filtro-btn" [class.activo]="filtroConductor === 'aprobado'" (click)="filtroConductor = 'aprobado'">Aprobados</button>
-            <button class="filtro-btn" [class.activo]="filtroConductor === 'rechazado'" (click)="filtroConductor = 'rechazado'">Rechazados</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="tabla-header cols-6">
-            <span>Conductor</span>
-            <span>Placa</span>
-            <span>Modelo</span>
-            <span>Teléfono</span>
-            <span>Estado</span>
-            <span>Acciones</span>
-          </div>
-          <div class="tabla-fila cols-6" *ngFor="let c of conductoresFiltrados()">
-            <div class="fila-conductor">
-              <div class="fila-avatar">{{ c.nombre?.charAt(0)?.toUpperCase() }}</div>
+        <div class="adm-grid-2">
+          <!-- Servicios de la semana -->
+          <section class="adm-card">
+            <div class="adm-card-head">
               <div>
-                <p class="fila-nombre">{{ c.nombre }}</p>
-                <p class="fila-correo">{{ c.correo }}</p>
+                <h2>Servicios de los últimos 7 días</h2>
+                <p class="adm-card-sub">
+                  {{ totalSemana }} solicitudes
+                  @if (variacionSemana !== null) {
+                    · <span [class.sube]="variacionSemana >= 0" [class.baja]="variacionSemana < 0">{{ variacionSemana >= 0 ? '+' : '' }}{{ variacionSemana }}% frente a los 7 días anteriores</span>
+                  } @else {
+                    · aún no hay semana anterior para comparar
+                  }
+                </p>
               </div>
             </div>
-            <span class="fila-placa">{{ c.placa || '—' }}</span>
-            <span>{{ c.modelo || '—' }}</span>
-            <span>{{ c.telefono || '—' }}</span>
-            <span class="estado-badge {{ c.estado }}">{{ c.estado }}</span>
-            <div class="fila-acciones">
-              <button class="btn-ver" (click)="verDocumentos(c)">👁️ Ver</button>
-              <button class="btn-aprobar" (click)="aprobarConductor(c)" *ngIf="c.estado === 'pendiente'">✓ Aprobar</button>
-              <button class="btn-rechazar" (click)="rechazarConductor(c)" *ngIf="c.estado === 'pendiente'">✗ Rechazar</button>
-              <button class="btn-bloquear" (click)="bloquearConductor(c)" *ngIf="c.estado === 'aprobado'">🚫</button>
-            </div>
-          </div>
-          <p *ngIf="conductoresFiltrados().length === 0" style="text-align:center;color:#94a3b8;padding:30px">No hay conductores en esta categoría</p>
-        </div>
-      </div>
+            @if (cargandoServicios) {
+              <p class="adm-vacio">Cargando servicios…</p>
+            } @else if (errorServicios) {
+              <p class="adm-error" role="alert">{{ errorServicios }}</p>
+            } @else {
+              <div class="adm-barras" role="img" [attr.aria-label]="'Servicios por día en los últimos 7 días: ' + totalSemana + ' en total'">
+                @for (d of serviciosSemana; track $index) {
+                  <div class="adm-barra-col">
+                    <span class="adm-barra-num">{{ d.total }}</span>
+                    <div class="adm-barra-pista"><div class="adm-barra" [class.hoy]="d.esHoy" [style.height.%]="d.altura || 2"></div></div>
+                    <span class="adm-barra-dia" [class.hoy]="d.esHoy">{{ d.esHoy ? 'Hoy' : d.etiqueta }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </section>
 
-      <!-- ══ USUARIOS ══ -->
-      <div *ngIf="seccionActiva === 'usuarios'">
-        <div class="page-header">
-          <div>
-            <h2 class="page-title">Usuarios</h2>
-            <p class="page-sub">Total: {{ totalUsuarios }} usuarios registrados</p>
-          </div>
-        </div>
-        <div class="card">
-          <p *ngIf="cargandoUsuarios" style="color:#64748b;padding:20px">Cargando usuarios...</p>
-          <p *ngIf="errorUsuarios" style="color:#dc2626;padding:20px">{{ errorUsuarios }}</p>
-          <div class="tabla-header cols-6">
-            <span>Usuario</span>
-            <span>Correo</span>
-            <span>Teléfono</span>
-            <span>Rol</span>
-            <span>Estado</span>
-            <span>Acciones</span>
-          </div>
-          <div class="tabla-fila cols-6" *ngFor="let u of usuarios">
-            <div class="fila-conductor">
-              <div class="fila-avatar">
-                <img *ngIf="u.foto" [src]="u.foto" style="width:36px;height:36px;border-radius:50%;object-fit:cover">
-                <span *ngIf="!u.foto">{{ u.nombre?.charAt(0)?.toUpperCase() }}</span>
-              </div>
+          <!-- Por tipo de servicio -->
+          <section class="adm-card">
+            <div class="adm-card-head">
               <div>
-                <p class="fila-nombre">{{ u.nombre }}</p>
+                <h2>Por tipo de servicio</h2>
+                <p class="adm-card-sub">Solicitudes de este mes</p>
               </div>
             </div>
-            <span class="celda-truncada" style="font-size:13px;color:#64748b" [title]="u.correo">{{ u.correo }}</span>
-            <span class="celda-truncada" [title]="u.telefono || 'Sin teléfono'">{{ u.telefono || '—' }}</span>
-            <span class="rol-badge" [ngStyle]="{
-              'background': u.rol === 'admin' ? '#fef3c7' : u.rol === 'conductor' ? '#dbeafe' : '#dcfce7',
-              'color': u.rol === 'admin' ? '#92400e' : u.rol === 'conductor' ? '#1e40af' : '#166534'
-            }">{{ u.rol }}</span>
-            <span class="estado-badge {{ u.estado }}">{{ u.estado }}</span>
-            <div class="fila-acciones">
-              <button class="btn-rechazar" (click)="bloquearUsuario(u)" *ngIf="u.estado === 'activo' && u.rol !== 'admin'">🚫 Bloquear</button>
-              <button class="btn-aprobar" (click)="activarUsuario(u)" *ngIf="u.estado !== 'activo'">✓ Activar</button>
+            <div class="adm-dist">
+              <div class="adm-dist-fila">
+                <span class="adm-dist-ico t-transporte"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'transporte' }" /></span>
+                <span class="adm-dist-nombre">Transporte</span>
+                <div class="adm-dist-pista"><div class="adm-dist-barra t-transporte" [style.width.%]="porcentajeTransporte"></div></div>
+                <span class="adm-dist-num">{{ transportesMes }}</span>
+              </div>
+              <div class="adm-dist-fila">
+                <span class="adm-dist-ico t-domicilio"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'domicilio' }" /></span>
+                <span class="adm-dist-nombre">Domicilios</span>
+                <div class="adm-dist-pista"><div class="adm-dist-barra t-domicilio" [style.width.%]="porcentajeDomicilio"></div></div>
+                <span class="adm-dist-num">{{ domiciliosMes }}</span>
+              </div>
+              <div class="adm-dist-fila">
+                <span class="adm-dist-ico t-encomienda"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'encomienda' }" /></span>
+                <span class="adm-dist-nombre">Encomiendas</span>
+                <div class="adm-dist-pista"><div class="adm-dist-barra t-encomienda" [style.width.%]="porcentajeEncomienda"></div></div>
+                <span class="adm-dist-num">{{ encomiendaMes }}</span>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
-      </div>
 
-      <!-- ══ SERVICIOS ══ -->
-      <div *ngIf="seccionActiva === 'servicios'">
-        <div class="page-header">
-          <div>
-            <h2 class="page-title">Servicios</h2>
-            <p class="page-sub">Historial de servicios de la plataforma</p>
-          </div>
-        </div>
-        <div class="card">
-          <div class="tabla-header cols-6">
-            <span>Tipo</span><span>Destino</span><span>Conductor</span>
-            <span>Cliente</span><span>Precio</span><span>Estado</span>
-          </div>
-          <div class="tabla-fila cols-6" *ngFor="let s of servicios">
-            <span>{{ s.icono }} {{ s.tipo }}</span>
-            <span>{{ s.destino }}</span>
-            <span>{{ s.conductor }}</span>
-            <span>{{ s.cliente }}</span>
-            <span>${{ s.precio | number }}</span>
-            <span class="estado-badge {{ s.estado }}">{{ s.estado }}</span>
-          </div>
-          <p *ngIf="servicios.length === 0" style="text-align:center;color:#94a3b8;padding:30px">No hay servicios registrados aún</p>
-        </div>
-      </div>
+        <div class="adm-grid-2">
+          <!-- Conductores por validar -->
+          <section class="adm-card">
+            <div class="adm-card-head">
+              <div>
+                <h2>Conductores por validar</h2>
+                <p class="adm-card-sub">Esperan la revisión de sus documentos</p>
+              </div>
+              @if (conductoresPendientes > 0) {
+                <button type="button" class="adm-link" (click)="irA('conductores', 'pendiente')">Ver todos</button>
+              }
+            </div>
+            @if (cargando) {
+              <p class="adm-vacio">Cargando conductores…</p>
+            } @else if (pendientesLista.length === 0) {
+              <div class="adm-vacio adm-vacio-ok">
+                <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" />
+                Todo al día: no hay conductores esperando validación.
+              </div>
+            } @else {
+              <ul class="adm-lista">
+                @for (c of pendientesLista | slice:0:4; track c.conductor_id) {
+                  <li class="adm-lista-item">
+                    <div class="adm-avatar-sm">{{ inicial(c.nombre) }}</div>
+                    <div class="adm-lista-txt">
+                      <span class="adm-lista-nombre">{{ c.nombre }}</span>
+                      <span class="adm-lista-sub">{{ c.placa || 'Sin placa' }} · {{ c.correo }}</span>
+                    </div>
+                    <button type="button" class="adm-btn adm-btn-suave" (click)="verDocumentos(c)">
+                      <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'documento' }" />
+                      Revisar
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
 
-      <!-- ══ REPORTES ══ -->
-      <div *ngIf="seccionActiva === 'reportes'">
-        <div class="page-header">
-          <div>
-            <h2 class="page-title">Reportes</h2>
-            <p class="page-sub">Estadísticas generales de la plataforma</p>
+          <!-- Actividad reciente -->
+          <section class="adm-card">
+            <div class="adm-card-head">
+              <div>
+                <h2>Actividad reciente</h2>
+                <p class="adm-card-sub">Últimas solicitudes de la plataforma</p>
+              </div>
+              <button type="button" class="adm-link" (click)="irA('servicios')">Ver todas</button>
+            </div>
+            @if (cargandoServicios) {
+              <p class="adm-vacio">Cargando servicios…</p>
+            } @else if (servicios.length === 0) {
+              <p class="adm-vacio">Todavía no hay servicios registrados.</p>
+            } @else {
+              <ul class="adm-lista">
+                @for (s of servicios | slice:0:5; track $index) {
+                  <li class="adm-lista-item">
+                    <span class="adm-tipo-ico t-{{ s.tipo?.toLowerCase() }}"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: s.tipo?.toLowerCase() }" /></span>
+                    <div class="adm-lista-txt">
+                      <span class="adm-lista-nombre">{{ s.tipoEtiqueta }} · {{ s.cliente }}</span>
+                      <span class="adm-lista-sub">{{ s.fecha ? (s.fecha | date:'d MMM, h:mm a') : 'Sin fecha' }} · {{ s.conductor }}</span>
+                    </div>
+                    <span class="adm-estado e-{{ s.estado }}">{{ s.estadoEtiqueta }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        </div>
+      }
+
+      <!-- ══════════ CONDUCTORES ══════════ -->
+      @if (seccionActiva === 'conductores') {
+        <div class="adm-barra-herr">
+          <div class="adm-pills" role="tablist" aria-label="Filtrar conductores">
+            @for (f of ['todos', 'pendiente', 'aprobado', 'rechazado', 'suspendido']; track f) {
+              <button type="button" role="tab" class="adm-pill" [class.activo]="filtroConductor === f"
+                      [attr.aria-selected]="filtroConductor === f" (click)="filtroConductor = f">
+                {{ f === 'todos' ? 'Todos' : f === 'pendiente' ? 'Pendientes' : f === 'aprobado' ? 'Aprobados' : f === 'rechazado' ? 'Rechazados' : 'Suspendidos' }}
+                <span class="adm-pill-num">{{ contarConductores(f) }}</span>
+              </button>
+            }
           </div>
         </div>
-        <div class="stats-grid">
-          <div class="stat-card azul">
-            <div class="stat-left"><span class="stat-valor">{{ transportesMes }}</span><span class="stat-label">Transportes este mes</span></div>
-            <div class="stat-icon-wrap azul-light">🏍️</div>
+
+        <section class="adm-card adm-card-tabla">
+          <div class="adm-tabla-scroll">
+            <table class="adm-tabla">
+              <thead>
+                <tr><th>Conductor</th><th>Placa</th><th>Modelo</th><th>Teléfono</th><th>Estado</th><th class="der">Acciones</th></tr>
+              </thead>
+              <tbody>
+                @for (c of conductoresFiltrados(); track c.conductor_id) {
+                  <tr>
+                    <td>
+                      <div class="adm-persona">
+                        <div class="adm-avatar-sm">{{ inicial(c.nombre) }}</div>
+                        <div><span class="adm-lista-nombre">{{ c.nombre }}</span><span class="adm-lista-sub">{{ c.correo }}</span></div>
+                      </div>
+                    </td>
+                    <td><span class="adm-placa">{{ c.placa || '—' }}</span></td>
+                    <td>{{ c.modelo || '—' }}</td>
+                    <td>{{ c.telefono || '—' }}</td>
+                    <td><span class="adm-estado e-{{ c.estado }}">{{ c.estado }}</span></td>
+                    <td class="der">
+                      <div class="adm-acciones">
+                        <button type="button" class="adm-btn-ico" (click)="verDocumentos(c)" aria-label="Ver documentos" title="Ver documentos">
+                          <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'ojo' }" />
+                        </button>
+                        @if (c.estado === 'pendiente') {
+                          <button type="button" class="adm-btn adm-btn-ok" (click)="aprobarConductor(c)" [disabled]="procesandoConductor">
+                            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" /> Aprobar
+                          </button>
+                          <button type="button" class="adm-btn adm-btn-peligro" (click)="rechazarConductor(c)">
+                            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" /> Rechazar
+                          </button>
+                        }
+                        @if (c.estado === 'aprobado') {
+                          <button type="button" class="adm-btn adm-btn-borde" (click)="bloquearConductor(c)" [disabled]="procesandoConductor">
+                            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'bloquear' }" /> Suspender
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="6" class="adm-vacio">{{ cargando ? 'Cargando conductores…' : 'No hay conductores en esta categoría.' }}</td></tr>
+                }
+              </tbody>
+            </table>
           </div>
-          <div class="stat-card verde">
-            <div class="stat-left"><span class="stat-valor">{{ domiciliosMes }}</span><span class="stat-label">Domicilios este mes</span></div>
-            <div class="stat-icon-wrap verde-light">🛵</div>
-          </div>
-          <div class="stat-card naranja">
-            <div class="stat-left"><span class="stat-valor">{{ encomiendaMes }}</span><span class="stat-label">Encomiendas este mes</span></div>
-            <div class="stat-icon-wrap naranja-light">📦</div>
-          </div>
-          <div class="stat-card morado">
-            <div class="stat-left"><span class="stat-valor">{{ calificacionPromedio }}</span><span class="stat-label">Calificación promedio</span></div>
-            <div class="stat-icon-wrap morado-light">⭐</div>
-          </div>
+        </section>
+      }
+
+      <!-- ══════════ USUARIOS ══════════ -->
+      @if (seccionActiva === 'usuarios') {
+        <div class="adm-barra-herr">
+          <label class="adm-buscar">
+            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'buscar' }" />
+            <span class="adm-sr">Buscar usuarios</span>
+            <input type="search" [(ngModel)]="busquedaUsuarios" placeholder="Buscar por nombre, correo o teléfono">
+          </label>
+          <span class="adm-contador">{{ usuariosFiltrados().length }} de {{ totalUsuarios }}</span>
         </div>
-        <div class="card">
-          <div class="card-header"><h3>📊 Distribución por tipo de servicio</h3></div>
-          <div class="reporte-barra">
-            <div class="barra-item">
-              <span class="barra-label">🏍️ Transporte</span>
-              <div class="barra-track"><div class="barra-fill azul" [style.width]="porcentajeTransporte + '%'"></div></div>
-              <span class="barra-valor">{{ porcentajeTransporte }}%</span>
-            </div>
-            <div class="barra-item">
-              <span class="barra-label">🛵 Domicilios</span>
-              <div class="barra-track"><div class="barra-fill verde" [style.width]="porcentajeDomicilio + '%'"></div></div>
-              <span class="barra-valor">{{ porcentajeDomicilio }}%</span>
-            </div>
-            <div class="barra-item">
-              <span class="barra-label">📦 Encomiendas</span>
-              <div class="barra-track"><div class="barra-fill naranja" [style.width]="porcentajeEncomienda + '%'"></div></div>
-              <span class="barra-valor">{{ porcentajeEncomienda }}%</span>
-            </div>
+
+        <section class="adm-card adm-card-tabla">
+          @if (errorUsuarios) { <p class="adm-error" role="alert">{{ errorUsuarios }}</p> }
+          <div class="adm-tabla-scroll">
+            <table class="adm-tabla">
+              <thead>
+                <tr><th>Usuario</th><th>Teléfono</th><th>Rol</th><th>Estado</th><th class="der">Acciones</th></tr>
+              </thead>
+              <tbody>
+                @for (u of usuariosFiltrados(); track u.id) {
+                  <tr>
+                    <td>
+                      <div class="adm-persona">
+                        @if (u.foto) {
+                          <img [src]="u.foto" alt="" class="adm-avatar-sm">
+                        } @else {
+                          <div class="adm-avatar-sm">{{ inicial(u.nombre) }}</div>
+                        }
+                        <div><span class="adm-lista-nombre">{{ u.nombre }}</span><span class="adm-lista-sub">{{ u.correo || 'Sin correo' }}</span></div>
+                      </div>
+                    </td>
+                    <td>{{ u.telefono || '—' }}</td>
+                    <td><span class="adm-rol {{ rolClase(u.rol) }}">{{ rolEtiquetaDe(u.rol) }}</span></td>
+                    <td><span class="adm-estado e-{{ u.estado }}">{{ u.estado || '—' }}</span></td>
+                    <td class="der">
+                      <div class="adm-acciones">
+                        @if (u.estado === 'activo' && u.rol !== 'admin') {
+                          <button type="button" class="adm-btn adm-btn-borde" (click)="bloquearUsuario(u)">
+                            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'bloquear' }" /> Bloquear
+                          </button>
+                        }
+                        @if (u.estado !== 'activo') {
+                          <button type="button" class="adm-btn adm-btn-ok" (click)="activarUsuario(u)">
+                            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" /> Activar
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="adm-vacio">{{ cargandoUsuarios ? 'Cargando usuarios…' : 'No hay usuarios que coincidan con la búsqueda.' }}</td></tr>
+                }
+              </tbody>
+            </table>
           </div>
+        </section>
+      }
+
+      <!-- ══════════ SERVICIOS ══════════ -->
+      @if (seccionActiva === 'servicios') {
+        <div class="adm-barra-herr">
+          <label class="adm-buscar">
+            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'buscar' }" />
+            <span class="adm-sr">Buscar servicios</span>
+            <input type="search" [(ngModel)]="busquedaServicios" (ngModelChange)="limiteServicios = 20" placeholder="Buscar por cliente, conductor o destino">
+          </label>
+          <label class="adm-select">
+            <span class="adm-sr">Tipo de servicio</span>
+            <select [(ngModel)]="filtroTipoServicio" (ngModelChange)="limiteServicios = 20">
+              <option value="todos">Todos los tipos</option>
+              <option value="TRANSPORTE">Transporte</option>
+              <option value="DOMICILIO">Domicilio</option>
+              <option value="ENCOMIENDA">Encomienda</option>
+            </select>
+          </label>
+          <label class="adm-select">
+            <span class="adm-sr">Estado</span>
+            <select [(ngModel)]="filtroEstadoServicio" (ngModelChange)="limiteServicios = 20">
+              <option value="todos">Todos los estados</option>
+              @for (e of estadosDisponibles; track e) { <option [value]="e">{{ etiquetaEstado(e) }}</option> }
+            </select>
+          </label>
+          <span class="adm-contador">{{ serviciosFiltrados().length }} de {{ servicios.length }}</span>
         </div>
-      </div>
+
+        <section class="adm-card adm-card-tabla">
+          @if (errorServicios) { <p class="adm-error" role="alert">{{ errorServicios }}</p> }
+          <div class="adm-tabla-scroll">
+            <table class="adm-tabla">
+              <thead>
+                <tr><th>Servicio</th><th>Fecha</th><th>Cliente</th><th>Conductor</th><th>Destino</th><th class="der">Tarifa</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                @for (s of serviciosFiltrados() | slice:0:limiteServicios; track $index) {
+                  <tr>
+                    <td>
+                      <div class="adm-persona adm-persona-corta">
+                        <span class="adm-tipo-ico t-{{ s.tipo?.toLowerCase() }}"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: s.tipo?.toLowerCase() }" /></span>
+                        <span class="adm-lista-nombre">{{ s.tipoEtiqueta }}</span>
+                      </div>
+                    </td>
+                    <td class="adm-nowrap">{{ s.fecha ? (s.fecha | date:'d MMM yy · h:mm a') : '—' }}</td>
+                    <td class="adm-nowrap">{{ s.cliente }}</td>
+                    <td class="adm-nowrap" [class.adm-tenue]="s.conductor === 'Sin asignar'">{{ s.conductor }}</td>
+                    <td class="adm-truncar" [title]="s.destino">{{ s.destino }}</td>
+                    <td class="der adm-nowrap">${{ s.precio | number:'1.0-0' }}</td>
+                    <td><span class="adm-estado e-{{ s.estado }}">{{ s.estadoEtiqueta }}</span></td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="7" class="adm-vacio">{{ cargandoServicios ? 'Cargando servicios…' : 'No hay servicios con esos filtros.' }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          @if (serviciosFiltrados().length > limiteServicios) {
+            <div class="adm-mas">
+              <span>Mostrando {{ limiteServicios }} de {{ serviciosFiltrados().length }}</span>
+              <button type="button" class="adm-btn adm-btn-borde" (click)="limiteServicios = limiteServicios + 20">Ver 20 más</button>
+            </div>
+          }
+        </section>
+      }
+
+      <!-- ══════════ REPORTES ══════════ -->
+      @if (seccionActiva === 'reportes') {
+        <section class="adm-kpis" aria-label="Indicadores del mes">
+          <article class="adm-kpi">
+            <div class="adm-kpi-ico k-turquesa"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'transporte' }" /></div>
+            <span class="adm-kpi-label">Transportes este mes</span>
+            <span class="adm-kpi-valor">{{ transportesMes }}</span>
+            <span class="adm-kpi-pie">{{ porcentajeTransporte }}% de las solicitudes</span>
+          </article>
+          <article class="adm-kpi">
+            <div class="adm-kpi-ico k-naranja"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'domicilio' }" /></div>
+            <span class="adm-kpi-label">Domicilios este mes</span>
+            <span class="adm-kpi-valor">{{ domiciliosMes }}</span>
+            <span class="adm-kpi-pie">{{ porcentajeDomicilio }}% de las solicitudes</span>
+          </article>
+          <article class="adm-kpi">
+            <div class="adm-kpi-ico k-azul"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'encomienda' }" /></div>
+            <span class="adm-kpi-label">Encomiendas este mes</span>
+            <span class="adm-kpi-valor">{{ encomiendaMes }}</span>
+            <span class="adm-kpi-pie">{{ porcentajeEncomienda }}% de las solicitudes</span>
+          </article>
+          <article class="adm-kpi adm-kpi-proximo">
+            <div class="adm-kpi-ico k-gris"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'estrella' }" /></div>
+            <span class="adm-kpi-label">Calificación promedio</span>
+            <span class="adm-kpi-valor adm-kpi-na">—</span>
+            <span class="adm-kpi-pie">Disponible cuando se implementen las calificaciones</span>
+          </article>
+        </section>
+
+        <div class="adm-grid-2">
+          <section class="adm-card">
+            <div class="adm-card-head"><div><h2>Servicios por estado</h2><p class="adm-card-sub">Todos los servicios registrados ({{ servicios.length }})</p></div></div>
+            @if (serviciosPorEstado.length === 0) {
+              <p class="adm-vacio">Todavía no hay servicios registrados.</p>
+            } @else {
+              <div class="adm-dist">
+                @for (e of serviciosPorEstado; track e.clave) {
+                  <div class="adm-dist-fila">
+                    <span class="adm-estado e-{{ e.clave.toLowerCase() }} adm-dist-estado">{{ e.etiqueta }}</span>
+                    <div class="adm-dist-pista"><div class="adm-dist-barra b-{{ e.clave.toLowerCase() }}" [style.width.%]="e.porcentaje"></div></div>
+                    <span class="adm-dist-num">{{ e.total }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="adm-card">
+            <div class="adm-card-head"><div><h2>Conductores</h2><p class="adm-card-sub">Estado de validación de todos los conductores ({{ conductores.length }})</p></div></div>
+            <div class="adm-dist">
+              @for (f of ['aprobado', 'pendiente', 'rechazado', 'suspendido']; track f) {
+                <div class="adm-dist-fila">
+                  <span class="adm-estado e-{{ f }} adm-dist-estado">{{ f }}</span>
+                  <div class="adm-dist-pista"><div class="adm-dist-barra b-{{ f }}" [style.width.%]="conductores.length ? (contarConductores(f) / conductores.length) * 100 : 0"></div></div>
+                  <span class="adm-dist-num">{{ contarConductores(f) }}</span>
+                </div>
+              }
+            </div>
+          </section>
+        </div>
+      }
+
+      <!-- ══════════ DATOS BÁSICOS ══════════ -->
+      @if (seccionActiva === 'catalogos') {
+        <app-admin-catalogos [soloLectura]="esSoporte" />
+      }
 
     </main>
   </div>
 
-  <!-- MODAL: VER DOCUMENTOS Y DATOS DEL CONDUCTOR -->
-  <div class="modal-docs-overlay" *ngIf="mostrarModalDocumentos" (click)="cerrarModalDocumentos()">
-    <div class="modal-docs-box" (click)="$event.stopPropagation()">
+  <!-- ═══════════════ MODAL: DETALLE Y DOCUMENTOS DEL CONDUCTOR ═══════════════ -->
+  @if (mostrarModalDocumentos) {
+    <div class="adm-modal-fondo" (click)="cerrarModalDocumentos()">
+      <div class="adm-modal adm-modal-grande" role="dialog" aria-modal="true" aria-labelledby="titulo-detalle" (click)="$event.stopPropagation()">
+        <div class="adm-modal-head">
+          <h2 id="titulo-detalle">Detalle del conductor</h2>
+          <button type="button" class="adm-btn-ico" (click)="cerrarModalDocumentos()" aria-label="Cerrar">
+            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" />
+          </button>
+        </div>
 
-      <div class="modal-docs-header">
-        <h2>Detalle del conductor</h2>
-        <button class="btn-cerrar-modal" (click)="cerrarModalDocumentos()">✕</button>
-      </div>
+        @if (cargandoDetalle) {
+          <p class="adm-vacio">Cargando información…</p>
+        }
 
-      <p *ngIf="cargandoDetalle" style="padding:30px;color:#64748b;text-align:center">Cargando información...</p>
+        @if (!cargandoDetalle && conductorDetalle) {
+          <div class="adm-modal-cuerpo">
+            <div class="adm-detalle-top">
+              <div class="adm-avatar-lg">{{ inicial(conductorDetalle.nombre) }}</div>
+              <div>
+                <div class="adm-detalle-nombre">{{ conductorDetalle.nombre }}</div>
+                <span class="adm-estado e-{{ conductorDetalle.estado }}">{{ conductorDetalle.estado }}</span>
+              </div>
+            </div>
 
-      <div *ngIf="!cargandoDetalle && conductorDetalle">
+            <div class="adm-datos">
+              <div><span class="adm-dato-label">Correo</span><span class="adm-dato">{{ conductorDetalle.correo || '—' }}</span></div>
+              <div><span class="adm-dato-label">Teléfono</span><span class="adm-dato">{{ conductorDetalle.telefono || '—' }}</span></div>
+              <div><span class="adm-dato-label">Placa</span><span class="adm-dato"><span class="adm-placa">{{ conductorDetalle.placa || '—' }}</span></span></div>
+              <div><span class="adm-dato-label">Modelo</span><span class="adm-dato">{{ conductorDetalle.modelo || '—' }}</span></div>
+            </div>
 
-        <!-- DATOS PERSONALES -->
-        <div class="modal-docs-seccion">
-          <h3>📋 Datos personales</h3>
-          <div class="modal-docs-grid">
-            <div><span class="dato-label">Nombre</span><span class="dato-valor">{{ conductorDetalle.nombre }}</span></div>
-            <div><span class="dato-label">Correo</span><span class="dato-valor">{{ conductorDetalle.correo }}</span></div>
-            <div><span class="dato-label">Teléfono</span><span class="dato-valor">{{ conductorDetalle.telefono || '—' }}</span></div>
-            <div>
-              <span class="dato-label">Estado actual</span>
-              <span class="estado-badge {{ conductorDetalle.estado }}">{{ conductorDetalle.estado }}</span>
+            @if (conductorDetalle.estado === 'rechazado' && conductorDetalle.motivo_rechazo) {
+              <div class="adm-motivo">
+                <span class="adm-dato-label">Motivo de rechazo</span>
+                <p>{{ conductorDetalle.motivo_rechazo }}</p>
+              </div>
+            }
+
+            <h3 class="adm-modal-sub">Documentos enviados</h3>
+            <div class="adm-docs">
+              @for (doc of [{ c: 'licencia', t: 'Licencia de conducción' }, { c: 'soat', t: 'SOAT' }, { c: 'tarjeta_propiedad', t: 'Tarjeta de propiedad' }, { c: 'cedula', t: 'Cédula' }]; track doc.c) {
+                @if (conductorDetalle[doc.c]) {
+                  <div class="adm-doc">
+                    <div class="adm-doc-preview">
+                      @if (esImagen(doc.c) && docUrls[doc.c]) {
+                        <img [src]="docUrls[doc.c]" [alt]="doc.t">
+                      } @else {
+                        <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'documento' }" />
+                      }
+                    </div>
+                    <span class="adm-doc-titulo">{{ doc.t }}</span>
+                    <button type="button" class="adm-btn adm-btn-suave" (click)="abrirDocumento(doc.c)" [disabled]="!docUrls[doc.c]">Abrir completo</button>
+                  </div>
+                }
+              }
+              @if (!conductorDetalle.licencia && !conductorDetalle.soat && !conductorDetalle.tarjeta_propiedad && !conductorDetalle.cedula) {
+                <p class="adm-vacio adm-docs-vacio">Este conductor no tiene documentos guardados en el sistema (posiblemente se registró antes de la actualización de almacenamiento de archivos).</p>
+              }
             </div>
           </div>
-        </div>
 
-        <!-- VEHICULO -->
-        <div class="modal-docs-seccion">
-          <h3>🏍️ Vehículo</h3>
-          <div class="modal-docs-grid">
-            <div><span class="dato-label">Placa</span><span class="dato-valor">{{ conductorDetalle.placa || '—' }}</span></div>
-            <div><span class="dato-label">Modelo</span><span class="dato-valor">{{ conductorDetalle.modelo || '—' }}</span></div>
-          </div>
-        </div>
-
-        <!-- MOTIVO DE RECHAZO -->
-        <div class="modal-docs-seccion" *ngIf="conductorDetalle.estado === 'rechazado' && conductorDetalle.motivo_rechazo">
-          <h3>❌ Motivo de rechazo</h3>
-          <p class="motivo-rechazo-texto">{{ conductorDetalle.motivo_rechazo }}</p>
-        </div>
-
-        <!-- DOCUMENTOS -->
-        <div class="modal-docs-seccion">
-          <h3>📎 Documentos enviados</h3>
-          <div class="documentos-grid">
-
-            <div class="documento-item" *ngIf="conductorDetalle.licencia">
-              <p class="documento-titulo">Licencia de conducción</p>
-              <img *ngIf="esImagen('licencia') && docUrls['licencia']" [src]="docUrls['licencia']" class="documento-preview" alt="Documento">
-              <button type="button" (click)="abrirDocumento('licencia')" [disabled]="!docUrls['licencia']" class="btn-ver-doc">🔍 Ver documento completo</button>
+          @if (conductorDetalle.estado === 'pendiente') {
+            <div class="adm-modal-pie">
+              <button type="button" class="adm-btn adm-btn-peligro" (click)="rechazarDesdeModal(conductorDetalle)">
+                <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" /> Rechazar
+              </button>
+              <button type="button" class="adm-btn adm-btn-ok" (click)="aprobarDesdeModal(conductorDetalle)" [disabled]="procesandoConductor">
+                <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" /> Aprobar conductor
+              </button>
             </div>
-
-            <div class="documento-item" *ngIf="conductorDetalle.soat">
-              <p class="documento-titulo">SOAT</p>
-              <img *ngIf="esImagen('soat') && docUrls['soat']" [src]="docUrls['soat']" class="documento-preview" alt="Documento">
-              <button type="button" (click)="abrirDocumento('soat')" [disabled]="!docUrls['soat']" class="btn-ver-doc">🔍 Ver documento completo</button>
-            </div>
-
-            <div class="documento-item" *ngIf="conductorDetalle.tarjeta_propiedad">
-              <p class="documento-titulo">Tarjeta de propiedad</p>
-              <img *ngIf="esImagen('tarjeta_propiedad') && docUrls['tarjeta_propiedad']" [src]="docUrls['tarjeta_propiedad']" class="documento-preview" alt="Documento">
-              <button type="button" (click)="abrirDocumento('tarjeta_propiedad')" [disabled]="!docUrls['tarjeta_propiedad']" class="btn-ver-doc">🔍 Ver documento completo</button>
-            </div>
-
-            <div class="documento-item" *ngIf="conductorDetalle.cedula">
-              <p class="documento-titulo">Cédula</p>
-              <img *ngIf="esImagen('cedula') && docUrls['cedula']" [src]="docUrls['cedula']" class="documento-preview" alt="Documento">
-              <button type="button" (click)="abrirDocumento('cedula')" [disabled]="!docUrls['cedula']" class="btn-ver-doc">🔍 Ver documento completo</button>
-            </div>
-
-            <p *ngIf="!conductorDetalle.licencia && !conductorDetalle.soat && !conductorDetalle.tarjeta_propiedad && !conductorDetalle.cedula"
-               style="color:#94a3b8;text-align:center;padding:20px;grid-column:1/-1">
-              ⚠️ Este conductor no tiene documentos guardados en el sistema (posiblemente se registró antes de la actualización de almacenamiento de archivos).
-            </p>
-          </div>
-        </div>
-
-        <!-- ACCIONES -->
-        <div class="modal-docs-acciones" *ngIf="conductorDetalle.estado === 'pendiente'">
-          <button class="btn-aprobar" (click)="aprobarDesdeModal(conductorDetalle)">✓ Aprobar conductor</button>
-          <button class="btn-rechazar" (click)="rechazarDesdeModal(conductorDetalle)">✗ Rechazar conductor</button>
-        </div>
-
+          }
+        }
       </div>
     </div>
-  </div>
+  }
+
+  <!-- ═══════════════ MODAL: MOTIVO DE RECHAZO (antes no existía) ═══════════════ -->
+  @if (mostrarModal) {
+    <div class="adm-modal-fondo" (click)="cerrarModal()">
+      <div class="adm-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-rechazo" (click)="$event.stopPropagation()">
+        <div class="adm-modal-head">
+          <h2 id="titulo-rechazo">Rechazar a {{ conductorSeleccionado?.nombre }}</h2>
+          <button type="button" class="adm-btn-ico" (click)="cerrarModal()" aria-label="Cerrar">
+            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" />
+          </button>
+        </div>
+        <div class="adm-modal-cuerpo">
+          <label class="adm-dato-label" for="motivo-rechazo">Motivo del rechazo</label>
+          <textarea id="motivo-rechazo" class="adm-textarea" rows="4" [(ngModel)]="motivoRechazo"
+                    placeholder="Ej.: la licencia está vencida o la foto del SOAT no se lee."></textarea>
+          <p class="adm-ayuda">El conductor verá este motivo para corregir y volver a enviar sus documentos.</p>
+        </div>
+        <div class="adm-modal-pie">
+          <button type="button" class="adm-btn adm-btn-borde" (click)="cerrarModal()">Cancelar</button>
+          <button type="button" class="adm-btn adm-btn-peligro-solido" (click)="confirmarRechazo()"
+                  [disabled]="!motivoRechazo.trim() || procesandoConductor">Rechazar conductor</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

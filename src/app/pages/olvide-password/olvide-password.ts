@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { UsuarioService } from '../../Base_de_datos/usuario.service';
+import { AuthLayoutComponent } from '../../shared/auth-layout/auth-layout';
 
 @Component({
   selector: 'app-olvide-password',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, AuthLayoutComponent],
   templateUrl: './olvide-password.html',
   styleUrl: './olvide-password.css'
 })

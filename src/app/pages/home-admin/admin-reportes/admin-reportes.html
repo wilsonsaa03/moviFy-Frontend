@@ -1,0 +1,158 @@
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Quejas y reportes</h2>
+    <p class="page-sub">Lo que los pasajeros y conductores reportan desde la app</p>
+  </div>
+  <button class="btn-recargar" (click)="cargar()" [disabled]="cargando">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.6" /><path d="M20 5v6h-6" /></svg>
+    Actualizar
+  </button>
+</div>
+
+<!-- Resumen -->
+<div class="resumen">
+  <div class="res-card">
+    <div class="res-txt">
+      <span class="res-label">{{ filtro === 'abiertos' ? 'Reportes abiertos' : 'Reportes en total' }}</span>
+      <span class="res-valor">{{ reportes.length }}</span>
+      <span class="res-sub">Recibidos y en proceso</span>
+    </div>
+    <span class="res-ico teal" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M5 21V4" /><path d="M5 4h11l-2 4 2 4H5" /></svg>
+    </span>
+  </div>
+  <div class="res-card">
+    <div class="res-txt">
+      <span class="res-label">Urgentes</span>
+      <span class="res-valor" [class.rojo]="totalUrgentes > 0">{{ totalUrgentes }}</span>
+      <span class="res-sub">Incidentes de seguridad</span>
+    </div>
+    <span class="res-ico rojo" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z" /><path d="M12 8v5" /><path d="M12 16.5h.01" /></svg>
+    </span>
+  </div>
+  <div class="res-card">
+    <div class="res-txt">
+      <span class="res-label">Fuera de plazo</span>
+      <span class="res-valor" [class.naranja]="totalVencidos > 0">{{ totalVencidos }}</span>
+      <span class="res-sub">Más de 21 días sin respuesta</span>
+    </div>
+    <span class="res-ico naranja" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+    </span>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="filtros">
+  <button class="chip" [class.activo]="filtro === 'abiertos'" (click)="cambiarFiltro('abiertos')">Abiertos</button>
+  <button class="chip" [class.activo]="filtro === 'todos'" (click)="cambiarFiltro('todos')">Todos</button>
+  <label class="check"><input type="checkbox" [(ngModel)]="soloUrgentes" /> Solo urgentes</label>
+</div>
+
+<div class="card">
+  <div class="tabla-header">
+    <span>Prioridad</span><span>Tipo</span><span>Reporta</span><span>Reportado</span>
+    <span>Recibido</span><span>Plazo</span><span>Estado</span>
+  </div>
+
+  <p *ngIf="cargando" class="vacio">Cargando reportes…</p>
+  <p *ngIf="error" class="vacio error">{{ error }}</p>
+  <p *ngIf="!cargando && !error && visibles.length === 0" class="vacio">No hay reportes {{ filtro === 'abiertos' ? 'pendientes' : '' }}</p>
+
+  <button class="tabla-fila" *ngFor="let r of visibles" (click)="abrir(r)" [class.vencida]="r.vencida">
+    <span><span class="prio {{ r.prioridad }}">{{ r.prioridad }}</span></span>
+    <span>{{ tipoTexto(r.tipo) }}</span>
+    <span class="persona">
+      <b>{{ r.reporta_nombre }}</b>
+      <small>{{ rolTexto(r.reporta_rol) }}</small>
+    </span>
+    <span class="persona">
+      <b>{{ r.reportado_nombre || '—' }}</b>
+      <small *ngIf="r.reportado_estado === 'bloqueado'" class="txt-rojo">Bloqueado</small>
+    </span>
+    <span>{{ fecha(r.creado_en) }}</span>
+    <span [class.txt-rojo]="r.vencida">{{ plazo(r) }}</span>
+    <span><span class="estado" [style.background]="r.estado_color + '22'" [style.color]="r.estado_color">{{ r.estado_nombre }}</span></span>
+  </button>
+</div>
+
+<!-- Detalle -->
+<div class="overlay" *ngIf="seleccionado as r" (click)="cerrar()">
+  <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" [attr.aria-label]="'Reporte ' + r.id">
+    <div class="modal-header">
+      <div>
+        <p class="modal-kicker">Reporte #{{ r.id }} · {{ tipoTexto(r.tipo) }}</p>
+        <h3>{{ r.asunto }}</h3>
+      </div>
+      <button class="btn-x" (click)="cerrar()" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="fila-chips">
+        <span class="estado" [style.background]="r.estado_color + '22'" [style.color]="r.estado_color">{{ r.estado_nombre }}</span>
+        <label class="prio-select">
+          Prioridad
+          <select [ngModel]="r.prioridad" (ngModelChange)="cambiarPrioridad(r, $event)" [disabled]="guardando || !estaAbierto(r)">
+            <option value="urgente">Urgente</option>
+            <option value="alta">Alta</option>
+            <option value="media">Media</option>
+            <option value="baja">Baja</option>
+          </select>
+        </label>
+        <span class="plazo" [class.txt-rojo]="r.vencida">Plazo: {{ plazo(r) }}</span>
+      </div>
+
+      <div class="bloque">
+        <h4>Lo que contó el usuario</h4>
+        <p class="descripcion">{{ r.descripcion }}</p>
+      </div>
+
+      <div class="dos-col">
+        <div class="bloque">
+          <h4>Reporta</h4>
+          <p><b>{{ r.reporta_nombre }}</b> <small>{{ rolTexto(r.reporta_rol) }}</small></p>
+          <p class="muted">{{ r.reporta_telefono || 'Sin teléfono' }}</p>
+        </div>
+        <div class="bloque">
+          <h4>Reportado</h4>
+          <ng-container *ngIf="r.reportado_id; else sinReportado">
+            <p><b>{{ r.reportado_nombre }}</b> <small *ngIf="r.reportado_estado === 'bloqueado'" class="txt-rojo">Bloqueado</small></p>
+            <p class="muted">{{ r.reportado_telefono || 'Sin teléfono' }}</p>
+          </ng-container>
+          <ng-template #sinReportado><p class="muted">No está ligado a un viaje con otra persona.</p></ng-template>
+        </div>
+      </div>
+
+      <div class="bloque" *ngIf="r.servicio_id">
+        <h4>Viaje #{{ r.servicio_id }} · {{ r.tipo_servicio }}</h4>
+        <p>{{ r.origen_direccion }} → {{ r.destino_direccion }}</p>
+        <p class="muted">{{ fecha(r.servicio_fecha) }}</p>
+      </div>
+
+      <div class="bloque" *ngIf="r.asignado_nombre">
+        <h4>Atiende</h4>
+        <p>{{ r.asignado_nombre }}</p>
+      </div>
+
+      <div class="bloque">
+        <h4>Respuesta para el usuario</h4>
+        <textarea [(ngModel)]="respuesta" rows="4" maxlength="2000" [disabled]="!estaAbierto(r) || guardando"
+                  placeholder="Ej.: Revisamos tu viaje y hablamos con el conductor. Gracias por avisarnos."></textarea>
+        <small class="muted">El usuario la verá en la app y recibirá una notificación.</small>
+      </div>
+
+      <p class="error" *ngIf="errorModal">{{ errorModal }}</p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-peligro" *ngIf="r.reportado_id && r.reportado_estado !== 'bloqueado'"
+              (click)="bloquearReportado(r)" [disabled]="guardando">Bloquear reportado</button>
+      <span class="espacio"></span>
+      <button class="btn-sec" *ngIf="r.estado === 'abierto'" (click)="tomar(r)" [disabled]="guardando">Tomar caso</button>
+      <button class="btn-pri" *ngIf="estaAbierto(r)" (click)="responder(r)" [disabled]="guardando">
+        {{ guardando ? 'Guardando…' : 'Responder y resolver' }}
+      </button>
+    </div>
+  </div>
+</div>

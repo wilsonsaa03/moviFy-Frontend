@@ -1,106 +1,85 @@
-<div class="login-wrapper">
+<app-auth-layout
+  volverRuta="/"
+  volverTexto="Volver al inicio"
+  tituloInicio="Qué bueno verte"
+  tituloResaltado="de nuevo"
+  texto="Entra para pedir y seguir tus servicios, o para gestionar la plataforma si haces parte del equipo de MoviFY.">
 
-  <div class="login-left">
-    <img src="/assets/fondologin.jpeg" class="fondo-img">
+  <div class="fm-marca">
+    <img src="assets/brand/movify-isotipo.svg" alt="" width="34" height="42">
+    <span class="fm-wordmark">Movi<span>FY</span></span>
   </div>
 
-  <div class="login-right">
+  <h1 class="fm-h1">Inicia sesión</h1>
+  <p class="fm-sub">Usa tu correo y contraseña, o entra con Google.</p>
 
-    <div class="login-card">
+  <form (ngSubmit)="onLogin()" novalidate>
 
-      <img src="/assets/brand/movify-logo.svg" class="logo-img" alt="MoviFY">
-
-      <h1>Inicia sesión</h1>
-
-      <form (ngSubmit)="onLogin()">
-
-        <!-- CORREO -->
-        <div class="input-group">
-          <span class="icon">✉️</span>
-
-          <input
-            type="email"
-            name="correo"
-            [(ngModel)]="usuario.correo"
-            placeholder="Correo electrónico"
-            required
-          >
-        </div>
-
-        <!-- ERROR CORREO -->
-        <p class="error-msg" *ngIf="errores.correo">
-          {{ errores.correo }}
-        </p>
-
-        <!-- PASSWORD -->
-        <div class="input-group">
-
-          <span class="icon">🔒</span>
-
-          <input
-            [type]="mostrarPassword ? 'text' : 'password'"
-            name="password"
-            [(ngModel)]="usuario.password"
-            placeholder="Contraseña"
-            required
-          >
-
-          <span
-            class="toggle"
-            (click)="mostrarPassword = !mostrarPassword"
-          >
-            {{ mostrarPassword ? '🙈' : '👁️' }}
-          </span>
-
-        </div>
-
-        <!-- ERROR PASSWORD -->
-        <p class="error-msg" *ngIf="errores.password">
-          {{ errores.password }}
-        </p>
-
-        <!-- OLVIDAR -->
-        <p class="olvidaste" routerLink="/olvide-password">
-          ¿Olvidaste tu contraseña?
-        </p>
-
-        <!-- ERROR GENERAL -->
-        <p class="error-msg" *ngIf="error">
-          {{ error }}
-        </p>
-
-        <!-- LOGIN NORMAL -->
-        <button type="submit" class="btn-login">
-          Iniciar sesión
-        </button>
-
-      </form>
-
-      <!-- SEPARADOR -->
-      <div class="separador">
-        <span>o continua con</span>
-      </div>
-
-      <!-- LOGIN SOCIAL -->
-      <div class="social-buttons">
-
-        <!-- GOOGLE -->
-        <div id="google-btn"></div>
-
-
-      </div>
-
-      <!-- REGISTRO -->
-      <p class="registrate">
-        ¿No tienes cuenta?
-
-        <span routerLink="/registro">
-          Regístrate
-        </span>
-      </p>
-
+    <!-- CORREO -->
+    <label class="fm-label" for="lg-correo">Correo electrónico</label>
+    <div class="fm-campo" [class.con-error]="errores.correo">
+      <svg class="fm-campo-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>
+      <input id="lg-correo" type="email" name="correo" autocomplete="email"
+             [(ngModel)]="usuario.correo" placeholder="tu@correo.com"
+             [attr.aria-invalid]="errores.correo ? true : null" aria-describedby="lg-error-correo" required>
     </div>
+    @if (errores.correo) {
+      <p id="lg-error-correo" class="fm-error-campo" role="alert">{{ errores.correo }}</p>
+    }
 
+    <!-- CONTRASEÑA -->
+    <label class="fm-label" for="lg-password">Contraseña</label>
+    <div class="fm-campo" [class.con-error]="errores.password">
+      <svg class="fm-campo-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <input id="lg-password" [type]="mostrarPassword ? 'text' : 'password'" name="password" autocomplete="current-password"
+             [(ngModel)]="usuario.password" placeholder="Tu contraseña"
+             [attr.aria-invalid]="errores.password ? true : null" aria-describedby="lg-error-password" required>
+      <button type="button" class="fm-ojo" (click)="mostrarPassword = !mostrarPassword"
+              [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'" [attr.aria-pressed]="mostrarPassword">
+        @if (mostrarPassword) {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.9 8.4 2.5 12 2.5 12S6 19 12 19a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        }
+      </button>
+    </div>
+    @if (errores.password) {
+      <p id="lg-error-password" class="fm-error-campo" role="alert">{{ errores.password }}</p>
+    }
+
+    <a routerLink="/olvide-password" class="fm-enlace">¿Olvidaste tu contraseña?</a>
+
+    @if (error) {
+      <div class="fm-alerta fm-alerta-error" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span>{{ error }}</span>
+      </div>
+    }
+
+    <button type="submit" class="fm-btn" [disabled]="cargando">
+      @if (cargando) {
+        <span class="fm-spinner" aria-hidden="true"></span>
+        Entrando…
+      } @else {
+        Iniciar sesión
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      }
+    </button>
+  </form>
+
+  <div class="fm-separador"><span>o continúa con</span></div>
+
+  <!-- GOOGLE: el botón lo dibuja Google dentro de este div -->
+  <div class="lg-google">
+    <div id="google-btn"></div>
   </div>
 
-</div>
+  <p class="fm-pie">¿No tienes cuenta? <a routerLink="/registro">Regístrate</a></p>
+
+  <!-- Los conductores trabajan en la app móvil: el backend los rechaza en la web (SOLO_APP_MOVIL) -->
+  <div class="fm-aviso">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>
+    <span>¿Eres conductor? Ingresa desde la <strong>app móvil de MoviFY</strong>.</span>
+  </div>
+
+</app-auth-layout>

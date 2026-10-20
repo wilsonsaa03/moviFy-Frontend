@@ -29,6 +29,10 @@ export class ApiService {
     return firstValueFrom(this.http.patch<T>(this.url(ruta), cuerpo));
   }
 
+  delete<T = any>(ruta: string): Promise<T> {
+    return firstValueFrom(this.http.delete<T>(this.url(ruta)));
+  }
+
   /** Para archivos protegidos (documentos del conductor, CSV de ganancias). */
   blob(ruta: string): Promise<Blob> {
     return firstValueFrom(this.http.get(this.url(ruta), { responseType: 'blob' }));

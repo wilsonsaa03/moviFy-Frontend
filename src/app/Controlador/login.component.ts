@@ -7,13 +7,14 @@ import { UsuarioService } from '../Base_de_datos/usuario.service';
 import { Usuario } from '../Modelo/usuario.model';
 import { SesionService } from '../core/sesion.service';
 import { ApiService } from '../core/api.service';
+import { AuthLayoutComponent } from '../shared/auth-layout/auth-layout';
 
 declare const google: any;
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, AuthLayoutComponent],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
@@ -23,6 +24,8 @@ export class LoginComponent implements OnInit {
   error = '';
   mostrarPassword = false;
   errores = { correo: '', password: '' };
+  /** Evita enviar el formulario dos veces mientras el servidor responde. */
+  cargando = false;
 
   constructor(
     private usuarioService: UsuarioService,
@@ -89,12 +92,14 @@ export class LoginComponent implements OnInit {
   }
 
   onLogin(): void {
-    if (!this.validarCampos()) return;
+    if (this.cargando || !this.validarCampos()) return;
     this.error = '';
+    this.cargando = true;
     this.usuarioService.login({ correo: this.usuario.correo.trim(), password: this.usuario.password })
       .subscribe({
         next: (res: any) => this.handleLoginExitoso(res),
         error: (err: any) => {
+          this.cargando = false;
           if (err.status === 0) {
             this.error = 'No hay conexión con el servidor. Intenta de nuevo.';
           } else {
@@ -106,6 +111,7 @@ export class LoginComponent implements OnInit {
   }
 
   private handleLoginExitoso(res: any): void {
+    this.cargando = false;
     this.sesion.guardar(res, this.usuario.correo);
     this.router.navigate([this.sesion.rutaInicio()]);
   }

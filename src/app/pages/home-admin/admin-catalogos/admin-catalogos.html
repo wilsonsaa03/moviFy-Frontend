@@ -1,0 +1,203 @@
+<!-- Íconos de esta sección (trazo de 24px que toma el color del texto) -->
+<ng-template #ico let-n>
+  <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    @switch (n) {
+      @case ('mas') { <path d="M12 5v14M5 12h14"/> }
+      @case ('editar') { <path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/> }
+      @case ('eliminar') { <path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/> }
+      @case ('x') { <path d="M18 6 6 18M6 6l12 12"/> }
+    }
+  </svg>
+</ng-template>
+
+<div class="cat">
+  <div class="adm-barra-herr">
+    <div class="adm-pills" role="tablist" aria-label="Datos básicos">
+      <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'motivos'"
+              [attr.aria-selected]="pestana === 'motivos'" (click)="pestana = 'motivos'">
+        Motivos de cancelación <span class="adm-pill-num">{{ motivos.length }}</span>
+      </button>
+      <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'documentos'"
+              [attr.aria-selected]="pestana === 'documentos'" (click)="pestana = 'documentos'">
+        Tipos de documento <span class="adm-pill-num">{{ tipos.length }}</span>
+      </button>
+    </div>
+    @if (!soloLectura) {
+      <button type="button" class="adm-btn adm-btn-primario cat-nuevo" (click)="nuevo()">
+        <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'mas' }" />
+        {{ pestana === 'motivos' ? 'Nuevo motivo' : 'Nuevo tipo de documento' }}
+      </button>
+    }
+  </div>
+
+  <section class="adm-card adm-card-tabla">
+    @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+    <div class="adm-tabla-scroll">
+
+      <!-- ══════════ MOTIVOS DE CANCELACIÓN ══════════ -->
+      @if (pestana === 'motivos') {
+        <table class="adm-tabla">
+          <thead>
+            <tr><th>#</th><th>Descripción</th><th>Quién cancela</th><th>Estado</th>@if (!soloLectura) { <th class="der">Acciones</th> }</tr>
+          </thead>
+          <tbody>
+            @for (m of motivos; track m.id) {
+              <tr>
+                <td class="adm-tenue-num">{{ m.id }}</td>
+                <td><span class="adm-lista-nombre cat-texto">{{ m.descripcion }}</span></td>
+                <td><span class="adm-rol rol-{{ m.actor }}">{{ actorTexto(m.actor) }}</span></td>
+                <td><span class="adm-estado" [class.e-activo]="m.activo" [class.e-suspendido]="!m.activo">{{ m.activo ? 'activo' : 'inactivo' }}</span></td>
+                @if (!soloLectura) {
+                  <td class="der">
+                    <div class="adm-acciones">
+                      <button type="button" class="adm-btn-ico" (click)="editarMotivo(m)" aria-label="Editar motivo" title="Editar">
+                        <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'editar' }" />
+                      </button>
+                      <button type="button" class="adm-btn-ico cat-borrar" (click)="eliminarMotivo(m)" aria-label="Eliminar motivo" title="Eliminar">
+                        <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'eliminar' }" />
+                      </button>
+                    </div>
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="adm-vacio">{{ cargando ? 'Cargando motivos…' : 'No hay motivos de cancelación.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- ══════════ TIPOS DE DOCUMENTO ══════════ -->
+      @if (pestana === 'documentos') {
+        <table class="adm-tabla">
+          <thead>
+            <tr><th>Documento</th><th>De</th><th>Paso en la app</th><th>Obligatorio</th><th>Vence</th>@if (!soloLectura) { <th class="der">Acciones</th> }</tr>
+          </thead>
+          <tbody>
+            @for (t of tipos; track t.codigo) {
+              <tr>
+                <td>
+                  <span class="adm-lista-nombre cat-texto">{{ t.nombre }}</span>
+                  <span class="adm-lista-sub"><code>{{ t.codigo }}</code>@if (t.ayuda) { · {{ t.ayuda }} }</span>
+                </td>
+                <td>{{ t.aplica_a === 'conductor' ? 'Conductor' : 'Vehículo' }}</td>
+                <td>{{ pasoTexto(t.paso) }}</td>
+                <td><span class="adm-estado" [class.e-aceptado]="t.obligatorio_moto || t.obligatorio_taxi">{{ obligatorioTexto(t) }}</span></td>
+                <td>{{ t.requiere_vencimiento ? 'Sí' : 'No' }}</td>
+                @if (!soloLectura) {
+                  <td class="der">
+                    <div class="adm-acciones">
+                      <button type="button" class="adm-btn-ico" (click)="editarTipo(t)" aria-label="Editar tipo de documento" title="Editar">
+                        <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'editar' }" />
+                      </button>
+                      <button type="button" class="adm-btn-ico cat-borrar" (click)="eliminarTipo(t)" aria-label="Eliminar tipo de documento" title="Eliminar">
+                        <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'eliminar' }" />
+                      </button>
+                    </div>
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="adm-vacio">{{ cargando ? 'Cargando tipos de documento…' : 'No hay tipos de documento.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </section>
+</div>
+
+<!-- ═══════════════ MODAL: CREAR / EDITAR ═══════════════ -->
+@if (mostrarForm) {
+  <div class="adm-modal-fondo" (click)="cerrarForm()">
+    <form class="adm-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-catalogo"
+          (click)="$event.stopPropagation()" (ngSubmit)="guardar()">
+      <div class="adm-modal-head">
+        <h2 id="titulo-catalogo">
+          {{ editando ? 'Editar' : 'Nuevo' }} {{ pestana === 'motivos' ? 'motivo de cancelación' : 'tipo de documento' }}
+        </h2>
+        <button type="button" class="adm-btn-ico" (click)="cerrarForm()" aria-label="Cerrar">
+          <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" />
+        </button>
+      </div>
+
+      <div class="adm-modal-cuerpo cat-form">
+        @if (errorForm) { <p class="adm-error" role="alert">{{ errorForm }}</p> }
+
+        @if (pestana === 'motivos') {
+          <label class="cat-campo">
+            <span class="adm-dato-label">Descripción</span>
+            <input class="cat-input" name="descripcion" [(ngModel)]="motivoForm.descripcion" maxlength="120"
+                   placeholder="Ej.: Ya no necesito el servicio">
+          </label>
+          <label class="cat-campo">
+            <span class="adm-dato-label">Quién cancela</span>
+            <select class="cat-input" name="actor" [(ngModel)]="motivoForm.actor">
+              @for (a of actores; track a[0]) { <option [value]="a[0]">{{ a[1] }}</option> }
+            </select>
+          </label>
+          <label class="cat-check">
+            <input type="checkbox" name="activo" [(ngModel)]="motivoForm.activo">
+            Activo (aparece en la app al cancelar)
+          </label>
+        } @else {
+          <label class="cat-campo">
+            <span class="adm-dato-label">Código</span>
+            <input class="cat-input" name="codigo" [(ngModel)]="tipoForm.codigo" [disabled]="editando" maxlength="30"
+                   placeholder="Ej.: certificado_curso">
+            <span class="adm-ayuda">{{ editando ? 'El código no se puede cambiar.' : 'Minúsculas y guion bajo. No se podrá cambiar después.' }}</span>
+          </label>
+          <label class="cat-campo">
+            <span class="adm-dato-label">Nombre</span>
+            <input class="cat-input" name="nombre" [(ngModel)]="tipoForm.nombre" maxlength="80"
+                   placeholder="Ej.: Certificado de curso de manejo">
+          </label>
+          <div class="cat-fila">
+            <label class="cat-campo">
+              <span class="adm-dato-label">Es del</span>
+              <select class="cat-input" name="aplica_a" [(ngModel)]="tipoForm.aplica_a">
+                <option value="conductor">Conductor</option>
+                <option value="vehiculo">Vehículo</option>
+              </select>
+            </label>
+            <label class="cat-campo">
+              <span class="adm-dato-label">Paso en la app</span>
+              <select class="cat-input" name="paso" [(ngModel)]="tipoForm.paso">
+                @for (p of pasos; track p[0]) { <option [value]="p[0]">{{ p[1] }}</option> }
+              </select>
+            </label>
+            <label class="cat-campo cat-corto">
+              <span class="adm-dato-label">Orden</span>
+              <input class="cat-input" type="number" name="orden" [(ngModel)]="tipoForm.orden" min="0" max="999">
+            </label>
+          </div>
+          <div class="cat-checks">
+            <label class="cat-check"><input type="checkbox" name="obligatorio_moto" [(ngModel)]="tipoForm.obligatorio_moto"> Obligatorio para moto</label>
+            <label class="cat-check"><input type="checkbox" name="obligatorio_taxi" [(ngModel)]="tipoForm.obligatorio_taxi"> Obligatorio para taxi</label>
+            <label class="cat-check"><input type="checkbox" name="requiere_vencimiento" [(ngModel)]="tipoForm.requiere_vencimiento"> Tiene fecha de vencimiento</label>
+            <label class="cat-check"><input type="checkbox" name="solo_imagen" [(ngModel)]="tipoForm.solo_imagen"> Solo foto (no PDF)</label>
+          </div>
+          <div class="cat-fila">
+            <label class="cat-campo cat-corto">
+              <span class="adm-dato-label">Exigir desde (años)</span>
+              <input class="cat-input" type="number" name="exigir_desde_anios" [(ngModel)]="tipoForm.exigir_desde_anios" min="1" max="50"
+                     placeholder="—">
+            </label>
+            <label class="cat-campo">
+              <span class="adm-dato-label">Ayuda para el conductor</span>
+              <input class="cat-input" name="ayuda" [(ngModel)]="tipoForm.ayuda" maxlength="120"
+                     placeholder="Ej.: Vigente y a tu nombre">
+            </label>
+          </div>
+        }
+      </div>
+
+      <div class="adm-modal-pie">
+        <button type="button" class="adm-btn adm-btn-borde" (click)="cerrarForm()">Cancelar</button>
+        <button type="submit" class="adm-btn adm-btn-primario" [disabled]="guardando">
+          {{ guardando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Crear' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}

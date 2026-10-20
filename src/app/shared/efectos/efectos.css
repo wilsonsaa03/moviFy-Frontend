@@ -1,0 +1,45 @@
+/* =========================================================
+   EFECTOS COMPARTIDOS (landing, login...)
+   La directiva appRevelar pone .rv al elemento y luego .rv-in
+   cuando entra en la pantalla. Se importa desde el CSS de cada página:
+     @import '../../shared/efectos/efectos.css';
+   ========================================================= */
+
+.rv {
+  opacity: 0;
+  filter: blur(18px);
+  transform: perspective(1000px) translateY(90px) rotateX(24deg) scale(.92);
+  transition: opacity .9s ease, filter 1.1s ease, transform 1.3s cubic-bezier(.16, 1, .3, 1);
+  transition-delay: var(--d, 0s);
+  will-change: opacity, transform, filter;
+}
+.rv.izq { transform: perspective(1000px) translateX(-110px) rotateY(22deg) scale(.94); }
+.rv.der { transform: perspective(1000px) translateX(110px) rotateY(-22deg) scale(.94); }
+.rv.zoom { transform: perspective(1000px) scale(.55) rotateZ(-6deg); }
+.rv.voltea { transform: perspective(1000px) translateY(60px) rotateY(-75deg) scale(.9); transform-origin: left center; }
+.rv.portal { transform: perspective(1000px) scale(.9); filter: blur(10px); }
+
+/* Estado final: "none" (no blur(0) ni scale(1)) para que el 3D de los hijos siga funcionando */
+.rv.rv-in { opacity: 1; filter: none; transform: none; will-change: auto; }
+.rv.portal.rv-in { animation: ef-portal 1.4s cubic-bezier(.16, 1, .3, 1) backwards; animation-delay: var(--d, 0s); }
+@keyframes ef-portal { from { clip-path: circle(0% at 50% 50%); } to { clip-path: circle(75% at 50% 50%); } }
+
+/* Títulos que se "escriben con tinta" */
+.rv-in .magia-txt {
+  -webkit-mask-image: linear-gradient(100deg, #000 42%, transparent 58%);
+  mask-image: linear-gradient(100deg, #000 42%, transparent 58%);
+  -webkit-mask-size: 280% 100%;
+  mask-size: 280% 100%;
+  animation: ef-tinta 1.6s cubic-bezier(.2, .7, .2, 1) both;
+  animation-delay: calc(var(--d, 0s) + .15s);
+}
+@keyframes ef-tinta {
+  from { -webkit-mask-position: 100% 0; mask-position: 100% 0; filter: blur(10px); transform: translateY(12px); }
+  to { -webkit-mask-position: 0% 0; mask-position: 0% 0; filter: none; transform: none; }
+}
+
+/* Si el sistema pide menos movimiento, todo aparece de una vez */
+@media (prefers-reduced-motion: reduce) {
+  .rv, .rv.izq, .rv.der, .rv.zoom, .rv.voltea, .rv.portal { opacity: 1; filter: none; transform: none; transition: none; animation: none; }
+  .magia-txt, .rv-in .magia-txt { animation: none; -webkit-mask-image: none; mask-image: none; }
+}
