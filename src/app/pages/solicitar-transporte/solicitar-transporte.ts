@@ -12,13 +12,15 @@ import { Router } from '@angular/router';
 import * as L from 'leaflet';
 import { cargarRoutingMachine } from '../../core/lrm-loader';
 import { ApiService } from '../../core/api.service';
+import { SelectorPuntos, crearMapaCiudad } from '../../core/mapa-ciudad';
+import { PuntosRutaComponent } from '../../shared/puntos-ruta/puntos-ruta';
 
 declare let window: any;
 
 @Component({
   selector: 'app-solicitar-transporte',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PuntosRutaComponent],
   templateUrl: './solicitar-transporte.html',
   styleUrls: ['./solicitar-transporte.css']
 })
@@ -51,7 +53,8 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   /* ===================== VARIABLES PRIVADAS ===================== */
   private idServicioFinal: number = 0;
   private map!: L.Map;
-  private usuarioMarker?: L.Marker;
+  /** Recogida y destino marcados en el mapa (core/mapa-ciudad). */
+  puntos!: SelectorPuntos;
   private destinoMarker?: L.Marker;
   private conductorMarker?: L.Marker;
   private userLng: number = 0;
@@ -83,10 +86,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {}
 
   ngAfterViewInit(): void {
-    this.cargarScriptLRM().then(() => {
-      this.initMap();
-      this.obtenerUbicacionReal();
-    });
+    this.cargarScriptLRM().then(() => this.initMap());
   }
 
   ngOnDestroy(): void {
@@ -108,13 +108,8 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     if (!container) { setTimeout(() => this.initMap(), 300); return; }
     if ((container as any)._leaflet_id) (container as any)._leaflet_id = null;
 
-    this.map = L.map('map', { center: [4.5709, -74.2973], zoom: 5, zoomControl: false });
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(this.map);
-
-    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+    // Abre en Buenaventura aunque el GPS no responda
+    this.map = crearMapaCiudad('map');
 
     try {
       this.routingControl = window.L.Routing.control({
@@ -145,98 +140,50 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       console.error('Error iniciando Routing Machine:', err);
     }
 
-    this.map.on('click', (e: L.LeafletMouseEvent) => {
-      this.establecerDestinoEnMapa(e.latlng.lat, e.latlng.lng);
-    });
-  }
-
-  /* ===================== GPS ===================== */
-  private obtenerUbicacionReal(): void {
-    if (!navigator.geolocation) {
-      this.origen = 'Tu dispositivo no tiene GPS';
-      return;
-    }
-
-    const timeoutAviso = setTimeout(() => {
-      if (!this.ubicacionEncontrada) this.origen = 'GPS tardando... activa permisos';
-    }, 5000);
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        clearTimeout(timeoutAviso);
-        this.userLat = position.coords.latitude;
-        this.userLng = position.coords.longitude;
-        this.ubicacionEncontrada = true;
-        this.origen = 'Mi ubicación actual';
-
-        const miUbicacion: [number, number] = [this.userLat, this.userLng];
-        this.map.setView(miUbicacion, 16);
-
-        const usuarioIcon = L.icon({
-          iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-          iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35]
-        });
-
-        this.usuarioMarker = L.marker(miUbicacion, { icon: usuarioIcon })
-          .addTo(this.map).bindPopup('📍 Tú estás aquí').openPopup();
-
-        L.circleMarker(miUbicacion, { color: '#7c4dff', radius: 10, fillOpacity: 0.5 }).addTo(this.map);
-
-        this.obtenerConductoresReales();
-
-        this.intervaloRefreshConductores = setInterval(() => {
-          if (!this.buscandoConductor && !this.simulacionActiva) {
-            this.obtenerConductoresReales();
-          }
-        }, 8000);
+    // Recogida y destino: tocando el mapa, escribiendo la dirección o con el GPS
+    this.puntos = new SelectorPuntos(
+      this.map,
+      {
+        origen: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35] }),
+        destino: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/2776/2776067.png', iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35] })
       },
-      (error) => {
-        clearTimeout(timeoutAviso);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            this.origen = 'Permiso GPS denegado';
-            alert('❌ Bloqueaste el GPS. Actívalo en el candado 🔒 de la barra de direcciones.');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            this.origen = 'Señal GPS no disponible';
-            break;
-          case error.TIMEOUT:
-            this.origen = 'GPS tardó demasiado';
-            break;
-        }
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      { origen: '📍 Punto de recogida', destino: '🏁 Punto destino' },
+      () => this.alCambiarPuntos(),
+      () => this.puedeEditarPuntos
     );
+    this.puntos.iniciar();
   }
 
-  /* ===================== DESTINO EN MAPA ===================== */
-  establecerDestinoEnMapa(lat: number, lon: number): void {
-    if (!this.ubicacionEncontrada) {
-      alert('Espera a que el GPS encuentre tu ubicación.');
-      return;
+  /** Mientras se busca conductor o hay un viaje en curso, la recogida y el destino ya no se mueven. */
+  get puedeEditarPuntos(): boolean {
+    return !this.buscandoConductor && !this.conductorInfo;
+  }
+
+  /* ===================== RECOGIDA Y DESTINO ===================== */
+  private alCambiarPuntos(): void {
+    const p = this.puntos;
+    if (p.origen) {
+      this.userLat = p.origen.lat;
+      this.userLng = p.origen.lng;
+      this.origen = p.textoOrigen;
+      if (!this.ubicacionEncontrada) {
+        this.ubicacionEncontrada = true;
+        this.obtenerConductoresReales();
+        this.intervaloRefreshConductores = setInterval(() => {
+          if (!this.buscandoConductor && !this.simulacionActiva) this.obtenerConductoresReales();
+        }, 8000);
+      }
     }
+    this.destino = p.destino ? p.textoDestino : '';
+    this.destinoMarker = p.marcador('destino');
 
-    const destinoIcon = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/2776/2776067.png',
-      iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35]
-    });
-
-    if (this.destinoMarker) {
-      this.destinoMarker.setLatLng([lat, lon]);
-    } else {
-      this.destinoMarker = L.marker([lat, lon], { icon: destinoIcon })
-        .addTo(this.map).bindPopup('🏁 Punto destino').openPopup();
-    }
-
-    if (this.routingControl) {
+    // Con los dos puntos, la ruta por calles (OSRM) da la distancia y la tarifa
+    if (p.origen && p.destino && this.routingControl) {
       this.routingControl.setWaypoints([
-        window.L.latLng(this.userLat, this.userLng),
-        window.L.latLng(lat, lon)
+        window.L.latLng(p.origen.lat, p.origen.lng),
+        window.L.latLng(p.destino.lat, p.destino.lng)
       ]);
     }
-
-    this.destino = 'Destino seleccionado';
-    this.map.setView([lat, lon], 14);
   }
 
   /* ===================== TARIFA ===================== */
@@ -251,26 +198,6 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
 
     calculo = Math.ceil(calculo / 100) * 100;
     this.tarifaEstimada = calculo < 4500 ? 4500 : calculo;
-  }
-
-  /* ===================== BÚSQUEDA MANUAL ===================== */
-  async buscarDireccionManual(): Promise<void> {
-    if (!this.ubicacionEncontrada) { alert('Espera a que el GPS te ubique.'); return; }
-    if (!this.destino || this.destino.length < 3 || this.destino === 'Destino seleccionado') return;
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.destino + ', Colombia')}`
-      );
-      const data = await response.json();
-      if (data?.length > 0) {
-        this.establecerDestinoEnMapa(parseFloat(data[0].lat), parseFloat(data[0].lon));
-      } else {
-        alert('No se encontró la dirección.');
-      }
-    } catch (error) {
-      alert('Ocurrió un error buscando la dirección.');
-    }
   }
 
   /* ===================== CONDUCTORES ACTIVOS ===================== */
@@ -570,7 +497,8 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     this.idServicioFinal = 0;
     this.segundosBuscando = 0;
 
-    if (this.destinoMarker) { this.map.removeLayer(this.destinoMarker); this.destinoMarker = undefined; }
+    this.puntos?.quitarDestino();
+    this.destinoMarker = undefined;
     if (this.conductorMarker) { this.map.removeLayer(this.conductorMarker); this.conductorMarker = undefined; }
     if (this.routingControl) { try { this.routingControl.setWaypoints([]); } catch (e) {} }
 

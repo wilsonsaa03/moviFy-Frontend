@@ -5,13 +5,15 @@ import { Router } from '@angular/router';
 import * as L from 'leaflet';
 import { cargarRoutingMachine } from '../../core/lrm-loader';
 import { ApiService } from '../../core/api.service';
+import { SelectorPuntos, crearMapaCiudad, rutaOsrm } from '../../core/mapa-ciudad';
+import { PuntosRutaComponent } from '../../shared/puntos-ruta/puntos-ruta';
 
 declare let window: any;
 
 @Component({
   selector: 'app-solicitar-domicilio',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PuntosRutaComponent],
   templateUrl: './solicitar-domicilio.html',
   styleUrls: ['./solicitar-domicilio.css']
 })
@@ -39,7 +41,8 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
   private routingControl: any;
   destinoMarker?: L.Marker;
-  private usuarioMarker?: L.Marker;
+  /** Recogida y entrega marcadas en el mapa (core/mapa-ciudad). */
+  puntos!: SelectorPuntos;
   private conductorMarker?: L.Marker;
   private conductoresMarkers: Map<number, L.Marker> = new Map();
   private pollingServicio: any;
@@ -84,113 +87,70 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
     if (!container) { setTimeout(() => this.initMap(), 500); return; }
     if ((container as any)._leaflet_id) (container as any)._leaflet_id = null;
     try {
-      this.map = L.map('map', { center: [4.5709, -74.2973], zoom: 5, zoomControl: false });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-      }).addTo(this.map);
-      L.control.zoom({ position: 'bottomright' }).addTo(this.map);
-      this.map.on('click', (e: L.LeafletMouseEvent) => this.establecerDestinoEnMapa(e.latlng.lat, e.latlng.lng));
-      this.obtenerUbicacionGPS();
+      // Abre en Buenaventura aunque el GPS no responda
+      this.map = crearMapaCiudad('map');
+      // Recogida y entrega: tocando el mapa, escribiendo la dirección o con el GPS
+      this.puntos = new SelectorPuntos(
+        this.map,
+        {
+          origen: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35] }),
+          destino: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/679/679821.png', iconSize: [45, 45], iconAnchor: [22, 45], popupAnchor: [0, -40] })
+        },
+        { origen: '📍 Punto de recogida', destino: '📦 Entregar paquete aquí' },
+        () => this.alCambiarPuntos(),
+        () => this.puedeEditarPuntos
+      );
+      this.puntos.iniciar();
     } catch (e) { console.error('Error iniciando mapa:', e); }
   }
 
-  establecerDestinoEnMapa(lat: number, lng: number): void {
-    if (!this.ubicacionEncontrada) {
-      alert('Espera a que el GPS encuentre tu ubicación.');
-      return;
+  /** Mientras se busca domiciliario o hay un pedido en curso, los puntos ya no se mueven. */
+  get puedeEditarPuntos(): boolean {
+    return !this.buscandoConductor && !this.conductorInfo;
+  }
+
+  private alCambiarPuntos(): void {
+    const p = this.puntos;
+    if (p.origen) {
+      this.userLat = p.origen.lat;
+      this.userLng = p.origen.lng;
+      this.origen = p.textoOrigen;
+      if (!this.ubicacionEncontrada) {
+        this.ubicacionEncontrada = true;
+        this.obtenerConductoresActivos();
+        this.intervaloRefreshConductores = setInterval(() => {
+          if (!this.buscandoConductor && !this.simulacionActiva) this.obtenerConductoresActivos();
+        }, 8000);
+      }
     }
-    const iconoPaquete = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/679/679821.png',
-      iconSize: [45, 45],
-      iconAnchor: [22, 45], popupAnchor: [0, -40]
-    });
-    if (this.destinoMarker) {
-      this.destinoMarker.setLatLng([lat, lng]);
-    } else {
-      this.destinoMarker = L.marker([lat, lng], { icon: iconoPaquete })
-        .addTo(this.map)
-        .bindPopup('📦 Entregar paquete aquí')
-        .openPopup();
-    }
-    this.destino = 'Punto de entrega seleccionado';
-    this.calcularRutaYTarifa(lat, lng);
+    this.destino = p.destino ? p.textoDestino : '';
+    this.destinoMarker = p.marcador('destino');
+    if (p.origen && p.destino) this.calcularRutaYTarifa();
   }
 
   toggleEntregaRapida() {
     this.entregaRapida = !this.entregaRapida;
-    if (this.destinoMarker) {
-      const pos = this.destinoMarker.getLatLng();
-      this.calcularRutaYTarifa(pos.lat, pos.lng);
-    }
+    if (this.puntos?.origen && this.puntos.destino) this.calcularRutaYTarifa();
   }
 
-  private async calcularRutaYTarifa(dLat: number, dLng: number) {
-    try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${this.userLng},${this.userLat};${dLng},${dLat}?overview=false`;
-      const resp = await fetch(url);
-      const data = await resp.json();
-      const route = data.routes?.[0];
-      if (route) {
-        const distM = route.distance ?? route.legs?.[0]?.distance;
-        const durS  = route.duration ?? route.legs?.[0]?.duration;
-        this.distanciaViaje = (distM ?? 0) / 1000;
-        this.duracionViaje  = (durS  ?? 0) / 60;
-        let calculo = 3500 + (this.distanciaViaje * 1200);
-        if (this.entregaRapida) calculo *= 1.20;
-        this.tarifaEstimada = Math.ceil(calculo / 100) * 100;
-      }
-    } catch (e) {
-      console.warn('Fallback tarifa por error OSRM:', e);
-      this.distanciaViaje = this.map.distance([this.userLat, this.userLng], [dLat, dLng]) / 1000;
+  /** Dibuja la ruta por calles (OSRM) entre recogida y entrega y calcula distancia y tarifa estimada. */
+  private async calcularRutaYTarifa() {
+    const o = this.puntos.origen!;
+    const d = this.puntos.destino!;
+    const ruta = await rutaOsrm(o, d);
+    if (ruta) {
+      this.puntos.mostrarRuta(ruta.puntos, '#16a34a');
+      this.distanciaViaje = ruta.km;
+      this.duracionViaje = ruta.min;
+      let calculo = 3500 + (this.distanciaViaje * 1200);
+      if (this.entregaRapida) calculo *= 1.20;
+      this.tarifaEstimada = Math.ceil(calculo / 100) * 100;
+    } else {
+      // Sin OSRM: línea recta como respaldo
+      this.puntos.mostrarRuta([o, d], '#16a34a');
+      this.distanciaViaje = this.map.distance(o, d) / 1000;
       this.tarifaEstimada = this.entregaRapida ? 6000 : 5000;
     }
-  }
-
-  private obtenerUbicacionGPS() {
-    if (!navigator.geolocation) { this.origen = 'GPS no soportado'; return; }
-
-    const timeoutAviso = setTimeout(() => {
-      if (!this.ubicacionEncontrada) this.origen = 'GPS tardando... activa permisos';
-    }, 5000);
-
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        clearTimeout(timeoutAviso);
-        this.userLat = pos.coords.latitude;
-        this.userLng = pos.coords.longitude;
-        this.ubicacionEncontrada = true;
-        this.origen = 'Ubicación actual';
-        this.map.setView([this.userLat, this.userLng], 15);
-
-        const usuarioIcon = L.icon({
-          iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-          iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35]
-        });
-        this.usuarioMarker = L.marker([this.userLat, this.userLng], { icon: usuarioIcon })
-          .addTo(this.map).bindPopup('📍 Tú estás aquí').openPopup();
-
-        L.circleMarker([this.userLat, this.userLng], {
-          color: '#16a34a', radius: 10, fillOpacity: 0.4
-        }).addTo(this.map);
-
-        this.obtenerConductoresActivos();
-
-        this.intervaloRefreshConductores = setInterval(() => {
-          if (!this.buscandoConductor && !this.simulacionActiva) {
-            this.obtenerConductoresActivos();
-          }
-        }, 8000);
-      },
-      err => {
-        clearTimeout(err as any);
-        switch ((err as GeolocationPositionError).code) {
-          case 1: this.origen = 'Permiso GPS denegado'; break;
-          case 2: this.origen = 'Señal GPS no disponible'; break;
-          case 3: this.origen = 'GPS tardó demasiado'; break;
-        }
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-    );
   }
 
   private async obtenerConductoresActivos(): Promise<void> {
@@ -223,6 +183,7 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   async solicitarDomicilio() {
     if (this.buscandoConductor) return;
     if (!this.descripcionEncargo) return alert('Describe qué debemos llevar');
+    if (!this.ubicacionEncontrada) return alert('Marca el punto de recogida en el mapa o escribe la dirección');
     if (!this.destinoMarker) return alert('Por favor, selecciona el destino en el mapa');
 
     this.buscandoConductor = true;
@@ -340,6 +301,7 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
     colorLinea: string
   ): void {
     this.detenerSimulacion();
+    this.puntos?.mostrarRuta(null); // la ruta del servicio reemplaza a la propuesta
     this.simulacionActiva = true;
     this.indexSimulacion = 0;
 
@@ -433,7 +395,8 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
     this.calificacionSeleccionada = 5;
     this.idServicioFinal = 0;
 
-    if (this.destinoMarker) { this.map.removeLayer(this.destinoMarker); this.destinoMarker = undefined; }
+    this.puntos?.quitarDestino();
+    this.destinoMarker = undefined;
     if (this.conductorMarker) { this.map.removeLayer(this.conductorMarker); this.conductorMarker = undefined; }
 
     this.router.navigate(['/home-usuario']);

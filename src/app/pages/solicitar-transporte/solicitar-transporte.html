@@ -20,36 +20,9 @@
         <p>Ingresa tu ruta para conectarte con un conductor disponible al instante.</p>
       </div>
 
-      <div class="input-group">
-        <label>Punto de recogida</label>
-        <div class="input-wrapper">
-          <span class="input-icon">📍</span>
-          <input 
-            type="text" 
-            placeholder="Esperando GPS..." 
-            [(ngModel)]="origen"
-            readonly
-            [class.loading-text]="origen === 'Buscando tu ubicación...'"
-          >
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>Punto de destino</label>
-        <div class="input-wrapper">
-          <span class="input-icon">🏁</span>
-          <input 
-            type="text" 
-            placeholder="Escribe una dirección y presiona Enter..." 
-            [(ngModel)]="destino"
-            (keyup.enter)="buscarDireccionManual()"
-            (blur)="buscarDireccionManual()"
-          >
-        </div>
-        <small class="hint-text">
-          ✨ También puedes dar clic directamente sobre el mapa
-        </small>
-      </div>
+      @if (puntos) {
+        <app-puntos-ruta [selector]="puntos" [editable]="puedeEditarPuntos" acento="#16a34a"></app-puntos-ruta>
+      }
 
       <div class="tarifa-box slide-up" *ngIf="tarifaEstimada > 0 && !buscandoConductor && !conductorInfo">
         <div class="tarifa-item">
@@ -64,7 +37,7 @@
       </div>
 
       <div class="info-mapa" *ngIf="tarifaEstimada === 0 && !buscandoConductor && !conductorInfo">
-        🗺️ Selecciona el destino en el mapa o escríbelo arriba
+        🗺️ Marca la recogida y el destino en el mapa o escríbelos arriba
       </div>
 
       <!-- ESTADO DE BÚSQUEDA CON CONTADOR -->

@@ -13,6 +13,8 @@ export class SesionService {
   get token(): string { return this.ls()?.getItem('token') || ''; }
   get id(): string { return this.ls()?.getItem('id') || ''; }
   get correo(): string { return this.ls()?.getItem('correo') || ''; }
+  get nombre(): string { return this.ls()?.getItem('nombre') || ''; }
+  get telefono(): string { return this.ls()?.getItem('telefono') || ''; }
 
   get rol(): Rol | '' {
     const r = (this.ls()?.getItem('rol') || '').toLowerCase().trim();

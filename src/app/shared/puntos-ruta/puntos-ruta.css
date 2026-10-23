@@ -1,0 +1,72 @@
+:host { display: block; --acento: #16a34a; }
+
+.pr-campo {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  transition: border-color .2s, background .2s;
+}
+.pr-campo.activo {
+  border-color: var(--acento);
+  background: color-mix(in srgb, var(--acento) 7%, white);
+}
+
+.pr-etiqueta {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--acento);
+}
+
+.pr-fila { display: flex; align-items: center; gap: 8px; }
+.pr-icono { font-size: 18px; }
+.pr-fila input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  color: #1e293b;
+  font-size: 15px;
+  outline: none;
+}
+.pr-fila input:focus { border-color: var(--acento); }
+.pr-fila input:disabled { color: #64748b; background: #f1f5f9; }
+
+.pr-acciones { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pr-boton {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pr-boton:hover { border-color: var(--acento); }
+.pr-boton.on { border-color: var(--acento); background: var(--acento); color: white; }
+
+.pr-aviso {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-size: 13.5px;
+}
+
+.pr-girando {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid #e2e8f0; border-top-color: var(--acento);
+  animation: pr-giro .8s linear infinite;
+}
+@keyframes pr-giro { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pr-girando { animation: none; } }

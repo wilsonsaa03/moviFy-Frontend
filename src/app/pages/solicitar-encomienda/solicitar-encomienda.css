@@ -109,12 +109,67 @@
 .enc-input:focus { border-color: #f97316; background: #fff7ed; box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
 .enc-input::placeholder { color: #94a3b8; }
 
-.tipo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.tipo-chip {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 8px 4px; border-radius: 10px; border: 1.5px solid #e2e8f0;
-  background: #f8fafc; cursor: pointer; transition: all 0.2s; font-size: 11px;
+/* ─── Validación: se marca solo después del primer intento de enviar ─── */
+.enc-input.invalido,
+.enc-textarea.invalido { border-color: #dc2626; background: #fef2f2; }
+.bloque-invalido { border-radius: 14px; box-shadow: 0 0 0 2px #fca5a5; }
+.error-campo { display: block; margin-top: 4px; font-size: 11.5px; font-weight: 600; color: #b91c1c; }
+.aviso-faltantes {
+  margin: 0 0 10px; padding: 10px 14px; border-radius: 12px;
+  background: #fef2f2; border: 1.5px solid #fca5a5; color: #991b1b; font-size: 13px; font-weight: 600;
 }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* ─── Casillas (frágil, lo recibo yo) y avisos del Figma ─── */
+.check-box {
+  display: flex; align-items: center; gap: 10px; margin: 8px 0;
+  min-height: 44px; padding: 8px 12px; border-radius: 12px;
+  border: 1.5px solid #e2e8f0; background: #f8fafc; cursor: pointer; font-size: 13px; color: #1e293b;
+}
+.check-box input { width: 18px; height: 18px; accent-color: #f97316; }
+.check-box.marcado { border-color: #f97316; background: #fff7ed; font-weight: 700; }
+.aviso-prohibidos {
+  margin: 4px 0 0; padding: 8px 12px; border-radius: 10px;
+  background: #fff7ed; color: #9a3412; font-size: 11.5px; line-height: 1.4;
+}
+.nota-vehiculo { margin: 8px 0 0; font-size: 12px; color: #475569; }
+
+/* ─── PIN de entrega (4 casillas, como "Encomienda 4" del Figma) ─── */
+.pin-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  margin-bottom: 12px; padding: 16px 18px; border-radius: 18px; background: #03274d; color: #ffffff;
+}
+.pin-textos small { font-size: 11px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: #ffc94d; }
+.pin-textos p { margin: 6px 0 0; font-size: 12.5px; color: #cbd5e1; }
+.pin-digitos { display: flex; gap: 8px; margin-top: 6px; }
+.pin-digitos span {
+  width: 44px; height: 52px; display: grid; place-items: center; border-radius: 10px;
+  background: #ffffff; color: #03274d; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.btn-pin {
+  min-height: 44px; padding: 10px 16px; border: 0; border-radius: 12px;
+  background: #25d366; color: #053b1a; font-weight: 800; font-size: 13px; cursor: pointer;
+}
+.btn-cancelar-busqueda { width: 100%; margin-top: 10px; min-height: 44px; }
+
+.tipo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tipo-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  min-height: 44px; padding: 10px 6px; border-radius: 12px; border: 1.5px solid #e2e8f0;
+  background: #f8fafc; cursor: pointer; transition: all 0.2s; font-size: 11px;
+  font-family: inherit; color: #1e293b; text-align: center;
+}
+.tipo-chip strong { font-size: 13px; }
+.tipo-chip small { color: #64748b; line-height: 1.25; }
+.tipo-chip:focus-visible { outline: 3px solid #f97316; outline-offset: 2px; }
+.tipo-vehiculo {
+  margin-top: 2px; padding: 2px 8px; border-radius: 999px;
+  background: #e2e8f0; font-size: 10.5px; font-weight: 700; color: #334155;
+}
+.tipo-chip.selected .tipo-vehiculo { background: #fed7aa; color: #9a3412; }
 .tipo-chip:hover  { border-color: #f97316; background: #fff7ed; }
 .tipo-chip.selected { border-color: #f97316; background: #fff7ed; color: #c2410c; font-weight: 700; }
 .tipo-icon { font-size: 22px; }
@@ -473,6 +528,10 @@
 }
 .estrella {
   font-size: 40px;
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  line-height: 1;
   color: #e2e8f0;
   cursor: pointer;
   transition: all 0.15s;

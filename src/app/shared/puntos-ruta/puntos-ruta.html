@@ -1,0 +1,34 @@
+@for (p of [{ tipo: 'origen', etiqueta: etiquetaOrigen, icono: '📍' }, { tipo: 'destino', etiqueta: etiquetaDestino, icono: '🏁' }]; track p.tipo) {
+  <div class="pr-campo" [class.activo]="editable && selector.activo === p.tipo">
+    <label class="pr-etiqueta" [for]="'pr-' + p.tipo">{{ p.etiqueta }}</label>
+    <div class="pr-fila">
+      <span class="pr-icono" aria-hidden="true">{{ p.icono }}</span>
+      @if (p.tipo === 'origen') {
+        <input id="pr-origen" type="text" [(ngModel)]="selector.textoOrigen" [disabled]="!editable"
+               placeholder="Escribe la dirección de recogida" autocomplete="off"
+               (keyup.enter)="selector.buscar('origen')" (blur)="selector.buscar('origen')" (focus)="elegir('origen')">
+      } @else {
+        <input id="pr-destino" type="text" [(ngModel)]="selector.textoDestino" [disabled]="!editable"
+               placeholder="Escribe la dirección de destino" autocomplete="off"
+               (keyup.enter)="selector.buscar('destino')" (blur)="selector.buscar('destino')" (focus)="elegir('destino')">
+      }
+      @if (selector.buscando === p.tipo) {
+        <span class="pr-girando" aria-label="Buscando"></span>
+      }
+    </div>
+    @if (editable) {
+      <div class="pr-acciones">
+        <button type="button" class="pr-boton" [class.on]="selector.activo === p.tipo" (click)="elegir($any(p.tipo))"
+                [attr.aria-pressed]="selector.activo === p.tipo">
+          🗺️ {{ selector.activo === p.tipo ? 'Toca el mapa para marcarlo' : 'Marcar en el mapa' }}
+        </button>
+        @if (p.tipo === 'origen') {
+          <button type="button" class="pr-boton" (click)="selector.usarGps()">🎯 Usar mi ubicación</button>
+        }
+      </div>
+    }
+  </div>
+}
+@if (selector.aviso) {
+  <p class="pr-aviso" role="status">{{ selector.aviso }}</p>
+}

@@ -21,44 +21,63 @@
 
       <!-- FILA 1: RECOGIDA + REMITENTE -->
       <div class="two-col">
-        <div class="section-block">
-          <div class="section-title">📍 Lugar de recogida</div>
-          <div class="field-box" [class.active]="ubicacionEncontrada">
-            <span class="fi">📍</span>
-            <div class="ft">
-              <strong>{{ ubicacionEncontrada ? 'Mi ubicación actual' : 'Detectando...' }}</strong>
-              <small>{{ origen }}</small>
-            </div>
-            <span class="fi">🎯</span>
-          </div>
+        <div class="section-block" data-campo="recogida" tabindex="-1"
+             [class.bloque-invalido]="invalido('recogida') || invalido('entrega')">
+          @if (puntos) {
+            <app-puntos-ruta [selector]="puntos" [editable]="puedeEditarPuntos" etiquetaOrigen="Lugar de recogida"
+                             etiquetaDestino="Destino de entrega" acento="#f97316"></app-puntos-ruta>
+          }
+          <span data-campo="entrega" tabindex="-1"></span>
+          @if (invalido('recogida')) { <small class="error-campo">Marca en el mapa o escribe dónde recogemos el paquete.</small> }
+          @if (invalido('entrega')) { <small class="error-campo">Marca en el mapa o escribe a dónde lo llevamos.</small> }
         </div>
 
         <div class="section-block">
-          <div class="section-title">👤 Datos del remitente</div>
-          <input class="enc-input" type="text" placeholder="Nombre completo" [(ngModel)]="nombreRemitente">
-          <input class="enc-input mt6" type="tel" placeholder="Número de teléfono" [(ngModel)]="telefonoRemitente">
+          <div class="section-title">👤 Quién envía</div>
+          <label class="sr-only" for="enc-rem-nombre">Nombre de quien envía</label>
+          <input id="enc-rem-nombre" class="enc-input" type="text" placeholder="Nombre completo" maxlength="120"
+                 autocomplete="name" data-campo="nombreRemitente" [class.invalido]="invalido('nombreRemitente')"
+                 [attr.aria-invalid]="invalido('nombreRemitente')" [(ngModel)]="nombreRemitente">
+          <label class="sr-only" for="enc-rem-tel">Celular de quien envía</label>
+          <input id="enc-rem-tel" class="enc-input mt6" type="tel" inputmode="tel" placeholder="Celular (ej. 300 123 4567)"
+                 maxlength="16" autocomplete="tel" data-campo="telefonoRemitente" [class.invalido]="invalido('telefonoRemitente')"
+                 [attr.aria-invalid]="invalido('telefonoRemitente')" [(ngModel)]="telefonoRemitente">
+          @if (invalido('telefonoRemitente')) { <small class="error-campo">Escribe un celular de 10 dígitos que empiece por 3.</small> }
         </div>
       </div>
 
       <!-- FILA 2: DESTINO + DESTINATARIO -->
       <div class="two-col">
         <div class="section-block">
-          <div class="section-title">🎯 Destino de entrega</div>
-          <div class="field-box" [class.active]="destinoMarker" style="cursor:pointer;">
-            <span class="fi">🎯</span>
+          <div class="section-title">🛣️ Ruta</div>
+          <div class="field-box" [class.active]="tarifaEstimada > 0">
+            <span class="fi">🛣️</span>
             <div class="ft">
-              <strong>{{ destinoMarker ? 'Destino seleccionado' : 'Toca el mapa para elegir' }}</strong>
+              <strong>{{ tarifaEstimada > 0 ? 'Ruta por calles' : 'Marca la recogida y la entrega' }}</strong>
               <small *ngIf="tarifaEstimada > 0">{{ distanciaViaje.toFixed(1) }} km · {{ tiempoEstimado }} min</small>
-              <small *ngIf="tarifaEstimada === 0">Haz clic sobre el mapa</small>
+              <small *ngIf="tarifaEstimada === 0">Toca el mapa o escribe las direcciones</small>
             </div>
-            <span class="fi">🗺️</span>
           </div>
         </div>
 
         <div class="section-block">
-          <div class="section-title">👥 Datos del destinatario</div>
-          <input class="enc-input" type="text" placeholder="Nombre destinatario" [(ngModel)]="nombreDestinatario">
-          <input class="enc-input mt6" type="tel" placeholder="Teléfono destinatario" [(ngModel)]="telefonoDestinatario">
+          <div class="section-title">👥 ¿Quién lo recibe?</div>
+          <label class="check-box" [class.marcado]="recibeYo">
+            <input type="checkbox" [checked]="recibeYo" (change)="alternarRecibeYo()">
+            <span>Lo recibo yo mismo</span>
+          </label>
+          <label class="sr-only" for="enc-des-nombre">Nombre de quien recibe</label>
+          <input id="enc-des-nombre" class="enc-input" type="text" placeholder="Nombre de quien recibe" maxlength="120"
+                 data-campo="nombreDestinatario" [class.invalido]="invalido('nombreDestinatario')"
+                 [attr.aria-invalid]="invalido('nombreDestinatario')" [(ngModel)]="nombreDestinatario">
+          @if (invalido('nombreDestinatario')) { <small class="error-campo">¿A quién le llega el paquete?</small> }
+          <label class="sr-only" for="enc-des-tel">Celular de quien recibe</label>
+          <input id="enc-des-tel" class="enc-input mt6" type="tel" inputmode="tel" placeholder="Celular de quien recibe"
+                 maxlength="16" data-campo="telefonoDestinatario" [class.invalido]="invalido('telefonoDestinatario')"
+                 [attr.aria-invalid]="invalido('telefonoDestinatario')" [(ngModel)]="telefonoDestinatario">
+          @if (invalido('telefonoDestinatario')) {
+            <small class="error-campo">Escribe un celular de 10 dígitos: el conductor lo llamará al llegar.</small>
+          }
         </div>
       </div>
 
@@ -67,33 +86,50 @@
         <div class="section-title">📦 Información de la encomienda</div>
         <div class="two-col">
           <div>
-            <label class="sub-label">Tipo de paquete</label>
-            <div class="tipo-grid">
-              <div class="tipo-chip" *ngFor="let t of tiposPaquete"
+            <span class="sub-label">Tamaño del paquete</span>
+            <div class="tipo-grid" role="radiogroup" aria-label="Tipo de paquete">
+              <button type="button" class="tipo-chip" *ngFor="let t of tiposPaquete" role="radio"
+                [attr.aria-checked]="tipoPaquete === t.valor"
                 [class.selected]="tipoPaquete === t.valor"
-                (click)="tipoPaquete = t.valor">
-                <span class="tipo-icon">{{ t.icon }}</span>
-                <small>{{ t.label }}</small>
-              </div>
+                (click)="elegirTipoPaquete(t.valor)">
+                <span class="tipo-icon" aria-hidden="true">{{ t.icon }}</span>
+                <strong>{{ t.label }}</strong>
+                <small>{{ t.detalle }}</small>
+                <span class="tipo-vehiculo">{{ t.vehiculo === 'taxi' ? '🚕 Taxi' : '🛵 Moto' }}</span>
+              </button>
             </div>
-            <label class="sub-label mt10">Peso aproximado</label>
+            <label class="sub-label mt10" for="enc-peso">Peso aproximado</label>
             <div class="select-box">
-              <span>⚖️</span>
-              <select [(ngModel)]="pesoAproximado" class="enc-select">
-                <option value="1">1 Kg</option>
-                <option value="2">2 Kg</option>
-                <option value="5">5 Kg</option>
-                <option value="10">10 Kg</option>
-                <option value="20">20+ Kg</option>
+              <span aria-hidden="true">⚖️</span>
+              <select id="enc-peso" [(ngModel)]="pesoAproximado" (ngModelChange)="cambiarPeso()" class="enc-select">
+                <option *ngFor="let p of pesos" [value]="p">Hasta {{ p }} kg</option>
               </select>
             </div>
+            <p class="nota-vehiculo" aria-live="polite">
+              @if (vehiculo === 'taxi') {
+                🚕 Va en <strong>taxi</strong>: la moto no lleva cajas grandes ni más de 15 kg.
+              } @else {
+                🛵 Va en <strong>moto</strong>, la opción más rápida y económica.
+              }
+            </p>
           </div>
           <div>
-            <label class="sub-label">📝 Descripción del paquete</label>
-            <textarea class="enc-textarea"
+            <label class="sub-label" for="enc-desc">📝 ¿Qué vas a enviar?</label>
+            <textarea id="enc-desc" class="enc-textarea" data-campo="descripcion"
+              [class.invalido]="invalido('descripcion') || !!prohibido" [attr.aria-invalid]="invalido('descripcion') || !!prohibido"
               placeholder="Ej: Documentos importantes, ropa, libros, repuestos..."
               [(ngModel)]="descripcion" maxlength="120" rows="4"></textarea>
             <small class="char-count">{{ descripcion.length }}/120</small>
+            @if (prohibido) {
+              <small class="error-campo" role="alert">🚫 No podemos llevar esto: menciona {{ prohibido }}. En MoviFY no se envían drogas, armas, dinero ni objetos robados.</small>
+            } @else if (invalido('descripcion')) { <small class="error-campo">Cuéntale al conductor qué lleva.</small> }
+            <label class="check-box" [class.marcado]="fragil">
+              <input type="checkbox" [(ngModel)]="fragil">
+              <span>🍷 Es frágil, manéjalo con cuidado</span>
+            </label>
+            <p class="aviso-prohibidos">
+              ⚠️ No enviamos dinero, armas, animales ni sustancias prohibidas.
+            </p>
           </div>
         </div>
       </div>
@@ -114,13 +150,12 @@
         </div>
 
         <div class="section-block">
-          <div class="section-title">💳 Método de pago</div>
-          <div class="pago-grid">
-            <div class="pago-chip" *ngFor="let p of metodosPago"
-              [class.selected]="metodoPago === p.valor"
-              (click)="metodoPago = p.valor">
-              <span>{{ p.icon }}</span>
-              <small>{{ p.label }}</small>
+          <div class="section-title">💵 Pago</div>
+          <div class="field-box active">
+            <span class="fi" aria-hidden="true">💵</span>
+            <div class="ft">
+              <strong>Efectivo al conductor</strong>
+              <small>Pagas al entregar el paquete. Precio fijo, sin sorpresas.</small>
             </div>
           </div>
         </div>
@@ -136,7 +171,7 @@
         <span>ℹ️</span>
         <div>
           <strong>Selecciona el destino</strong>
-          <p>Toca en el mapa el punto de entrega para calcular la ruta y el valor.</p>
+          <p>Toca en el mapa la recogida y la entrega (o escríbelas) para calcular la ruta y el valor.</p>
         </div>
       </div>
 
@@ -176,18 +211,43 @@
 
   <!-- BOTÓN SOLICITAR -->
   <div class="footer-bar">
-    <button class="btn-solicitar"
-      [disabled]="!puedeEnviar() || buscandoConductor"
-      [class.is-loading]="buscandoConductor"
-      (click)="solicitarEncomienda()">
-      <span *ngIf="!buscandoConductor" class="btn-content">
-        🛵 SOLICITAR ENCOMIENDA
-      </span>
-      <span *ngIf="buscandoConductor" class="btn-content">
-        <div class="dot-spin"></div> Buscando conductor...
-      </span>
-    </button>
-    <p class="seguridad">🔒 Tus datos están protegidos · MoviFY</p>
+    <!-- PIN de entrega: sin él el conductor no puede cerrar la entrega -->
+    @if (codigoEntrega) {
+      <div class="pin-card" role="status">
+        <div class="pin-textos">
+          <small>Código de entrega</small>
+          <div class="pin-digitos" [attr.aria-label]="'Código ' + codigoEntrega.split('').join(' ')" role="img">
+            @for (d of codigoEntrega.split(''); track $index) { <span aria-hidden="true">{{ d }}</span> }
+          </div>
+          <p>Dáselo a <b>{{ nombreDestinatario || 'quien recibe' }}</b>. El conductor se lo pedirá al entregar el paquete.</p>
+        </div>
+        <button type="button" class="btn-pin" (click)="compartirCodigo()">📲 Enviar por WhatsApp</button>
+      </div>
+    }
+
+    @if (intentoEnviar && mensajeFaltantes) {
+      <p class="aviso-faltantes" role="alert">⚠️ {{ mensajeFaltantes }}</p>
+    }
+
+    @if (!conductorInfo) {
+      <button type="button" class="btn-solicitar"
+        [disabled]="buscandoConductor"
+        [class.is-loading]="buscandoConductor"
+        [attr.aria-describedby]="intentoEnviar && mensajeFaltantes ? null : 'enc-ayuda'"
+        (click)="solicitarEncomienda()">
+        @if (!buscandoConductor) {
+          <span class="btn-content">{{ vehiculo === 'taxi' ? '🚕' : '🛵' }} SOLICITAR ENCOMIENDA
+            @if (tarifaEstimada > 0) { · ${{ tarifaEstimada | number }} }
+          </span>
+        } @else {
+          <span class="btn-content"><span class="dot-spin" aria-hidden="true"></span> Buscando conductor...</span>
+        }
+      </button>
+    }
+    @if (buscandoConductor) {
+      <button type="button" class="btn-cancelar btn-cancelar-busqueda" (click)="cancelarServicio()">Cancelar solicitud</button>
+    }
+    <p class="seguridad" id="enc-ayuda">🔒 Tus datos solo los ve el conductor que tome el envío · Pagas en efectivo</p>
   </div>
 
   <!-- ═══════════════════════════════════════════════════
@@ -224,10 +284,12 @@
 
     <!-- Info del conductor -->
     <div class="conductor-header">
-      <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="foto-conductor">
+      <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="foto-conductor"
+           [alt]="'Foto de ' + conductorInfo.conductor_nombre">
       <div class="info-texto">
         <h3>{{ conductorInfo.conductor_nombre }}</h3>
-        <p>Conductor MoviFY · ⭐️ 4.9</p>
+        <p>Conductor MoviFY{{ conductorInfo.conductor_calificacion ? ' · ⭐ ' + (conductorInfo.conductor_calificacion | number:'1.1-1') : '' }}
+          {{ conductorInfo.conductor_placa ? ' · ' + conductorInfo.conductor_placa : '' }}</p>
       </div>
       <div class="tarifa-tag">
         ${{ conductorInfo.tarifa | number }}
@@ -238,13 +300,11 @@
     <div class="viaje-footer">
       <span class="badge-estado">{{ mensajeEstado }}</span>
       <div class="acciones-viaje">
-        <!-- Botón cancelar solo en estado ACEPTADO -->
-        <button class="btn-cancelar"
-          *ngIf="conductorInfo.estado === 'ACEPTADO'"
-          (click)="cancelarServicio()">
-          Cancelar
-        </button>
-        <button class="btn-accion" (click)="enviarMensaje()">💬</button>
+        <!-- Pendiente o aceptada: todavía se puede cancelar; ya recogido, no -->
+        @if (puedeCancelar) {
+          <button type="button" class="btn-cancelar" (click)="cancelarServicio()">Cancelar</button>
+        }
+        <button type="button" class="btn-accion" aria-label="Escribirle al conductor por WhatsApp" (click)="enviarMensaje()">💬</button>
       </div>
     </div>
 
@@ -264,20 +324,22 @@
       </p>
 
       <div class="modal-destino-conductor" *ngIf="conductorInfo">
-        <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="modal-foto">
+        <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="modal-foto"
+             [alt]="'Foto de ' + conductorInfo.conductor_nombre">
         <div>
           <strong>{{ conductorInfo.conductor_nombre }}</strong>
-          <small>Conductor MoviFY · ⭐ 4.9</small>
+          <small>Conductor MoviFY{{ conductorInfo.conductor_calificacion ? ' · ⭐ ' + (conductorInfo.conductor_calificacion | number:'1.1-1') : '' }}</small>
         </div>
         <div class="modal-destino-tarifa">${{ conductorInfo.tarifa | number }}</div>
       </div>
 
       <div class="modal-estrellas">
         <p>¿Cómo calificarías el servicio?</p>
-        <div class="estrellas-row">
-          <span *ngFor="let e of estrellasArray" class="estrella"
+        <div class="estrellas-row" role="radiogroup" aria-label="Calificación del servicio">
+          <button type="button" *ngFor="let e of estrellasArray" class="estrella" role="radio"
+            [attr.aria-checked]="e === calificacionSeleccionada" [attr.aria-label]="e + (e === 1 ? ' estrella' : ' estrellas')"
             [class.activa]="e <= calificacionSeleccionada"
-            (click)="seleccionarEstrella(e)">★</span>
+            (click)="seleccionarEstrella(e)">★</button>
         </div>
       </div>
 

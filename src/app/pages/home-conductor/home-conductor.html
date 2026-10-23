@@ -128,16 +128,22 @@
       <!-- PANEL VIAJE ACTIVO -->
       <div class="viaje-activo-panel" *ngIf="viajeActivo">
         <div class="viaje-header">
-          <span class="viaje-badge">🚦 Viaje en curso</span>
+          <span class="viaje-badge">{{ esEncomienda ? '📦 Encomienda en curso' : '🚦 Viaje en curso' }}</span>
           <span class="viaje-estado" [ngClass]="getBadgeClass(viajeActivo.estado)">
             {{ getFriendlyEstado(viajeActivo.estado) }}
           </span>
         </div>
         <div class="viaje-datos">
           <div class="viaje-fila">
-            <span>👤 Pasajero</span>
+            <span>👤 {{ esEncomienda ? 'Envía' : 'Pasajero' }}</span>
             <strong>{{ viajeActivo.usuario_nombre || 'Usuario MoviFY' }}</strong>
           </div>
+          @if (esEncomienda && viajeActivo.destino) {
+            <div class="viaje-fila">
+              <span>🏁 Entregar en</span>
+              <strong>{{ viajeActivo.destino }}</strong>
+            </div>
+          }
           <div class="viaje-fila">
             <span>📏 Distancia</span>
             <strong>{{ viajeActivo.distancia_km | number:'1.1-2' }} km</strong>
@@ -154,16 +160,26 @@
             📍 Llegué al usuario
           </button>
           <button class="btn-llegue" style="background:#f59e0b;"
-            *ngIf="viajeActivo.estado === 'LLEGO_AL_ORIGEN' && viajeActivo.tipo === 'DOMICILIO'"
+            *ngIf="viajeActivo.estado === 'LLEGO_AL_ORIGEN' && (viajeActivo.tipo === 'DOMICILIO' || esEncomienda)"
             (click)="paqueteRecogido()">
             📦 Paquete recogido
           </button>
           <button class="btn-finalizar"
             *ngIf="viajeActivo.estado === 'EN_VIAJE' || viajeActivo.estado === 'PAQUETE_RECOGIDO'"
             (click)="finalizarViaje()">
-            🏁 Finalizar viaje
+            {{ esEncomienda ? '🏁 Entregar paquete' : '🏁 Finalizar viaje' }}
           </button>
         </div>
+        <!-- Encomienda: el conductor escribe el PIN que le da quien recibe -->
+        @if (esEncomienda && viajeActivo.estado === 'PAQUETE_RECOGIDO') {
+          <div class="pin-entrega">
+            <label for="pin-entrega">Código de entrega <small>(se lo da quien recibe)</small></label>
+            <input id="pin-entrega" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="4"
+                   placeholder="• • • •" [(ngModel)]="codigoEntrega" (keyup.enter)="finalizarViaje()"
+                   [attr.aria-invalid]="!!errorEntrega" [attr.aria-describedby]="errorEntrega ? 'pin-error' : null">
+            @if (errorEntrega) { <small id="pin-error" class="pin-error" role="alert">{{ errorEntrega }}</small> }
+          </div>
+        }
       </div>
 
       <!-- SOLICITUDES LISTA -->

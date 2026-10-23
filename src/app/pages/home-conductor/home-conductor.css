@@ -749,6 +749,19 @@ body {
 .btn-llegue   { background: #f59e0b; color: white; }
 .btn-llegue:hover { opacity: 0.9; }
 .btn-finalizar { background: #16a34a; color: white; }
+
+/* PIN de entrega de la encomienda */
+.pin-entrega { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.pin-entrega label { font-size: 13px; font-weight: 700; color: #0f172a; }
+.pin-entrega label small { font-weight: 500; color: #64748b; }
+.pin-entrega input {
+  width: 160px; min-height: 48px; padding: 8px 12px; border-radius: 12px;
+  border: 2px solid #cbd5e1; font-size: 26px; font-weight: 800; letter-spacing: 10px; text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.pin-entrega input:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.15); }
+.pin-entrega input[aria-invalid='true'] { border-color: #dc2626; }
+.pin-error { color: #b91c1c; font-size: 12.5px; font-weight: 600; }
 .btn-finalizar:hover { opacity: 0.9; }
 
 /* ================================================================

@@ -20,17 +20,10 @@
         <p>¿Qué necesitas enviar o recoger? Describe tu pedido y selecciona el destino en el mapa.</p>
       </div>
 
-      <div class="field-group">
-        <label class="field-label">Punto de recogida</label>
-        <div class="field-box">
-          <span class="field-icon">📍</span>
-          <div class="field-text">
-            <strong>{{ ubicacionEncontrada ? 'Ubicación actual' : 'Detectando...' }}</strong>
-            <small>{{ origen }}</small>
-          </div>
-          <span class="field-status">🎯</span>
-        </div>
-      </div>
+      @if (puntos) {
+        <app-puntos-ruta [selector]="puntos" [editable]="puedeEditarPuntos"
+                         etiquetaDestino="Destino de entrega" acento="#16a34a"></app-puntos-ruta>
+      }
 
       <div class="field-group">
         <label class="field-label">¿Qué llevamos?</label>
@@ -47,15 +40,13 @@
         <small class="char-count">{{ descripcionEncargo.length }}/120</small>
       </div>
 
-      <div class="field-group">
-        <label class="field-label">Destino de entrega</label>
-        <div class="field-box" [class.field-selected]="destinoMarker">
-          <span class="field-icon">🏁</span>
+      <div class="field-group" *ngIf="tarifaEstimada > 0">
+        <div class="field-box field-selected">
+          <span class="field-icon">🛣️</span>
           <div class="field-text">
-            <strong>{{ destinoMarker ? 'Punto seleccionado' : 'Toca el mapa para marcar el destino' }}</strong>
-            <small *ngIf="tarifaEstimada > 0">{{ distanciaViaje.toFixed(2) }} km · ${{ tarifaEstimada | number }}</small>
+            <strong>Ruta por calles</strong>
+            <small>{{ distanciaViaje.toFixed(2) }} km · ${{ tarifaEstimada | number }}</small>
           </div>
-          <span class="field-status">🗺️</span>
         </div>
       </div>
 
@@ -97,7 +88,7 @@
         <span>ℹ️</span>
         <div>
           <strong>Instrucciones</strong>
-          <p>Toca en el mapa para seleccionar el punto de entrega</p>
+          <p>Toca en el mapa para marcar la recogida y luego la entrega, o escribe las direcciones</p>
         </div>
       </div>
       <div id="map" style="height:100%;width:100%;border-radius:20px;"></div>

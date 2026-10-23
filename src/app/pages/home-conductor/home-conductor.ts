@@ -389,11 +389,37 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     }, 3000);
   }
 
+  /** Encomienda: para cerrar la entrega hace falta el PIN de 4 dígitos que le da quien recibe. */
+  codigoEntrega = '';
+  errorEntrega = '';
+
+  get esEncomienda(): boolean {
+    return String(this.viajeActivo?.tipo ?? this.viajeActivo?.tipo_servicio ?? '').toLowerCase() === 'encomienda';
+  }
+
   finalizarViaje() {
     if (!this.viajeId) return;
-    this.api.patch(`/transporte/servicio/${this.viajeId}/estado`, { estado: 'FINALIZADO' })
-      .then(() => this.terminarViajeActivo('✅ Viaje finalizado correctamente'))
-      .catch(err => alert(ApiService.mensaje(err, 'No se pudo finalizar el viaje')));
+    const cuerpo: Record<string, string> = { estado: 'FINALIZADO' };
+    if (this.esEncomienda) {
+      const pin = this.codigoEntrega.replace(/\D/g, '');
+      if (pin.length !== 4) {
+        this.errorEntrega = 'Pídele a quien recibe el código de 4 dígitos y escríbelo aquí.';
+        return;
+      }
+      cuerpo['codigo_entrega'] = pin;
+    }
+    this.errorEntrega = '';
+    this.api.patch(`/transporte/servicio/${this.viajeId}/estado`, cuerpo)
+      .then(() => {
+        this.codigoEntrega = '';
+        this.terminarViajeActivo(this.esEncomienda ? '✅ Paquete entregado' : '✅ Viaje finalizado correctamente');
+      })
+      .catch(err => {
+        const msg = ApiService.mensaje(err, 'No se pudo finalizar');
+        // El PIN equivocado se muestra junto al campo, sin ventanas emergentes
+        if (this.esEncomienda) this.errorEntrega = msg;
+        else alert(msg);
+      });
   }
 
   cancelarViaje() {
