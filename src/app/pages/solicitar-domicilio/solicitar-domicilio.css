@@ -485,3 +485,68 @@
   transition: color 0.2s;
 }
 .modal-btn-saltar:hover { color: #475569; }
+
+/* ─── Pedido (Figma "Domicilio 1 · Pedido") ─── */
+.opcional { text-transform: none; letter-spacing: 0; color: #94a3b8; font-weight: 500; }
+.ayuda { display: block; margin: -4px 0 6px; font-size: 12px; color: #64748b; }
+.mt8 { margin-top: 10px; }
+.dom-input {
+  width: 100%; min-height: 46px; padding: 10px 14px; border-radius: 14px;
+  border: 1.5px solid #e2e8f0; background: #f8fafc; font-size: 14px; color: #1e293b; font-family: inherit;
+}
+.dom-input:focus { outline: none; border-color: #16a34a; background: #f0fdf4; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 44px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid #e2e8f0;
+  background: #ffffff; font-size: 14px; font-weight: 600; color: #1e293b; cursor: pointer; font-family: inherit;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.chip:hover { border-color: #03274d; }
+.chip.selected { background: #03274d; border-color: #03274d; color: #ffffff; }
+.chip:focus-visible, .segmento button:focus-visible { outline: 3px solid #16a34a; outline-offset: 2px; }
+
+.segmento {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px;
+  border-radius: 14px; background: #eef3f8;
+}
+.segmento button {
+  min-height: 50px; border: 2px solid transparent; border-radius: 11px; background: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: inherit; color: #1e293b; cursor: pointer;
+}
+.segmento button strong { font-size: 14px; }
+.segmento button small { font-size: 11.5px; color: #64748b; }
+.segmento button.selected { border-color: #03274d; background: #ffffff; box-shadow: 0 3px 8px rgba(3, 39, 77, 0.12); }
+
+.valor-box {
+  display: flex; align-items: center; gap: 6px; max-width: 220px; min-height: 46px; padding: 0 14px;
+  border-radius: 14px; border: 1.5px solid #e2e8f0; background: #f8fafc; font-weight: 700;
+}
+.valor-box input { flex: 1; min-width: 0; border: 0; background: none; font-size: 16px; font-weight: 700; outline: none; }
+.nota-pago {
+  margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff1e6; color: #9a3412;
+  font-size: 12.5px; line-height: 1.4;
+}
+
+.resumen-pago {
+  margin: 4px 0 14px; padding: 12px 14px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: #ffffff;
+  display: flex; flex-direction: column; gap: 6px; font-size: 14px;
+}
+.resumen-pago div { display: flex; justify-content: space-between; }
+.resumen-pago .total { padding-top: 6px; border-top: 1.5px dashed #cbd5e1; font-size: 15px; }
+.resumen-pago small { color: #64748b; }
+
+/* ─── Validación ─── */
+.field-box.invalido, .valor-box.invalido { border-color: #dc2626; background: #fef2f2; }
+.bloque-invalido { border-radius: 14px; box-shadow: 0 0 0 2px #fca5a5; }
+.error-campo { display: block; margin-top: 4px; font-size: 12px; font-weight: 600; color: #b91c1c; }
+.aviso-faltantes {
+  margin: 0 0 10px; padding: 10px 14px; border-radius: 12px;
+  background: #fef2f2; border: 1.5px solid #fca5a5; color: #991b1b; font-size: 13px; font-weight: 600;
+}
+.btn-cancelar-dom {
+  width: 100%; min-height: 44px; margin-top: 10px; border-radius: 14px;
+  border: 1.5px solid #fca5a5; background: #fef2f2; color: #b91c1c; font-weight: 700; cursor: pointer;
+}
+.btn-cancelar-dom:hover { background: #dc2626; color: #ffffff; }

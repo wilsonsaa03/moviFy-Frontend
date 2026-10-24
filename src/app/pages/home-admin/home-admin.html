@@ -92,6 +92,17 @@
 
     <main class="adm-contenido">
 
+      <!-- Resultado de la última acción (en lugar de ventanas alert) -->
+      @if (aviso) {
+        <div class="adm-toast" [class.error]="aviso.tipo === 'error'" role="status" aria-live="polite">
+          <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: aviso.tipo === 'ok' ? 'check' : 'alerta' }" />
+          <span>{{ aviso.texto }}</span>
+          <button type="button" class="adm-btn-ico" (click)="aviso = null" aria-label="Cerrar aviso">
+            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" />
+          </button>
+        </div>
+      }
+
       <!-- ══════════ RESUMEN ══════════ -->
       @if (seccionActiva === 'dashboard') {
 
@@ -550,49 +561,100 @@
 
             <div class="adm-datos">
               <div><span class="adm-dato-label">Correo</span><span class="adm-dato">{{ conductorDetalle.correo || '—' }}</span></div>
-              <div><span class="adm-dato-label">Teléfono</span><span class="adm-dato">{{ conductorDetalle.telefono || '—' }}</span></div>
+              <div>
+                <span class="adm-dato-label">Celular</span>
+                <span class="adm-dato">{{ conductorDetalle.telefono || '—' }}
+                  @if (conductorDetalle.telefono) {
+                    <span class="adm-verif" [class.no]="!conductorDetalle.telefono_verificado">{{ conductorDetalle.telefono_verificado ? 'Verificado' : 'Sin verificar' }}</span>
+                  }
+                </span>
+              </div>
+              <div><span class="adm-dato-label">Identificación</span><span class="adm-dato">{{ conductorDetalle.tipo_identificacion || '' }} {{ conductorDetalle.numero_identificacion || '—' }}</span></div>
+              <div><span class="adm-dato-label">Licencia</span><span class="adm-dato">{{ conductorDetalle.categorias_licencia || '—' }}</span></div>
+              <div><span class="adm-dato-label">Vehículo</span><span class="adm-dato adm-cap">{{ conductorDetalle.tipo_vehiculo || '—' }}</span></div>
               <div><span class="adm-dato-label">Placa</span><span class="adm-dato"><span class="adm-placa">{{ conductorDetalle.placa || '—' }}</span></span></div>
-              <div><span class="adm-dato-label">Modelo</span><span class="adm-dato">{{ conductorDetalle.modelo || '—' }}</span></div>
+              <div><span class="adm-dato-label">Marca y modelo</span><span class="adm-dato">{{ conductorDetalle.modelo || '—' }}</span></div>
+              <div><span class="adm-dato-label">Color</span><span class="adm-dato">{{ conductorDetalle.color || '—' }}</span></div>
+              @if (conductorDetalle.empresa_afiliadora) {
+                <div><span class="adm-dato-label">Empresa</span><span class="adm-dato">{{ conductorDetalle.empresa_afiliadora }}{{ conductorDetalle.numero_interno ? ' · N.º ' + conductorDetalle.numero_interno : '' }}</span></div>
+              }
             </div>
 
-            @if (conductorDetalle.estado === 'rechazado' && conductorDetalle.motivo_rechazo) {
+            @if ((conductorDetalle.estado === 'rechazado' || conductorDetalle.estado === 'suspendido') && conductorDetalle.motivo_rechazo) {
               <div class="adm-motivo">
-                <span class="adm-dato-label">Motivo de rechazo</span>
+                <span class="adm-dato-label">Motivo {{ conductorDetalle.estado === 'suspendido' ? 'de la suspensión' : 'del rechazo' }}</span>
                 <p>{{ conductorDetalle.motivo_rechazo }}</p>
               </div>
             }
 
-            <h3 class="adm-modal-sub">Documentos enviados</h3>
+            <h3 class="adm-modal-sub">
+              Documentos enviados
+              @if (documentosPorRevisar) { <span class="adm-sub-nota">{{ documentosPorRevisar }} por revisar</span> }
+            </h3>
             <div class="adm-docs">
-              @for (doc of [{ c: 'licencia', t: 'Licencia de conducción' }, { c: 'soat', t: 'SOAT' }, { c: 'tarjeta_propiedad', t: 'Tarjeta de propiedad' }, { c: 'cedula', t: 'Cédula' }]; track doc.c) {
-                @if (conductorDetalle[doc.c]) {
-                  <div class="adm-doc">
-                    <div class="adm-doc-preview">
-                      @if (esImagen(doc.c) && docUrls[doc.c]) {
-                        <img [src]="docUrls[doc.c]" [alt]="doc.t">
-                      } @else {
-                        <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'documento' }" />
+              @for (d of documentosDetalle; track d.id) {
+                <div class="adm-doc" [class.doc-mal]="d.estado === 'rechazado' || d.estado === 'vencido'">
+                  <button type="button" class="adm-doc-preview" (click)="abrirDocumento('' + d.id)" [disabled]="!docUrls['' + d.id]" [attr.aria-label]="'Abrir ' + d.nombre">
+                    @if (esImagen('' + d.id) && docUrls['' + d.id]) {
+                      <img [src]="docUrls['' + d.id]" [alt]="d.nombre">
+                    } @else {
+                      <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'documento' }" />
+                    }
+                  </button>
+                  <span class="adm-doc-titulo">{{ d.nombre }}</span>
+                  <span class="adm-estado e-{{ d.estado }}">{{ d.estado_nombre }}</span>
+                  @if (vence(d)) { <small class="adm-doc-nota">{{ vence(d) }}</small> }
+                  @if (d.observacion) { <small class="adm-doc-nota mal">{{ d.observacion }}</small> }
+
+                  @if (rechazandoDoc === d.id) {
+                    <label class="adm-dato-label" [for]="'obs-' + d.id">¿Por qué lo rechazas?</label>
+                    <textarea [id]="'obs-' + d.id" class="adm-textarea adm-textarea-sm" rows="2" [(ngModel)]="observacionDoc"
+                              placeholder="Ej.: la foto está borrosa"></textarea>
+                    <div class="adm-doc-acciones">
+                      <button type="button" class="adm-btn adm-btn-borde" (click)="rechazandoDoc = null">Cancelar</button>
+                      <button type="button" class="adm-btn adm-btn-peligro-solido" (click)="revisarDocumento(d, 'rechazado')"
+                              [disabled]="!observacionDoc.trim() || procesandoDoc === d.id">Rechazar</button>
+                    </div>
+                  } @else {
+                    <div class="adm-doc-acciones">
+                      @if (d.estado !== 'aprobado') {
+                        <button type="button" class="adm-btn adm-btn-ok" (click)="revisarDocumento(d, 'aprobado')" [disabled]="procesandoDoc === d.id">
+                          <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" /> Aprobar
+                        </button>
+                      }
+                      @if (d.estado !== 'rechazado') {
+                        <button type="button" class="adm-btn adm-btn-peligro" (click)="revisarDocumento(d, 'rechazado')" [disabled]="procesandoDoc === d.id">
+                          <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" /> Rechazar
+                        </button>
                       }
                     </div>
-                    <span class="adm-doc-titulo">{{ doc.t }}</span>
-                    <button type="button" class="adm-btn adm-btn-suave" (click)="abrirDocumento(doc.c)" [disabled]="!docUrls[doc.c]">Abrir completo</button>
-                  </div>
-                }
-              }
-              @if (!conductorDetalle.licencia && !conductorDetalle.soat && !conductorDetalle.tarjeta_propiedad && !conductorDetalle.cedula) {
-                <p class="adm-vacio adm-docs-vacio">Este conductor no tiene documentos guardados en el sistema (posiblemente se registró antes de la actualización de almacenamiento de archivos).</p>
+                  }
+                </div>
+              } @empty {
+                <p class="adm-vacio adm-docs-vacio">Este conductor todavía no ha subido documentos.</p>
               }
             </div>
+
+            @if (errorModal) {
+              <p class="adm-error-modal" role="alert">
+                <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'alerta' }" /> {{ errorModal }}
+              </p>
+            }
           </div>
 
-          @if (conductorDetalle.estado === 'pendiente') {
-            <div class="adm-modal-pie">
-              <button type="button" class="adm-btn adm-btn-peligro" (click)="rechazarDesdeModal(conductorDetalle)">
-                <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" /> Rechazar
-              </button>
-              <button type="button" class="adm-btn adm-btn-ok" (click)="aprobarDesdeModal(conductorDetalle)" [disabled]="procesandoConductor">
-                <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" /> Aprobar conductor
-              </button>
+          @if (conductorDetalle.estado === 'pendiente' || conductorDetalle.estado === 'rechazado') {
+            <div class="adm-modal-pie adm-modal-pie-nota">
+              <p class="adm-ayuda">Solo los conductores aprobados pueden conectarse y recibir servicios. Al aprobar, los documentos que sigan por revisar quedan aprobados.</p>
+              <div class="adm-pie-botones">
+                @if (conductorDetalle.estado === 'pendiente') {
+                  <button type="button" class="adm-btn adm-btn-peligro" (click)="rechazarDesdeModal(conductorDetalle)">
+                    <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" /> Rechazar
+                  </button>
+                }
+                <button type="button" class="adm-btn adm-btn-ok" (click)="aprobarDesdeModal(conductorDetalle)" [disabled]="procesandoConductor">
+                  <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" /> Aprobar conductor
+                </button>
+              </div>
             </div>
           }
         }
@@ -605,21 +667,27 @@
     <div class="adm-modal-fondo" (click)="cerrarModal()">
       <div class="adm-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-rechazo" (click)="$event.stopPropagation()">
         <div class="adm-modal-head">
-          <h2 id="titulo-rechazo">Rechazar a {{ conductorSeleccionado?.nombre }}</h2>
+          <h2 id="titulo-rechazo">{{ accionModal === 'suspendido' ? 'Suspender' : 'Rechazar' }} a {{ conductorSeleccionado?.nombre }}</h2>
           <button type="button" class="adm-btn-ico" (click)="cerrarModal()" aria-label="Cerrar">
             <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" />
           </button>
         </div>
         <div class="adm-modal-cuerpo">
-          <label class="adm-dato-label" for="motivo-rechazo">Motivo del rechazo</label>
+          <label class="adm-dato-label" for="motivo-rechazo">Motivo {{ accionModal === 'suspendido' ? 'de la suspensión' : 'del rechazo' }}</label>
           <textarea id="motivo-rechazo" class="adm-textarea" rows="4" [(ngModel)]="motivoRechazo"
-                    placeholder="Ej.: la licencia está vencida o la foto del SOAT no se lee."></textarea>
-          <p class="adm-ayuda">El conductor verá este motivo para corregir y volver a enviar sus documentos.</p>
+                    [placeholder]="accionModal === 'suspendido' ? 'Ej.: varias quejas de pasajeros o el SOAT venció.' : 'Ej.: la licencia está vencida o la foto del SOAT no se lee.'"></textarea>
+          <p class="adm-ayuda">
+            @if (accionModal === 'suspendido') {
+              Mientras esté suspendido no recibe servicios. Verá este motivo y podrá hablar con soporte.
+            } @else {
+              El conductor verá este motivo para corregir y volver a enviar sus documentos.
+            }
+          </p>
         </div>
         <div class="adm-modal-pie">
           <button type="button" class="adm-btn adm-btn-borde" (click)="cerrarModal()">Cancelar</button>
           <button type="button" class="adm-btn adm-btn-peligro-solido" (click)="confirmarRechazo()"
-                  [disabled]="!motivoRechazo.trim() || procesandoConductor">Rechazar conductor</button>
+                  [disabled]="!motivoRechazo.trim() || procesandoConductor">{{ accionModal === 'suspendido' ? 'Suspender' : 'Rechazar' }} conductor</button>
         </div>
       </div>
     </div>

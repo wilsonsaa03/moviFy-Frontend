@@ -12,15 +12,31 @@ type Seccion = 'dashboard' | 'conductores' | 'usuarios' | 'servicios' | 'reporte
 interface DiaSemana { etiqueta: string; total: number; altura: number; esHoy: boolean; }
 interface Conteo { clave: string; etiqueta: string; total: number; porcentaje: number; }
 
-/** Estados de un servicio tal como los devuelve el backend. */
-const ESTADOS_EN_CURSO = ['ACEPTADO', 'EN_CAMINO'];
+/** Estados de un servicio tal como los devuelve el backend (nombres de la web, fn_estado_legado). */
+const ESTADOS_EN_CURSO = ['ACEPTADO', 'EN_CAMINO_AL_USUARIO', 'LLEGO_AL_ORIGEN', 'EN_CAMINO', 'EN_VIAJE', 'PAQUETE_RECOGIDO'];
 const ETIQUETA_ESTADO: Record<string, string> = {
   PENDIENTE: 'Pendiente',
   ACEPTADO: 'Aceptado',
+  EN_CAMINO_AL_USUARIO: 'Va por el cliente',
+  LLEGO_AL_ORIGEN: 'Llegó al origen',
   EN_CAMINO: 'En camino',
+  EN_VIAJE: 'En viaje',
+  PAQUETE_RECOGIDO: 'Pedido recogido',
   FINALIZADO: 'Finalizado',
   CANCELADO: 'Cancelado'
 };
+
+/** Documento vigente del conductor (GET /admin/conductor/{id}/detalle → documentos). */
+interface DocumentoConductor {
+  id: number;
+  tipo_documento: string;
+  nombre: string;
+  archivo: string;
+  estado: 'pendiente' | 'aprobado' | 'rechazado' | 'vencido';
+  estado_nombre: string;
+  observacion: string | null;
+  fecha_vencimiento: string | null;
+}
 const ETIQUETA_TIPO: Record<string, string> = {
   TRANSPORTE: 'Transporte',
   DOMICILIO: 'Domicilio',
@@ -111,9 +127,19 @@ export class HomeAdminComponent implements OnInit {
 
   cargando = true;
 
-  /** URLs locales (blob:) de los documentos: se descargan con el token del admin. */
+  /** URLs locales (blob:) de los documentos, por id de documento: se descargan con el token del admin. */
   docUrls: Record<string, string> = {};
   docTipos: Record<string, string> = {};
+
+  /** Documento que se está rechazando (muestra el campo del motivo debajo de su tarjeta). */
+  rechazandoDoc: number | null = null;
+  observacionDoc = '';
+  procesandoDoc: number | null = null;
+  /** Error de aprobar/rechazar dentro del modal (p. ej. "falta la licencia"): el modal no se cierra. */
+  errorModal = '';
+  /** Aviso arriba del contenido (en lugar de alert): éxito o error de una acción. */
+  aviso: { tipo: 'ok' | 'error'; texto: string } | null = null;
+  private relojAviso?: ReturnType<typeof setTimeout>;
 
   constructor(
     private router: Router,
@@ -172,20 +198,32 @@ export class HomeAdminComponent implements OnInit {
     return estado === 'todos' ? this.conductores.length : this.conductores.filter(c => c.estado === estado).length;
   }
 
-  aprobarConductor(c: any) { this.cambiarEstado(c.conductor_id, 'aprobado'); }
-  rechazarConductor(c: any) { this.conductorSeleccionado = c; this.mostrarModal = true; }
-  bloquearConductor(c: any) { this.cambiarEstado(c.conductor_id, 'suspendido'); }
+  /** Rechazar y suspender piden motivo (el backend lo exige y el conductor lo ve en la app). */
+  accionModal: 'rechazado' | 'suspendido' = 'rechazado';
 
-  /** Botón "Rechazar" del modal de motivo (antes el modal no existía en el HTML). */
+  aprobarConductor(c: any) { this.cambiarEstado(c.conductor_id, 'aprobado'); }
+  rechazarConductor(c: any) { this.abrirMotivo(c, 'rechazado'); }
+  bloquearConductor(c: any) { this.abrirMotivo(c, 'suspendido'); }
+
+  private abrirMotivo(c: any, accion: 'rechazado' | 'suspendido') {
+    this.conductorSeleccionado = c;
+    this.accionModal = accion;
+    this.motivoRechazo = '';
+    this.mostrarModal = true;
+  }
+
+  /** Botón del modal de motivo: rechaza o suspende. */
   confirmarRechazo() {
     if (!this.conductorSeleccionado) return;
-    this.cambiarEstado(this.conductorSeleccionado.conductor_id, 'rechazado');
+    this.cambiarEstado(this.conductorSeleccionado.conductor_id, this.accionModal);
   }
 
   verDocumentos(c: any) {
     this.mostrarModalDocumentos = true;
     this.cargandoDetalle = true;
     this.conductorDetalle = null;
+    this.errorModal = '';
+    this.rechazandoDoc = null;
 
     this.liberarDocumentos();
 
@@ -193,20 +231,68 @@ export class HomeAdminComponent implements OnInit {
       .then((data: any) => {
         this.conductorDetalle = data;
         this.cargandoDetalle = false;
-        for (const campo of ['licencia', 'soat', 'tarjeta_propiedad', 'cedula']) {
-          if (data[campo]) this.cargarDocumento(campo, data[campo]);
+        // Todos los documentos vigentes (licencia, SOAT, técnico-mecánica, fotos del vehículo…), no solo 4
+        for (const d of (data.documentos || []) as DocumentoConductor[]) {
+          if (d.archivo) this.cargarDocumento(String(d.id), d.archivo);
         }
       })
       .catch(err => {
-        console.error('Error cargando detalle del conductor:', err);
         this.cargandoDetalle = false;
+        this.errorModal = ApiService.mensaje(err, 'No se pudo cargar el detalle del conductor.');
       });
+  }
+
+  get documentosDetalle(): DocumentoConductor[] {
+    return this.conductorDetalle?.documentos || [];
+  }
+
+  get documentosPorRevisar(): number {
+    return this.documentosDetalle.filter(d => d.estado === 'pendiente').length;
   }
 
   cerrarModalDocumentos() {
     this.mostrarModalDocumentos = false;
     this.conductorDetalle = null;
+    this.errorModal = '';
+    this.rechazandoDoc = null;
     this.liberarDocumentos();
+  }
+
+  /** Aprueba o rechaza un documento (PATCH /api/admin/documentos/{id}); rechazar exige el motivo. */
+  async revisarDocumento(d: DocumentoConductor, estado: 'aprobado' | 'rechazado') {
+    if (estado === 'rechazado' && this.rechazandoDoc !== d.id) {
+      this.rechazandoDoc = d.id;
+      this.observacionDoc = '';
+      return;
+    }
+    if (estado === 'rechazado' && !this.observacionDoc.trim()) {
+      this.errorModal = 'Escribe por qué rechazas el documento para que el conductor sepa qué corregir.';
+      return;
+    }
+    this.procesandoDoc = d.id;
+    this.errorModal = '';
+    try {
+      await this.api.patch(`/admin/documentos/${d.id}`, {
+        estado,
+        observacion: estado === 'rechazado' ? this.observacionDoc.trim() : null
+      });
+      d.estado = estado;
+      d.estado_nombre = estado === 'aprobado' ? 'Aprobado' : 'Rechazado';
+      d.observacion = estado === 'rechazado' ? this.observacionDoc.trim() : null;
+      this.rechazandoDoc = null;
+      this.cargarDatos(); // el contador de "documentos por revisar" de la tabla
+    } catch (err) {
+      this.errorModal = ApiService.mensaje(err, 'No se pudo actualizar el documento.');
+    } finally {
+      this.procesandoDoc = null;
+    }
+  }
+
+  vence(d: DocumentoConductor): string {
+    if (!d.fecha_vencimiento) return '';
+    const f = new Date(d.fecha_vencimiento + 'T12:00:00');
+    const vencido = f.getTime() < Date.now();
+    return `${vencido ? 'Venció' : 'Vence'} el ${f.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}`;
   }
 
   /**
@@ -238,9 +324,11 @@ export class HomeAdminComponent implements OnInit {
     if (url) window.open(url, '_blank', 'noopener');
   }
 
-  aprobarDesdeModal(c: any) {
-    this.aprobarConductor(c);
-    this.cerrarModalDocumentos();
+  /** Solo se cierra si quedó aprobado; si el backend lo impide (falta un documento…), el motivo se ve en el modal. */
+  async aprobarDesdeModal(c: any) {
+    this.errorModal = '';
+    const ok = await this.cambiarEstado(c.conductor_id, 'aprobado', true);
+    if (ok) this.cerrarModalDocumentos();
   }
 
   rechazarDesdeModal(c: any) {
@@ -248,27 +336,44 @@ export class HomeAdminComponent implements OnInit {
     this.rechazarConductor(c);
   }
 
-  async cambiarEstado(conductorId: number, nuevoEstado: string) {
-    if (nuevoEstado === 'rechazado' && !this.motivoRechazo.trim()) {
-      alert('Por favor ingrese un motivo de rechazo.');
-      return;
+  /** @param enModal el error se muestra dentro del modal de detalle (no como aviso de la página). */
+  async cambiarEstado(conductorId: number, nuevoEstado: string, enModal = false): Promise<boolean> {
+    const conMotivo = nuevoEstado === 'rechazado' || nuevoEstado === 'suspendido';
+    if (conMotivo && !this.motivoRechazo.trim()) {
+      this.avisar('error', 'Escribe el motivo para que el conductor sepa qué pasó.');
+      return false;
     }
 
-    if (this.procesandoConductor) return;
+    if (this.procesandoConductor) return false;
     this.procesandoConductor = true;
     try {
       await this.api.patch(`/transporte/admin/conductor/${conductorId}/estado`, {
         estado: nuevoEstado,
-        motivo_rechazo: nuevoEstado === 'rechazado' ? this.motivoRechazo.trim() : ''
+        motivo_rechazo: conMotivo ? this.motivoRechazo.trim() : ''
       });
-      alert(`Conductor ${nuevoEstado} con éxito.`);
+      const textos: Record<string, string> = {
+        aprobado: 'Conductor aprobado: ya puede conectarse y recibir servicios.',
+        rechazado: 'Conductor rechazado. Verá el motivo en la app para corregir.',
+        suspendido: 'Conductor suspendido: deja de recibir servicios.'
+      };
+      this.avisar('ok', textos[nuevoEstado] || `Conductor ${nuevoEstado}.`);
       this.cerrarModal();
       this.cargarDatos();
+      return true;
     } catch (err) {
-      alert(ApiService.mensaje(err, 'No se pudo actualizar el conductor.'));
+      const msg = ApiService.mensaje(err, 'No se pudo actualizar el conductor.');
+      if (enModal) this.errorModal = msg;
+      else this.avisar('error', msg);
+      return false;
     } finally {
       this.procesandoConductor = false;
     }
+  }
+
+  private avisar(tipo: 'ok' | 'error', texto: string) {
+    clearTimeout(this.relojAviso);
+    this.aviso = { tipo, texto };
+    this.relojAviso = setTimeout(() => (this.aviso = null), 6000);
   }
 
   // ─── USUARIOS ──────────────────────────────────
@@ -332,9 +437,9 @@ export class HomeAdminComponent implements OnInit {
       await this.api.patch(`/auth/usuarios/${id}/estado`, { estado: nuevoEstado });
       const user = this.usuarios.find(user => user.id === id);
       if (user) user.estado = nuevoEstado;
-      alert(`Usuario actualizado a: ${nuevoEstado}`);
+      this.avisar('ok', nuevoEstado === 'bloqueado' ? `${user?.nombre ?? 'El usuario'} quedó bloqueado.` : `${user?.nombre ?? 'El usuario'} quedó activo.`);
     } catch (err) {
-      alert('Error: ' + ApiService.mensaje(err, 'No se pudo actualizar'));
+      this.avisar('error', ApiService.mensaje(err, 'No se pudo actualizar el usuario.'));
     }
   }
 

@@ -16,70 +16,120 @@
     <!-- PANEL IZQUIERDO: FORMULARIO -->
     <div class="form-card">
       <div class="form-header">
-        <h2>Solicitar Mandado <span class="emoji">📦</span></h2>
-        <p>¿Qué necesitas enviar o recoger? Describe tu pedido y selecciona el destino en el mapa.</p>
+        <h2>Pide un domicilio <span class="emoji" aria-hidden="true">🛍️</span></h2>
+        <p>Comida, farmacia, mercado o una diligencia: te lo llevamos sin que salgas de casa.</p>
       </div>
 
-      @if (puntos) {
-        <app-puntos-ruta [selector]="puntos" [editable]="puedeEditarPuntos"
-                         etiquetaDestino="Destino de entrega" acento="#16a34a"></app-puntos-ruta>
-      }
+      <div data-campo="recogida" tabindex="-1" [class.bloque-invalido]="invalido('recogida') || invalido('entrega')">
+        @if (puntos) {
+          <app-puntos-ruta [selector]="puntos" [editable]="puedeEditarPuntos" etiquetaOrigen="Recoger en"
+                           etiquetaDestino="Entregar en" acento="#16a34a"></app-puntos-ruta>
+        }
+        <span data-campo="entrega" tabindex="-1"></span>
+        @if (invalido('recogida')) { <small class="error-campo">Marca en el mapa o escribe dónde recogemos el pedido.</small> }
+        @if (invalido('entrega')) { <small class="error-campo">Marca en el mapa o escribe a dónde lo llevamos.</small> }
+      </div>
 
       <div class="field-group">
-        <label class="field-label">¿Qué llevamos?</label>
-        <div class="field-box textarea-box">
-          <span class="field-icon">📝</span>
+        <label class="field-label" for="dom-lugar">Nombre del lugar <small class="opcional">(opcional)</small></label>
+        <input id="dom-lugar" class="dom-input" type="text" maxlength="120" placeholder="Ej.: Droguería La Económica"
+               [(ngModel)]="establecimiento">
+      </div>
+
+      <div class="field-group">
+        <span class="field-label">¿Qué es?</span>
+        <div class="chips" role="radiogroup" aria-label="¿Qué es el pedido?">
+          @for (c of categorias; track c.valor) {
+            <button type="button" class="chip" role="radio" [class.selected]="categoria === c.valor"
+                    [attr.aria-checked]="categoria === c.valor" (click)="categoria = categoria === c.valor ? '' : c.valor">
+              <span aria-hidden="true">{{ c.icon }}</span> {{ c.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="dom-desc">¿Qué hay que llevar?</label>
+        <small class="ayuda">Escríbelo como se lo dirías al domiciliario.</small>
+        <div class="field-box textarea-box" [class.invalido]="invalido('descripcion') || !!prohibido">
+          <span class="field-icon" aria-hidden="true">📝</span>
           <textarea
-            placeholder="Ej: Entrega de llaves, Documentos, Comida..."
+            id="dom-desc"
+            data-campo="descripcion"
+            placeholder="Ej.: Una caja de acetaminofén de 500 mg y un suero oral de naranja."
             [(ngModel)]="descripcionEncargo"
-            rows="2"
-            maxlength="120"
+            rows="3"
+            maxlength="300"
             class="dom-textarea"
+            [attr.aria-invalid]="invalido('descripcion') || !!prohibido"
           ></textarea>
         </div>
-        <small class="char-count">{{ descripcionEncargo.length }}/120</small>
+        <small class="char-count">{{ descripcionEncargo.length }}/300</small>
+        @if (prohibido) {
+          <small class="error-campo" role="alert">🚫 No podemos llevar esto: menciona {{ prohibido }}. En MoviFY no se llevan drogas, armas, dinero ni objetos robados.</small>
+        } @else if (invalido('descripcion')) {
+          <small class="error-campo">Cuéntale al domiciliario qué debe llevar.</small>
+        }
       </div>
 
-      <div class="field-group" *ngIf="tarifaEstimada > 0">
-        <div class="field-box field-selected">
-          <span class="field-icon">🛣️</span>
-          <div class="field-text">
-            <strong>Ruta por calles</strong>
-            <small>{{ distanciaViaje.toFixed(2) }} km · ${{ tarifaEstimada | number }}</small>
-          </div>
+      <div class="field-group">
+        <span class="field-label">¿Quién paga el pedido en la tienda?</span>
+        <div class="segmento" role="radiogroup" aria-label="¿Quién paga el pedido en la tienda?">
+          <button type="button" role="radio" [class.selected]="!pagaDomiciliario" [attr.aria-checked]="!pagaDomiciliario"
+                  (click)="pagaDomiciliario = false">
+            <strong>Ya está pago</strong>
+          </button>
+          <button type="button" role="radio" [class.selected]="pagaDomiciliario" [attr.aria-checked]="pagaDomiciliario"
+                  (click)="pagaDomiciliario = true">
+            <strong>El domiciliario</strong><small>y yo le devuelvo</small>
+          </button>
         </div>
+        @if (pagaDomiciliario) {
+          <label class="field-label mt8" for="dom-valor">Valor aproximado del pedido</label>
+          <div class="valor-box" [class.invalido]="invalido('valor')">
+            <span aria-hidden="true">$</span>
+            <input id="dom-valor" data-campo="valor" type="number" inputmode="numeric" min="0" step="500"
+                   placeholder="28000" [(ngModel)]="valorPedido" [attr.aria-invalid]="invalido('valor')">
+          </div>
+          @if (invalido('valor')) { <small class="error-campo">¿Cuánto cuesta más o menos? El domiciliario lo paga y tú se lo devuelves.</small> }
+          <p class="nota-pago">💵 Lo pagas en efectivo al recibir. El domiciliario te mostrará la factura: pagas lo que diga la factura más el domicilio.</p>
+        }
       </div>
 
-      <div class="opciones-grid">
-        <div class="opcion-chip" [class.selected]="incluirFoto" (click)="incluirFoto = !incluirFoto">
-          <span class="opcion-icon">📷</span>
-          <div>
-            <strong>Agregar foto</strong>
-            <small>(Opcional)</small>
-          </div>
+      @if (tarifaEstimada > 0) {
+        <div class="resumen-pago" aria-live="polite">
+          <div><span>Domicilio</span><strong>${{ tarifaEstimada | number }}</strong></div>
+          @if (pagaDomiciliario && valorPedido) {
+            <div><span>Pedido (aproximado)</span><strong>${{ valorPedido | number }}</strong></div>
+          }
+          <div class="total"><span>Pagas al recibir</span><strong>${{ totalAlRecibir | number }}</strong></div>
+          <small>🛵 Llega en moto · {{ distanciaViaje | number:'1.1-1' }} km</small>
         </div>
-        <div class="opcion-chip" [class.selected]="entregaRapida" (click)="toggleEntregaRapida()">
-          <span class="opcion-icon">⚡</span>
-          <div>
-            <strong>Entrega rápida</strong>
-            <small>Prioridad alta</small>
-          </div>
-        </div>
-      </div>
+      }
 
-      <button
-        class="btn-solicitar"
-        [class.loading]="buscandoConductor"
-        [disabled]="!destinoMarker || !descripcionEncargo || buscandoConductor"
-        (click)="solicitarDomicilio()"
-      >
-        <span *ngIf="!buscandoConductor">🛵 Solicitar Domiciliario</span>
-        <span *ngIf="buscandoConductor" class="btn-loading">
-          <span class="dot-spin"></span> Buscando...
-        </span>
-      </button>
+      @if (intentoEnviar && mensajeFaltantes) {
+        <p class="aviso-faltantes" role="alert">⚠️ {{ mensajeFaltantes }}</p>
+      }
 
-      <p class="seguridad-tag">🔒 Tus datos están protegidos</p>
+      @if (!conductorInfo) {
+        <button type="button"
+          class="btn-solicitar"
+          [class.loading]="buscandoConductor"
+          [disabled]="buscandoConductor"
+          (click)="solicitarDomicilio()"
+        >
+          @if (!buscandoConductor) {
+            <span>🛵 Pedir domicilio</span>
+          } @else {
+            <span class="btn-loading"><span class="dot-spin" aria-hidden="true"></span> Buscando domiciliario...</span>
+          }
+        </button>
+      }
+      @if (puedeCancelar) {
+        <button type="button" class="btn-cancelar-dom" (click)="cancelarDomicilio()">Cancelar domicilio</button>
+      }
+
+      <p class="seguridad-tag">🔒 Pagas en efectivo al recibir · Todos los domiciliarios están verificados</p>
     </div>
 
     <!-- PANEL MAPA -->
@@ -111,8 +161,8 @@
       <div class="step" [class.active]="esPasoActivo('FINALIZADO')"><span>🏁</span><small>Entregado</small></div>
     </div>
     <div class="panel-footer">
-      <span class="estado-badge">{{ mensajeEstado }}</span>
-      <button class="btn-chat" (click)="enviarMensajeConductor()">💬 Chat</button>
+      <span class="estado-badge" aria-live="polite">{{ mensajeEstado }}</span>
+      <button type="button" class="btn-chat" (click)="enviarMensajeConductor()">💬 Chat</button>
     </div>
   </div>
 
@@ -123,10 +173,11 @@
       <h2 class="modal-titulo">¡Pedido entregado!</h2>
       <p class="modal-sub">Esperamos que tu domicilio haya llegado perfecto.<br>¡Gracias por usar <strong>MoviFY</strong>!</p>
       <div class="modal-conductor" *ngIf="conductorInfo">
-        <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="modal-foto">
+        <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="modal-foto"
+             [alt]="'Foto de ' + (conductorInfo.conductor_nombre || 'tu domiciliario')">
         <div>
           <strong>{{ conductorInfo.conductor_nombre || 'Tu domiciliario' }}</strong>
-          <small>Domiciliario MoviFY · ⭐ 4.9</small>
+          <small>Domiciliario MoviFY{{ conductorInfo.conductor_calificacion ? ' · ⭐ ' + (conductorInfo.conductor_calificacion | number:'1.1-1') : '' }}</small>
         </div>
         <div class="modal-tarifa">${{ conductorInfo.tarifa | number }}</div>
       </div>

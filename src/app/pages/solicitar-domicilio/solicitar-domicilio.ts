@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import * as L from 'leaflet';
 import { cargarRoutingMachine } from '../../core/lrm-loader';
 import { ApiService } from '../../core/api.service';
+import { contenidoProhibido } from '../../core/contenido-prohibido';
 import { SelectorPuntos, crearMapaCiudad, rutaOsrm } from '../../core/mapa-ciudad';
 import { PuntosRutaComponent } from '../../shared/puntos-ruta/puntos-ruta';
 
@@ -22,14 +23,26 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
   origen: string = 'Buscando tu ubicación...';
   destino: string = '';
   descripcionEncargo: string = '';
+  /** Figma "Domicilio 1 · Pedido": ¿Qué es? */
+  categorias = [
+    { valor: 'comida', label: 'Comida', icon: '🍴' },
+    { valor: 'farmacia', label: 'Farmacia', icon: '💊' },
+    { valor: 'mercado', label: 'Mercado', icon: '🛒' },
+    { valor: 'diligencia', label: 'Diligencia', icon: '📄' }
+  ];
+  categoria: string = '';
+  /** Nombre del sitio donde se recoge ("Droguería La Económica"), opcional. */
+  establecimiento: string = '';
+  /** ¿Quién paga el pedido en la tienda? true = el domiciliario (y el cliente le devuelve al recibir). */
+  pagaDomiciliario: boolean = false;
+  valorPedido: number | null = null;
+  intentoEnviar: boolean = false;
   tarifaEstimada: number = 0;
   distanciaViaje: number = 0;
   duracionViaje: number = 0;
   buscandoConductor: boolean = false;
   mensajeEstado: string = 'Iniciando búsqueda...';
   conductorInfo: any = null;
-  incluirFoto: boolean = false;
-  entregaRapida: boolean = false;
   totalConductoresActivos: number = 0;
 
   // Modal calificación
@@ -128,12 +141,7 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
     if (p.origen && p.destino) this.calcularRutaYTarifa();
   }
 
-  toggleEntregaRapida() {
-    this.entregaRapida = !this.entregaRapida;
-    if (this.puntos?.origen && this.puntos.destino) this.calcularRutaYTarifa();
-  }
-
-  /** Dibuja la ruta por calles (OSRM) entre recogida y entrega y calcula distancia y tarifa estimada. */
+  /** Dibuja la ruta por calles (OSRM) y pide al backend la tarifa de domicilio (la misma con la que se cobra). */
   private async calcularRutaYTarifa() {
     const o = this.puntos.origen!;
     const d = this.puntos.destino!;
@@ -142,14 +150,76 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
       this.puntos.mostrarRuta(ruta.puntos, '#16a34a');
       this.distanciaViaje = ruta.km;
       this.duracionViaje = ruta.min;
-      let calculo = 3500 + (this.distanciaViaje * 1200);
-      if (this.entregaRapida) calculo *= 1.20;
-      this.tarifaEstimada = Math.ceil(calculo / 100) * 100;
     } else {
       // Sin OSRM: línea recta como respaldo
       this.puntos.mostrarRuta([o, d], '#16a34a');
       this.distanciaViaje = this.map.distance(o, d) / 1000;
-      this.tarifaEstimada = this.entregaRapida ? 6000 : 5000;
+    }
+    try {
+      const c = await this.api.get('/tarifas/cotizar', {
+        tipo_servicio: 'domicilio', tipo_vehiculo: 'moto',
+        origen_lat: o.lat, origen_lng: o.lng, destino_lat: d.lat, destino_lng: d.lng
+      });
+      this.tarifaEstimada = Number(c.opciones?.[0]?.valor_estimado) || 0;
+      if (c.duracion_min) this.duracionViaje = Number(c.duracion_min);
+    } catch {
+      this.tarifaEstimada = 0;
+    }
+  }
+
+  /** Lo que se paga al recibir: domicilio + (si el domiciliario compra) el valor aproximado del pedido. */
+  get totalAlRecibir(): number {
+    return this.tarifaEstimada + (this.pagaDomiciliario ? Number(this.valorPedido) || 0 : 0);
+  }
+
+  get prohibido(): string | null {
+    return contenidoProhibido(this.descripcionEncargo) ?? contenidoProhibido(this.establecimiento);
+  }
+
+  /** Lo que falta para poder pedir, en el orden de la pantalla. Vacío = listo. */
+  get faltantes(): { campo: string; texto: string }[] {
+    const f: { campo: string; texto: string }[] = [];
+    if (!this.ubicacionEncontrada) f.push({ campo: 'recogida', texto: 'dónde recogemos el pedido' });
+    if (!this.destinoMarker) f.push({ campo: 'entrega', texto: 'a dónde lo llevamos' });
+    if (!this.descripcionEncargo.trim()) f.push({ campo: 'descripcion', texto: 'qué hay que llevar' });
+    else if (this.prohibido) f.push({ campo: 'descripcion', texto: `quitar lo que no podemos llevar (${this.prohibido})` });
+    if (this.pagaDomiciliario && !(Number(this.valorPedido) > 0)) {
+      f.push({ campo: 'valor', texto: 'cuánto cuesta más o menos el pedido' });
+    }
+    return f;
+  }
+
+  invalido(campo: string): boolean {
+    return this.intentoEnviar && this.faltantes.some(f => f.campo === campo);
+  }
+
+  get mensajeFaltantes(): string {
+    const t = this.faltantes.map(f => f.texto);
+    if (!t.length) return '';
+    const lista = t.length === 1 ? t[0] : `${t.slice(0, -1).join(', ')} y ${t[t.length - 1]}`;
+    return `Para pedir tu domicilio falta ${lista}.`;
+  }
+
+  /** Pendiente o aceptado: el cliente todavía puede cancelar. */
+  get puedeCancelar(): boolean {
+    const e = this.conductorInfo?.estado;
+    return this.buscandoConductor || e === 'PENDIENTE' || e === 'ACEPTADO' || e === 'EN_CAMINO_AL_USUARIO';
+  }
+
+  async cancelarDomicilio(): Promise<void> {
+    const id = this.servicioId ?? this.conductorInfo?.id;
+    if (!id) return;
+    if (!confirm('¿Cancelar el domicilio? Dejaremos de buscar domiciliario.')) return;
+    try {
+      await this.api.post(`/servicios/${id}/estado`, { estado: 'cancelado' });
+      if (this.pollingServicio) clearInterval(this.pollingServicio);
+      this.detenerSimulacion();
+      this.buscandoConductor = false;
+      this.conductorInfo = null;
+      this.servicioId = null;
+      this.router.navigate(['/home-usuario']);
+    } catch (e) {
+      alert(ApiService.mensaje(e, 'No se pudo cancelar el domicilio en este momento.'));
     }
   }
 
@@ -182,21 +252,32 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
 
   async solicitarDomicilio() {
     if (this.buscandoConductor) return;
-    if (!this.descripcionEncargo) return alert('Describe qué debemos llevar');
-    if (!this.ubicacionEncontrada) return alert('Marca el punto de recogida en el mapa o escribe la dirección');
-    if (!this.destinoMarker) return alert('Por favor, selecciona el destino en el mapa');
+    if (this.faltantes.length) {
+      // No se crea nada: se dice qué falta y se lleva al primer campo pendiente
+      this.intentoEnviar = true;
+      document.querySelector<HTMLElement>(`[data-campo="${this.faltantes[0].campo}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
     this.buscandoConductor = true;
     this.transicionFinalizada = false;
     this.mensajeEstado = 'Estamos buscando el domiciliario más cercano...';
 
-    const destCoords = this.destinoMarker.getLatLng();
+    const destCoords = this.destinoMarker!.getLatLng();
     const body = {
       origen_lat: this.userLat, origen_lng: this.userLng,
       destino_lat: destCoords.lat, destino_lng: destCoords.lng,
+      origen: this.puntos.textoOrigen,
+      destino: this.puntos.textoDestino,
       tipo: 'DOMICILIO',
-      descripcion: this.descripcionEncargo,
-      entrega_rapida: this.entregaRapida
+      tipo_vehiculo: 'moto',
+      metodo_pago: 'efectivo',
+      descripcion: this.descripcionEncargo.trim(),
+      establecimiento: this.establecimiento.trim() || null,
+      categoria: this.categoria || null,
+      requiere_compra: this.pagaDomiciliario,
+      valor_productos_aprox: this.pagaDomiciliario ? Number(this.valorPedido) : null
     };
 
     try {
@@ -392,6 +473,12 @@ export class SolicitarDomicilio implements OnInit, AfterViewInit, OnDestroy {
     this.tarifaEstimada = 0;
     this.distanciaViaje = 0;
     this.descripcionEncargo = '';
+    this.establecimiento = '';
+    this.categoria = '';
+    this.pagaDomiciliario = false;
+    this.valorPedido = null;
+    this.intentoEnviar = false;
+    this.servicioId = null;
     this.calificacionSeleccionada = 5;
     this.idServicioFinal = 0;
 

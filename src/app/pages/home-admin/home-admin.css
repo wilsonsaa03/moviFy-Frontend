@@ -236,7 +236,7 @@ textarea:focus-visible { outline: 3px solid var(--turquesa-claro); outline-offse
 .adm-estado::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .e-aprobado, .e-finalizado, .e-activo { background: var(--verde-fondo); color: var(--verde-texto); }
 .e-pendiente { background: var(--amarillo-fondo); color: var(--amarillo-texto); }
-.e-aceptado, .e-en_camino { background: var(--turquesa-fondo); color: var(--turquesa-texto); }
+.e-aceptado, .e-en_camino, .e-en_camino_al_usuario, .e-llego_al_origen, .e-en_viaje, .e-paquete_recogido { background: var(--turquesa-fondo); color: var(--turquesa-texto); }
 .e-rechazado, .e-cancelado, .e-bloqueado { background: var(--rojo-fondo); color: var(--rojo-texto); }
 .e-suspendido { background: #EEF1F5; color: #4F5D70; }
 .rol-cliente { background: var(--turquesa-fondo); color: var(--turquesa-texto); }
@@ -328,6 +328,40 @@ textarea:focus-visible { outline: 3px solid var(--turquesa-claro); outline-offse
 .adm-doc-preview .ico { width: 32px; height: 32px; }
 .adm-doc-titulo { font-size: 13px; font-weight: 800; }
 .adm-docs-vacio { grid-column: 1 / -1; }
+.adm-doc-preview { border: 0; padding: 0; cursor: pointer; width: 100%; }
+.adm-doc-preview:disabled { cursor: default; }
+.adm-doc-preview:focus-visible { outline: 3px solid var(--turquesa); outline-offset: 2px; }
+.adm-doc .adm-estado { align-self: flex-start; }
+.adm-doc.doc-mal { border-color: #F5C2BC; background: #FFF8F7; }
+.adm-doc-nota { font-size: 12px; color: var(--texto-3); line-height: 1.35; }
+.adm-doc-nota.mal { color: var(--rojo-texto); font-weight: 700; }
+.adm-doc-acciones { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.adm-doc-acciones .adm-btn { flex: 1; padding: 7px 10px; font-size: 13px; }
+.adm-textarea-sm { margin-top: 0; padding: 8px 10px; font-size: 13px; }
+.adm-sub-nota { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--amarillo-fondo); color: var(--amarillo-texto); font-size: 12px; }
+.adm-verif { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--verde-fondo); color: var(--verde-texto); font-size: 11px; font-weight: 800; }
+.adm-verif.no { background: var(--amarillo-fondo); color: var(--amarillo-texto); }
+.adm-cap { text-transform: capitalize; }
+.e-vencido { background: var(--rojo-fondo); color: var(--rojo-texto); }
+.adm-error-modal {
+  margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; display: flex; align-items: flex-start; gap: 8px;
+  background: var(--rojo-fondo); color: var(--rojo-texto); font-weight: 700; font-size: 14px;
+}
+.adm-error-modal .ico { width: 18px; height: 18px; flex: none; }
+.adm-modal-pie-nota { flex-direction: column; align-items: stretch; }
+.adm-modal-pie-nota .adm-ayuda { margin: 0; }
+.adm-pie-botones { display: flex; justify-content: flex-end; gap: 10px; }
+
+/* Aviso de la última acción (reemplaza los alert) */
+.adm-toast {
+  position: sticky; top: 12px; z-index: 50;
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 12px 14px; border-radius: 14px;
+  background: var(--verde-fondo); color: var(--verde-texto); font-weight: 700;
+  border: 1px solid #BFE5D0; box-shadow: 0 10px 24px -12px rgba(2, 27, 54, 0.35);
+}
+.adm-toast.error { background: var(--rojo-fondo); color: var(--rojo-texto); border-color: #F5C2BC; }
+.adm-toast > .ico { width: 20px; height: 20px; flex: none; }
+.adm-toast span { flex: 1; }
 
 .adm-textarea {
   width: 100%; margin-top: 6px; padding: 12px; border-radius: 12px; resize: vertical;

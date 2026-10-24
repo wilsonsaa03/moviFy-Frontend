@@ -397,9 +397,16 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     return String(this.viajeActivo?.tipo ?? this.viajeActivo?.tipo_servicio ?? '').toLowerCase() === 'encomienda';
   }
 
+  /** Domicilio en el que el domiciliario pone la plata: para cerrarlo hay que decir cuánto dice la factura. */
+  valorFactura: number | null = null;
+
+  get esCompraDomicilio(): boolean {
+    return String(this.viajeActivo?.tipo ?? '').toLowerCase() === 'domicilio' && !!this.viajeActivo?.requiere_compra;
+  }
+
   finalizarViaje() {
     if (!this.viajeId) return;
-    const cuerpo: Record<string, string> = { estado: 'FINALIZADO' };
+    const cuerpo: Record<string, string | number> = { estado: 'FINALIZADO' };
     if (this.esEncomienda) {
       const pin = this.codigoEntrega.replace(/\D/g, '');
       if (pin.length !== 4) {
@@ -408,16 +415,25 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
       }
       cuerpo['codigo_entrega'] = pin;
     }
+    if (this.esCompraDomicilio) {
+      if (!(Number(this.valorFactura) >= 0) || this.valorFactura === null) {
+        this.errorEntrega = 'Escribe cuánto pagaste en la tienda (lo que dice la factura).';
+        return;
+      }
+      cuerpo['valor_compra_real'] = Number(this.valorFactura);
+    }
     this.errorEntrega = '';
     this.api.patch(`/transporte/servicio/${this.viajeId}/estado`, cuerpo)
       .then(() => {
+        const mensaje = this.esEncomienda ? '✅ Paquete entregado' : this.esCompraDomicilio ? '✅ Pedido entregado' : '✅ Viaje finalizado correctamente';
         this.codigoEntrega = '';
-        this.terminarViajeActivo(this.esEncomienda ? '✅ Paquete entregado' : '✅ Viaje finalizado correctamente');
+        this.valorFactura = null;
+        this.terminarViajeActivo(mensaje);
       })
       .catch(err => {
         const msg = ApiService.mensaje(err, 'No se pudo finalizar');
-        // El PIN equivocado se muestra junto al campo, sin ventanas emergentes
-        if (this.esEncomienda) this.errorEntrega = msg;
+        // El PIN o la factura con error se muestran junto al campo, sin ventanas emergentes
+        if (this.esEncomienda || this.esCompraDomicilio) this.errorEntrega = msg;
         else alert(msg);
       });
   }

@@ -170,6 +170,16 @@
             {{ esEncomienda ? '🏁 Entregar paquete' : '🏁 Finalizar viaje' }}
           </button>
         </div>
+        <!-- Domicilio con compra: el domiciliario dice cuánto pagó (lo que dice la factura) -->
+        @if (esCompraDomicilio && (viajeActivo.estado === 'PAQUETE_RECOGIDO' || viajeActivo.estado === 'EN_VIAJE')) {
+          <div class="pin-entrega">
+            <label for="valor-factura">¿Cuánto pagaste en la tienda? <small>(lo que dice la factura; el cliente te lo devuelve)</small></label>
+            <input id="valor-factura" class="valor-factura" type="number" inputmode="numeric" min="0" step="100"
+                   [placeholder]="viajeActivo.valor_productos_aprox || 0" [(ngModel)]="valorFactura" (keyup.enter)="finalizarViaje()"
+                   [attr.aria-invalid]="!!errorEntrega" [attr.aria-describedby]="errorEntrega ? 'factura-error' : null">
+            @if (errorEntrega) { <small id="factura-error" class="pin-error" role="alert">{{ errorEntrega }}</small> }
+          </div>
+        }
         <!-- Encomienda: el conductor escribe el PIN que le da quien recibe -->
         @if (esEncomienda && viajeActivo.estado === 'PAQUETE_RECOGIDO') {
           <div class="pin-entrega">

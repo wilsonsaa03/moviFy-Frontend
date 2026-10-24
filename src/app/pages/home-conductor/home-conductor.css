@@ -762,6 +762,7 @@ body {
 .pin-entrega input:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.15); }
 .pin-entrega input[aria-invalid='true'] { border-color: #dc2626; }
 .pin-error { color: #b91c1c; font-size: 12.5px; font-weight: 600; }
+.pin-entrega input.valor-factura { width: 220px; font-size: 20px; letter-spacing: 0; text-align: left; }
 .btn-finalizar:hover { opacity: 0.9; }
 
 /* ================================================================
