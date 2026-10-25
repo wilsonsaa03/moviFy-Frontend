@@ -1,0 +1,54 @@
+<div class="sv">
+  <header class="sv-cabeza">
+    <img src="assets/brand/movify-icono.png" alt="" width="36" height="36" />
+    <span><b>MoviFY</b><small>Viaje compartido en vivo</small></span>
+  </header>
+
+  <div id="mapa-seguir" class="sv-mapa" role="img" [attr.aria-label]="'Mapa del viaje: ' + titulo()"></div>
+
+  <main class="sv-hoja">
+    @if (error() === 'vencido' || error() === 'no-existe') {
+      <section class="sv-fin" role="status">
+        <h1>{{ error() === 'vencido' ? 'Este enlace ya venció' : 'Este enlace no existe' }}</h1>
+        <p>Pídele a quien te lo envió que comparta su viaje de nuevo desde la app MoviFY.</p>
+      </section>
+    } @else {
+    @if (v(); as s) {
+      <p [class]="'sv-estado ' + s.estado_codigo" aria-live="polite">{{ s.estado_nombre }}</p>
+      <h1 aria-live="polite">{{ titulo() }}</h1>
+      @if (llegada(); as hora) {
+        <p class="sv-llegada">Llegada estimada: <b>{{ hora }}</b> · {{ minutos() }} min</p>
+      }
+
+      @if (s.conductor) {
+        <section class="sv-vehiculo-datos" aria-label="Vehículo">
+          <span class="sv-disco" [class.taxi]="s.tipo_vehiculo === 'taxi'">{{ s.tipo_vehiculo === 'moto' ? 'Moto' : 'Taxi' }}</span>
+          <span class="sv-textos">
+            <b>{{ s.conductor }}</b>
+            <small>{{ s.modelo }}{{ s.color ? ' · ' + s.color : '' }}</small>
+          </span>
+          @if (s.placa) { <span class="sv-placa">{{ s.placa }}</span> }
+        </section>
+      }
+
+      <ol class="sv-ruta" aria-label="Recorrido">
+        <li class="origen"><small>Desde</small><b>{{ s.origen }}</b></li>
+        @if (s.parada) { <li class="parada"><small>Parada</small><b>{{ s.parada }}</b></li> }
+        <li class="destino"><small>Hasta</small><b>{{ s.destino }}{{ s.destino_barrio ? ', ' + s.destino_barrio : '' }}</b></li>
+      </ol>
+
+      @if (activo()) {
+        <p class="sv-nota">
+          Se actualiza solo cada 5 segundos{{ horaActualizado() ? ' · última vez ' + horaActualizado() : '' }}.
+          @if (error() === 'red') { <span class="sv-red">Sin conexión, reintentando…</span> }
+        </p>
+      }
+      <p class="sv-seguridad">
+        ¿Crees que hay una emergencia? Llama a la Policía al <a href="tel:123">123</a>.
+      </p>
+    } @else {
+      <div class="sv-esqueleto" aria-label="Cargando el viaje"></div>
+    }
+    }
+  </main>
+</div>

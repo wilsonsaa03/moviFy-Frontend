@@ -1,0 +1,310 @@
+/* Seguir viaje en vivo: misma identidad que la app (azul #03274d, naranja #fe7b13, teal #02aab4). */
+:host {
+  --navy: #03274d;
+  --naranja: #fe7b13;
+  --teal: #02aab4;
+  --teal-d: #007c85;
+  --gris: #5b6b80;
+  --borde: #e4ebf2;
+  display: block;
+  height: 100dvh;
+  background: #f2efe9;
+  color: var(--navy);
+  font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.sv {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.sv-cabeza {
+  position: absolute;
+  z-index: 500;
+  top: 12px;
+  left: 12px;
+  padding: 6px 14px 6px 6px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(3, 39, 77, 0.18);
+}
+.sv-cabeza img {
+  border-radius: 10px;
+}
+.sv-cabeza b {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+}
+.sv-cabeza small {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gris);
+}
+
+.sv-mapa {
+  flex: 1;
+  min-height: 0;
+}
+
+.sv-hoja {
+  position: relative;
+  z-index: 500;
+  max-height: 58%;
+  overflow-y: auto;
+  margin-top: -24px;
+  padding: 18px 20px calc(18px + env(safe-area-inset-bottom));
+  border-radius: 28px 28px 0 0;
+  background: #ffffff;
+  box-shadow: 0 -10px 30px rgba(3, 39, 77, 0.15);
+}
+
+h1 {
+  margin: 6px 0 4px;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.sv-estado {
+  display: inline-block;
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: #fff1e6;
+  color: #b4530a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.sv-estado.finalizado {
+  background: #e2f6f7;
+  color: var(--teal-d);
+}
+.sv-estado.cancelado,
+.sv-estado.expirado {
+  background: #fdecee;
+  color: #b42333;
+}
+
+.sv-llegada {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gris);
+}
+.sv-llegada b {
+  color: var(--navy);
+}
+
+.sv-vehiculo-datos {
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f5f8fb;
+}
+.sv-disco {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #5fd6dc;
+  font-size: 12px;
+  font-weight: 800;
+}
+.sv-disco.taxi {
+  background: #ffc94d;
+}
+.sv-textos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sv-textos b {
+  font-size: 17px;
+  font-weight: 800;
+}
+.sv-textos small {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gris);
+}
+.sv-placa {
+  padding: 3px 10px;
+  border: 2px solid var(--navy);
+  border-radius: 8px;
+  background: #ffc94d;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.sv-ruta {
+  margin: 12px 0;
+  padding: 0 0 0 22px;
+  list-style: none;
+  position: relative;
+}
+.sv-ruta::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 10px;
+  bottom: 14px;
+  width: 2px;
+  background: #c9d5e2;
+}
+.sv-ruta li {
+  position: relative;
+  padding: 4px 0 8px;
+  display: flex;
+  flex-direction: column;
+}
+.sv-ruta li::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 8px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 0 4px #d4f3f5;
+}
+.sv-ruta li.parada::before {
+  border-radius: 3px;
+  transform: rotate(45deg) scale(0.85);
+  background: var(--naranja);
+  box-shadow: none;
+}
+.sv-ruta li.destino::before {
+  border-radius: 3px;
+  background: var(--navy);
+  box-shadow: none;
+}
+.sv-ruta small {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--gris);
+}
+.sv-ruta b {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.sv-nota,
+.sv-seguridad {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gris);
+}
+.sv-red {
+  display: block;
+  color: #b4530a;
+}
+.sv-seguridad a {
+  color: #b42333;
+  font-weight: 800;
+}
+
+.sv-fin {
+  padding: 12px 0;
+  text-align: center;
+}
+.sv-fin p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gris);
+}
+
+.sv-esqueleto {
+  height: 160px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #f2f6fa 0%, #e8eef4 50%, #f2f6fa 100%);
+  background-size: 200% 100%;
+  animation: sv-brillo 1.2s linear infinite;
+}
+@keyframes sv-brillo {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Marcadores (los crea Leaflet fuera de la plantilla) */
+:host ::ng-deep .sv-vehiculo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  background: #fe7b13;
+  border: 3px solid #ffffff;
+  box-shadow: 0 6px 14px rgba(3, 39, 77, 0.35);
+  transition: transform 800ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+:host ::ng-deep .sv-vehiculo svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: #03274d;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:host ::ng-deep .sv-punto {
+  display: block;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 3px solid #ffffff;
+  box-shadow: 0 3px 8px rgba(3, 39, 77, 0.3);
+}
+:host ::ng-deep .sv-punto.origen {
+  border-radius: 50%;
+  background: #02aab4;
+}
+:host ::ng-deep .sv-punto.parada {
+  border-radius: 4px;
+  transform: rotate(45deg);
+  background: #fe7b13;
+}
+:host ::ng-deep .sv-punto.destino {
+  border-radius: 4px;
+  background: #03274d;
+}
+
+@media (min-width: 900px) {
+  .sv {
+    flex-direction: row;
+  }
+  .sv-hoja {
+    order: -1;
+    width: 400px;
+    max-height: none;
+    margin-top: 0;
+    padding-top: 80px;
+    border-radius: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sv-esqueleto {
+    animation: none;
+  }
+}

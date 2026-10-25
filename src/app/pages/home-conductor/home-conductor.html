@@ -136,8 +136,20 @@
         <div class="viaje-datos">
           <div class="viaje-fila">
             <span>👤 {{ esEncomienda ? 'Envía' : 'Pasajero' }}</span>
-            <strong>{{ viajeActivo.usuario_nombre || 'Usuario MoviFY' }}</strong>
+            <strong>{{ viajeActivo.pasajero_nombre || viajeActivo.usuario_nombre || 'Usuario MoviFY' }}</strong>
           </div>
+          @if (!esEncomienda && viajeActivo.parada) {
+            <div class="viaje-fila">
+              <span>🔶 Parada</span>
+              <strong>{{ viajeActivo.parada }}</strong>
+            </div>
+          }
+          @if (!esEncomienda && requisitosDe(viajeActivo); as r) {
+            <div class="viaje-fila">
+              <span>✅ Pidió</span>
+              <strong>{{ r }}</strong>
+            </div>
+          }
           @if (esEncomienda && viajeActivo.destino) {
             <div class="viaje-fila">
               <span>🏁 Entregar en</span>
@@ -324,14 +336,32 @@
     <div class="sol-datos">
       <div class="sol-fila">
         <span class="sol-label">👤 Pasajero</span>
-        <strong class="sol-valor">{{ s.usuario_nombre }}</strong>
+        <strong class="sol-valor">{{ s.pasajero_nombre || s.usuario_nombre }}</strong>
       </div>
+      @if (s.pasajero_nombre) {
+        <div class="sol-fila">
+          <span class="sol-label">📲 Lo pidió</span>
+          <strong class="sol-valor">{{ s.usuario_nombre }}</strong>
+        </div>
+      }
       <div class="sol-fila">
         <span class="sol-label">📏 Distancia</span>
         <strong class="sol-valor">{{ s.distancia_km | number:'1.1-2' }} km</strong>
       </div>
+      @if (s.parada) {
+        <div class="sol-fila">
+          <span class="sol-label">🔶 Parada</span>
+          <strong class="sol-valor">{{ s.parada }}</strong>
+        </div>
+      }
+      @if (requisitosDe(s); as r) {
+        <div class="sol-fila">
+          <span class="sol-label">✅ Pidió</span>
+          <strong class="sol-valor">{{ r }}</strong>
+        </div>
+      }
       <div class="sol-fila sol-fila-highlight">
-        <span class="sol-label">💰 Tarifa</span>
+        <span class="sol-label">💰 Tarifa{{ s.tarifa_subida ? ' (¡subió!)' : '' }}</span>
         <strong class="sol-valor sol-tarifa">${{ s.tarifa | number }}</strong>
       </div>
     </div>

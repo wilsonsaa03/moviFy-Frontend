@@ -4,6 +4,8 @@ import { invitadoGuard, rolGuard } from './core/guards';
 export const routes: Routes = [
   // Inicio y Auth
   { path: '', loadComponent: () => import('./pages/landing/landing').then(m => m.LandingComponent) },
+  // Público: la familia sigue el viaje en vivo desde el enlace que comparte el pasajero (sin cuenta)
+  { path: 'seguir/:token', loadComponent: () => import('./pages/seguir-viaje/seguir-viaje').then(m => m.SeguirViajeComponent) },
   { path: 'login', loadComponent: () => import('./Controlador/login.component').then(m => m.LoginComponent), canActivate: [invitadoGuard] },
   { path: 'olvide-password', loadComponent: () => import('./pages/olvide-password/olvide-password').then(m => m.OlvidePasswordComponent), canActivate: [invitadoGuard] },
   { path: 'restablecer-password', loadComponent: () => import('./pages/restablecer-password/restablecer-password').then(m => m.RestablecerPasswordComponent), canActivate: [invitadoGuard] },

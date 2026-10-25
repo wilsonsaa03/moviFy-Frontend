@@ -663,6 +663,17 @@ export class HomeConductorComponent implements OnInit, OnDestroy {
     return estado.replace(/_/g, ' ');
   }
 
+  /** Lo que pidió el pasajero (V14): "Casco · 3 pasajeros · Equipaje". Vacío = nada especial. */
+  requisitosDe(s: any): string {
+    if (!s) return '';
+    return [
+      s.necesita_casco ? 'Casco para el pasajero' : '',
+      Number(s.pasajeros) > 1 ? `${s.pasajeros} pasajeros` : '',
+      s.lleva_equipaje ? 'Equipaje' : '',
+      s.lleva_mascota ? 'Mascota' : '',
+    ].filter(Boolean).join(' · ');
+  }
+
   /**
    * Verifica si el conductor puede activarse. Si no puede, muestra el modal
    * explicando la razón y retorna false.
