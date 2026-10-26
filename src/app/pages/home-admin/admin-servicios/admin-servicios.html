@@ -1,0 +1,76 @@
+<div class="srv">
+  <div class="adm-barra-herr srv-filtros">
+    <label class="adm-buscar">
+      <span class="adm-sr">Buscar solicitudes</span>
+      <input type="search" [(ngModel)]="q" (ngModelChange)="escribir()" placeholder="N.º, cliente, conductor, placa o dirección">
+    </label>
+    <label class="adm-select">
+      <span class="adm-sr">Servicio</span>
+      <select [(ngModel)]="servicio" (ngModelChange)="filtrar()">
+        <option value="todos">Todos los servicios</option>
+        <option value="moto">Viaje en moto</option>
+        <option value="taxi">Viaje en taxi</option>
+        <option value="domicilio">Domicilio</option>
+        <option value="encomienda">Encomienda</option>
+      </select>
+    </label>
+    <label class="adm-select">
+      <span class="adm-sr">Estado</span>
+      <select [(ngModel)]="estado" (ngModelChange)="filtrar()">
+        <option value="">Todos los estados</option>
+        <option value="activos">Activos ahora</option>
+        <option value="buscando">Buscando conductor</option>
+        <option value="asignado">Conductor asignado</option>
+        <option value="en_origen">En la recogida</option>
+        <option value="en_curso">En curso</option>
+        <option value="finalizado">Finalizado</option>
+        <option value="cancelado">Cancelado</option>
+        <option value="expirado">Sin conductor</option>
+      </select>
+    </label>
+    <label class="srv-fecha"><span>Desde</span><input type="date" [(ngModel)]="desde" (ngModelChange)="filtrar()" [max]="hasta || null"></label>
+    <label class="srv-fecha"><span>Hasta</span><input type="date" [(ngModel)]="hasta" (ngModelChange)="filtrar()" [min]="desde || null"></label>
+    <button type="button" class="adm-link" (click)="limpiar()">Limpiar filtros</button>
+    <span class="adm-contador">{{ total | number }} {{ total === 1 ? 'solicitud' : 'solicitudes' }}</span>
+  </div>
+
+  <section class="adm-card adm-card-tabla">
+    @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+    <div class="adm-tabla-scroll">
+      <table class="adm-tabla" [class.srv-cargando]="cargando">
+        <thead>
+          <tr><th>N.º</th><th>Servicio</th><th>Fecha</th><th>Cliente</th><th>Conductor</th><th>Destino</th><th class="der">Valor</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          @for (s of items; track s.id) {
+            <tr class="adm-fila-clic" tabindex="0" (click)="abrir.emit(s.id)" (keydown.enter)="abrir.emit(s.id)" [attr.aria-label]="'Ver la solicitud ' + s.id">
+              <td class="adm-nowrap"><b>#{{ s.id }}</b></td>
+              <td class="adm-nowrap">{{ nombreServicio(s) }}</td>
+              <td class="adm-nowrap">{{ s.solicitado_en | date:'d MMM yy · h:mm a' }}</td>
+              <td class="adm-nowrap">{{ s.cliente_nombre }}</td>
+              <td class="adm-nowrap" [class.adm-tenue]="!s.conductor_nombre">
+                {{ s.conductor_nombre || 'Sin asignar' }}
+                @if (s.placa) { <span class="adm-placa srv-placa">{{ s.placa }}</span> }
+              </td>
+              <td class="adm-truncar" [title]="s.destino">{{ s.destino }}</td>
+              <td class="der adm-nowrap">${{ s.tarifa | number:'1.0-0' }}</td>
+              <td class="adm-nowrap">
+                <span class="adm-estado e-{{ s.estado_codigo }}">{{ s.estado_nombre }}</span>
+                @if (atascado(s)) { <span class="srv-atascado" title="Lleva mucho tiempo sin avanzar">{{ s.minutos }} min</span> }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="8" class="adm-vacio">{{ cargando ? 'Cargando solicitudes…' : 'No hay solicitudes con esos filtros.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (total > tamano) {
+      <nav class="adm-mas srv-paginas" aria-label="Páginas">
+        <button type="button" class="adm-btn adm-btn-borde" (click)="ir(pagina - 1)" [disabled]="pagina === 0 || cargando">Anterior</button>
+        <span>Página {{ pagina + 1 }} de {{ paginas }}</span>
+        <button type="button" class="adm-btn adm-btn-borde" (click)="ir(pagina + 1)" [disabled]="pagina + 1 >= paginas || cargando">Siguiente</button>
+      </nav>
+    }
+  </section>
+</div>

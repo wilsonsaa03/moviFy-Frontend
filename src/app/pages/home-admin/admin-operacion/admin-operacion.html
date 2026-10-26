@@ -1,0 +1,87 @@
+<div class="ope">
+  @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+
+  @if (op) {
+    <div class="adm-grid-2">
+      <section class="adm-card">
+        <div class="adm-card-head"><div><h2>Qué vehículo hace qué servicio</h2><p class="adm-card-sub">Conductores: solo moto y taxi</p></div></div>
+        <table class="adm-tabla ope-matriz">
+          <thead><tr><th>Servicio</th>@for (v of op.tipos_vehiculo; track v.codigo) { <th class="ope-c">{{ v.nombre }}<small>{{ v.capacidad_pasajeros }} pas.</small></th> }</tr></thead>
+          <tbody>
+            @for (s of op.tipos_servicio; track s.codigo) {
+              <tr><td><b>{{ s.nombre }}</b></td>
+                @for (v of op.tipos_vehiculo; track v.codigo) {
+                  <td class="ope-c">@if (permitido(s.codigo, v.codigo)) { <span class="ope-si"><adm-ico n="check" /></span> } @else { <span class="adm-tenue">—</span> }</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+      <section class="adm-card">
+        <div class="adm-card-head">
+          <div><h2>Límites de domicilios y encomiendas</h2><p class="adm-card-sub">Se cambian en Configuración</p></div>
+          <button type="button" class="adm-btn adm-btn-borde" (click)="ir.emit('configuracion')">Ir a Configuración</button>
+        </div>
+        <ul class="adm-lista">
+          @for (l of op.limites; track l.clave) {
+            <li class="adm-lista-item"><span class="adm-lista-txt"><span class="adm-lista-nombre">{{ l.descripcion }}</span><span class="adm-lista-sub"><code>{{ l.clave }}</code></span></span><b>{{ l.valor }}</b></li>
+          }
+          <li class="adm-lista-item"><span class="adm-lista-txt"><span class="adm-lista-nombre">Peso máximo de una encomienda</span><span class="adm-lista-sub">En taxi (fijo en la base)</span></span><b>30 kg</b></li>
+        </ul>
+      </section>
+    </div>
+  }
+
+  @if (pr) {
+    <section class="adm-card">
+      <div class="adm-card-head">
+        <div>
+          <h2>Contenido prohibido en domicilios y encomiendas</h2>
+          <p class="adm-card-sub">Si el cliente escribe algo de esta lista, el pedido no se crea. Se comparan palabras completas, sin tildes, y se detectan trucos como "c0ca1na".</p>
+        </div>
+      </div>
+      <div class="ope-base">
+        @for (c of pr.base | keyvalue; track c.key) {
+          <div class="ope-cat"><span class="adm-dato-label adm-cap">{{ c.key }}</span>
+            <p>@for (p of c.value; track p) { <span class="ope-palabra">{{ p }}</span> }</p></div>
+        }
+        <div class="ope-cat"><span class="adm-dato-label">Excepciones legales (siempre se dejan pasar)</span>
+          <p>@for (p of pr.permitidos_base; track p) { <span class="ope-palabra ok">{{ p }}</span> }</p></div>
+      </div>
+
+      <h3 class="adm-modal-sub">Agregadas por el equipo <span class="adm-pill-num">{{ pr.agregadas.length }}</span></h3>
+      <ul class="adm-lista">
+        @for (a of pr.agregadas; track a.id) {
+          <li class="adm-lista-item">
+            <span class="ope-palabra" [class.ok]="a.tipo === 'permitida'">{{ a.palabra }}</span>
+            <span class="adm-lista-txt"><span class="adm-lista-sub">{{ a.tipo === 'permitida' ? 'Excepción' : a.categoria }} · {{ a.creado_por || '—' }} · {{ a.creado_en | date:'d MMM y' }}</span></span>
+            @if (!soloLectura) { <button type="button" class="adm-btn-ico" (click)="quitar(a.id, a.palabra)" [attr.aria-label]="'Quitar ' + a.palabra"><adm-ico n="x" /></button> }
+          </li>
+        } @empty { <li class="adm-tenue">Todavía no se han agregado palabras.</li> }
+      </ul>
+
+      @if (!soloLectura) {
+        <form class="cat-fila ope-form" (ngSubmit)="agregar()">
+          <label class="cat-campo"><span class="adm-dato-label">Palabra o frase</span>
+            <input class="cat-input" name="palabra" [(ngModel)]="palabra" maxlength="60" placeholder="Ej.: escopolamina" autocomplete="off"></label>
+          <label class="cat-campo cat-corto"><span class="adm-dato-label">Tipo</span>
+            <select class="cat-input" name="tipo" [(ngModel)]="tipo">
+              <option value="prohibida">Bloquear</option>
+              <option value="permitida">Excepción (dejar pasar)</option>
+            </select></label>
+          @if (tipo === 'prohibida') {
+            <label class="cat-campo cat-corto"><span class="adm-dato-label">Categoría</span>
+              <select class="cat-input" name="categoria" [(ngModel)]="categoria">
+                @for (c of categorias; track c) { <option [value]="c">{{ c }}</option> }
+              </select></label>
+          }
+          <button type="submit" class="adm-btn adm-btn-primario ope-boton" [disabled]="guardando"><adm-ico n="mas" /> Agregar</button>
+        </form>
+        @if (errorPalabra) { <p class="adm-error" role="alert">{{ errorPalabra }}</p> }
+        <p class="adm-ayuda">Ojo con palabras de uso común en Buenaventura (machete, coca la gaseosa, perico el desayuno): bloquearlas rechazaría pedidos normales.
+          La app y la web avisan con su propia copia de la lista base; la decisión final la toma el servidor con esta lista completa.</p>
+      }
+    </section>
+  }
+</div>

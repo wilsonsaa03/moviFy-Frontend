@@ -399,3 +399,58 @@ textarea:focus-visible { outline: 3px solid var(--turquesa-claro); outline-offse
   .adm-modal { animation: none; }
   .adm-barra, .adm-dist-barra { transition: none; }
 }
+
+/* ---------- Panel ampliado (V15): alertas del menú, "necesita atención", filas clicables y roles ---------- */
+.adm-nav-badge-rojo { background: #E5484D; color: #FFFFFF; }
+
+.adm-atencion { display: flex; flex-wrap: wrap; gap: 12px; }
+.adm-atencion-item {
+  flex: 1 1 260px; display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  border: 1px solid var(--borde); border-radius: 16px; background: #FFFFFF; color: var(--texto);
+  font-size: 14px; text-align: left; cursor: pointer; transition: border-color .15s ease;
+}
+.adm-atencion-item b { font-family: 'Baloo 2', sans-serif; font-size: 20px; margin-right: 2px; }
+.adm-atencion-item:hover { border-color: var(--turquesa); }
+.adm-atencion-item.rojo { border-color: #F5B5AF; background: var(--rojo-fondo); color: var(--rojo-texto); }
+.adm-atencion-item.naranja { border-color: #F7C99B; background: var(--naranja-fondo); color: var(--naranja-texto); }
+
+.adm-fila-clic { cursor: pointer; }
+.adm-fila-clic:focus-visible td { background: var(--turquesa-fondo); outline: none; }
+
+.adm-roles { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.adm-rol-opcion { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--borde); border-radius: 12px; cursor: pointer; }
+.adm-rol-opcion input { width: 18px; height: 18px; accent-color: var(--turquesa); }
+.adm-rol-opcion small { font-size: 13px; color: var(--texto-3); }
+.adm-rol-opcion:has(input:disabled) { cursor: default; opacity: .75; }
+
+/* ---------- Expediente del conductor (V16): checklist según moto o taxi ---------- */
+.adm-checklist { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.adm-checklist li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--borde); border-radius: 12px; background: #FFFFFF; }
+.adm-checklist li.ok { border-color: #BFE8D2; background: var(--verde-fondo); }
+.adm-checklist li.mal { border-color: #F5B5AF; background: var(--rojo-fondo); }
+.adm-check-marca { width: 22px; height: 22px; flex: none; border-radius: 50%; display: grid; place-items: center; background: #FFFFFF; font-weight: 800; font-size: 13px; color: var(--texto-2); }
+.adm-checklist li.ok .adm-check-marca { color: var(--verde-texto); }
+.adm-checklist li.mal .adm-check-marca { color: var(--rojo-texto); }
+.adm-check-txt { display: flex; flex-direction: column; }
+.adm-check-txt b { font-size: 13.5px; }
+.adm-check-txt small { font-size: 12px; color: var(--texto-2); }
+.adm-exp-columnas { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.adm-clic { cursor: pointer; border-radius: 10px; }
+.adm-clic:hover { background: var(--gris-fondo); }
+.adm-texto-rojo { color: var(--rojo-texto) !important; }
+
+/* ---------- Menú lateral con 14 secciones: todo dentro de la franja azul ----------
+   La barra mide lo que la pantalla (100vh); el menú se desplaza por dentro y el perfil queda fijo abajo. */
+@media (min-width: 901px) {
+  .adm-side { gap: 16px; padding: 20px 14px 16px; overflow: hidden; }
+  .adm-nav {
+    flex: 1 1 auto; min-height: 0; gap: 2px;
+    overflow-y: auto; overscroll-behavior: contain;
+    margin: 0 -6px; padding: 0 6px;
+    scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  }
+  .adm-nav::-webkit-scrollbar { width: 6px; }
+  .adm-nav::-webkit-scrollbar-thumb { border-radius: 3px; background: rgba(255, 255, 255, 0.25); }
+  .adm-nav-item { padding: 9px 12px; font-size: 14.5px; flex: none; }
+  .adm-side-pie { flex: none; margin-top: 0; }
+}

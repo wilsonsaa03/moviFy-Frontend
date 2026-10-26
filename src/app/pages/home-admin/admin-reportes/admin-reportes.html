@@ -128,6 +128,7 @@
         <h4>Viaje #{{ r.servicio_id }} · {{ r.tipo_servicio }}</h4>
         <p>{{ r.origen_direccion }} → {{ r.destino_direccion }}</p>
         <p class="muted">{{ fecha(r.servicio_fecha) }}</p>
+        <button type="button" class="ver-viaje" (click)="abrirServicio.emit(r.servicio_id!)">Ver el viaje: línea de tiempo y chat</button>
       </div>
 
       <div class="bloque" *ngIf="r.asignado_nombre">

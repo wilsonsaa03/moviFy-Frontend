@@ -1,0 +1,50 @@
+<div class="conf">
+  <div class="adm-barra-herr">
+    <label class="adm-buscar">
+      <span class="adm-sr">Buscar parámetros</span>
+      <input type="search" [(ngModel)]="busqueda" placeholder="Buscar un parámetro (ej.: radio, nocturno, central)">
+    </label>
+    <span class="adm-contador">{{ parametros.length }} parámetros · cada cambio queda en la auditoría</span>
+  </div>
+
+  @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+  @if (cargando && !parametros.length) { <p class="adm-vacio">Cargando la configuración…</p> }
+
+  @for (g of grupos; track g.nombre) {
+    <section class="adm-card adm-card-tabla">
+      <div class="conf-cabeza">
+        <h2>{{ g.nombre }}</h2>
+        @if (g.ayuda) { <p class="adm-card-sub">{{ g.ayuda }}</p> }
+      </div>
+      <ul class="conf-lista">
+        @for (p of g.parametros; track p.clave) {
+          <li class="conf-fila" [class.editando]="editando === p.clave">
+            <div class="conf-txt">
+              <b>{{ nombre(p.clave) }}</b>
+              <small>{{ p.descripcion }}</small>
+              <code>{{ p.clave }} · cambiado {{ p.actualizado_en | date:'d MMM y, h:mm a' }}</code>
+            </div>
+            @if (editando === p.clave) {
+              <form class="conf-editar" (ngSubmit)="guardar(p)">
+                <label class="adm-sr" [for]="'v-' + p.clave">Nuevo valor de {{ nombre(p.clave) }}</label>
+                <input [id]="'v-' + p.clave" class="cat-input" name="valor" [(ngModel)]="valor" maxlength="200" autocomplete="off">
+                <span class="conf-unidad">{{ unidad(p.clave) }}</span>
+                <button type="button" class="adm-btn adm-btn-borde" (click)="editando = null" [disabled]="guardando">Cancelar</button>
+                <button type="submit" class="adm-btn adm-btn-primario" [disabled]="guardando">{{ guardando ? 'Guardando…' : 'Guardar' }}</button>
+                @if (errorFila) { <p class="adm-error conf-error" role="alert">{{ errorFila }}</p> }
+              </form>
+            } @else {
+              <div class="conf-valor">
+                <span class="conf-num" [class.vacio]="!p.valor">{{ p.valor || 'Vacío' }}</span>
+                <span class="conf-unidad">{{ unidad(p.clave) }}</span>
+                <button type="button" class="adm-btn-ico" (click)="editar(p)" [attr.aria-label]="'Cambiar ' + nombre(p.clave)"><adm-ico n="editar" /></button>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  } @empty {
+    @if (!cargando && parametros.length) { <p class="adm-vacio">Ningún parámetro coincide con "{{ busqueda }}".</p> }
+  }
+</div>

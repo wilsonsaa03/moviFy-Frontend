@@ -1,0 +1,100 @@
+<div class="est">
+  <div class="adm-barra-herr">
+    <div class="adm-pills" aria-label="Periodos rápidos">
+      <button type="button" class="adm-pill" (click)="rapido(7)">7 días</button>
+      <button type="button" class="adm-pill" (click)="rapido(30)">30 días</button>
+      <button type="button" class="adm-pill" (click)="rapido(90)">90 días</button>
+    </div>
+    <label class="srv-fecha"><span>Desde</span><input type="date" [(ngModel)]="desde" [max]="hasta" (change)="cargar()"></label>
+    <label class="srv-fecha"><span>Hasta</span><input type="date" [(ngModel)]="hasta" [min]="desde" (change)="cargar()"></label>
+    @if (puedeExportar) {
+      <button type="button" class="adm-btn adm-btn-primario est-exportar" (click)="exportar()" [disabled]="exportando || !r">
+        <adm-ico n="documento" /> {{ exportando ? 'Preparando…' : 'Exportar a Excel (CSV)' }}
+      </button>
+    }
+  </div>
+
+  @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+  @if (cargando && !r) { <p class="adm-vacio">Calculando…</p> }
+
+  @if (r) {
+    <section class="adm-kpis" aria-label="Indicadores del periodo" [class.est-cargando]="cargando">
+      <article class="adm-kpi"><span class="adm-kpi-label">Solicitudes</span><span class="adm-kpi-valor">{{ r.totales.solicitudes | number }}</span>
+        <span class="adm-kpi-pie">{{ r.totales.finalizados | number }} terminadas</span></article>
+      <article class="adm-kpi"><span class="adm-kpi-label">Se perdieron</span><span class="adm-kpi-valor">{{ r.totales.tasa_perdida ?? 0 }} %</span>
+        <span class="adm-kpi-pie" [class.pie-alerta]="(r.totales.tasa_perdida ?? 0) >= 25">{{ r.totales.cancelados }} canceladas · {{ r.totales.sin_conductor }} sin conductor</span></article>
+      <article class="adm-kpi"><span class="adm-kpi-label">Tiempo hasta que aceptan</span><span class="adm-kpi-valor">{{ r.totales.min_aceptacion_mediana ?? '—' }} min</span>
+        <span class="adm-kpi-pie">mediana · promedio {{ r.totales.min_aceptacion ?? '—' }} min</span></article>
+      <article class="adm-kpi"><span class="adm-kpi-label">Llegada del conductor</span><span class="adm-kpi-valor">{{ r.totales.min_llegada ?? '—' }} min</span>
+        <span class="adm-kpi-pie">viaje promedio {{ r.totales.min_viaje ?? '—' }} min</span></article>
+      <article class="adm-kpi"><span class="adm-kpi-label">Movido en efectivo</span><span class="adm-kpi-valor">${{ r.totales.efectivo | number:'1.0-0' }}</span>
+        <span class="adm-kpi-pie">promedio ${{ r.totales.ticket_promedio ?? 0 | number:'1.0-0' }} por servicio</span></article>
+    </section>
+
+    <div class="adm-grid-2">
+      <section class="adm-card">
+        <div class="adm-card-head"><div><h2>Por tipo de servicio</h2><p class="adm-card-sub">Terminados y perdidos</p></div></div>
+        <ul class="est-filas">
+          @for (t of r.por_tipo; track nombreTipo(t)) {
+            <li>
+              <span>{{ nombreTipo(t) }}</span>
+              <span class="dsh-pista est-pista"><i class="ok" [style.width.%]="t.finalizados / t.total * alto(t.total, r.por_tipo)"></i><i class="mal" [style.width.%]="t.perdidos / t.total * alto(t.total, r.por_tipo)"></i></span>
+              <b>{{ t.total }}</b>
+            </li>
+          } @empty { <li class="adm-vacio">Sin solicitudes en el periodo.</li> }
+        </ul>
+      </section>
+      <section class="adm-card">
+        <div class="adm-card-head"><div><h2>Quién cancela</h2><p class="adm-card-sub">Y los motivos más comunes</p></div></div>
+        <div class="est-quien">
+          <span><b>{{ r.totales.cancelados_cliente }}</b> cliente</span>
+          <span><b>{{ r.totales.cancelados_conductor }}</b> conductor</span>
+          <span><b>{{ r.totales.cancelados_personal }}</b> soporte</span>
+          <span><b>{{ r.totales.sin_conductor }}</b> nadie aceptó</span>
+        </div>
+        <ul class="adm-lista">
+          @for (m of r.motivos_cancelacion; track m.descripcion) {
+            <li class="adm-lista-item"><span class="adm-lista-txt"><span class="adm-lista-nombre">{{ m.descripcion }}</span><span class="adm-lista-sub adm-cap">{{ m.actor }}</span></span><b>{{ m.total }}</b></li>
+          } @empty { <li class="adm-tenue">Sin cancelaciones.</li> }
+        </ul>
+      </section>
+    </div>
+
+    <div class="adm-grid-2">
+      <section class="adm-card">
+        <div class="adm-card-head"><div><h2>Por hora del día</h2><p class="adm-card-sub">{{ horaPico !== null ? 'Hora pico: ' + horaPico + ':00' : '' }}</p></div></div>
+        <div class="dsh-horas est-horas">
+          @for (h of horas; track h.hora) {
+            <span class="dsh-hora" [title]="h.hora + ':00 · ' + h.total"><i [style.height.%]="alto(h.total, horas) || 2" [class.vacia]="!h.total"></i>
+              @if (h.hora % 3 === 0) { <small>{{ h.hora }}</small> }</span>
+          }
+        </div>
+      </section>
+      <section class="adm-card">
+        <div class="adm-card-head"><div><h2>Por día</h2><p class="adm-card-sub">{{ r.desde | date:'d MMM' }} a {{ r.hasta | date:'d MMM y' }}</p></div></div>
+        <div class="est-dias">
+          @for (d of r.por_dia; track d.fecha) {
+            <span class="est-dia" [title]="(d.fecha | date:'EEE d MMM') + ' · ' + d.total + ' solicitudes'"><i [style.height.%]="alto(d.total, r.por_dia) || 2"></i></span>
+          } @empty { <p class="adm-tenue">Sin datos.</p> }
+        </div>
+      </section>
+    </div>
+
+    <section class="adm-card adm-card-tabla">
+      <div class="conf-cabeza"><h2>Conductores más activos</h2></div>
+      <div class="adm-tabla-scroll">
+        <table class="adm-tabla">
+          <thead><tr><th>#</th><th>Conductor</th><th>Vehículo</th><th class="der">Terminados</th><th class="der">Cobrado</th><th class="der">Calificación</th></tr></thead>
+          <tbody>
+            @for (c of r.top_conductores; track c.conductor_id; let i = $index) {
+              <tr><td>{{ i + 1 }}</td><td><b>{{ c.nombre }}</b></td>
+                <td class="adm-nowrap"><span class="adm-cap">{{ c.tipo_vehiculo }}</span> @if (c.placa) { <span class="adm-placa">{{ c.placa }}</span> }</td>
+                <td class="der">{{ c.finalizados }}</td><td class="der">${{ c.cobrado | number:'1.0-0' }}</td>
+                <td class="der">{{ c.calificacion ? (c.calificacion | number:'1.1-1') + ' ★' : '—' }}</td></tr>
+            } @empty { <tr><td colspan="6" class="adm-vacio">Sin servicios con conductor en el periodo.</td></tr> }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>

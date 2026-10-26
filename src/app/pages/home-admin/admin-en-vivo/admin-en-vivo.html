@@ -1,0 +1,93 @@
+<div class="ev">
+  <!-- Lo urgente primero: si hay SOS o "¿Todo bien?" sin revisar, se ve antes que nada -->
+  @if (contadores.sos_abiertas || contadores.alertas_pendientes) {
+    <button type="button" class="ev-alarma" (click)="ir.emit('seguridad')">
+      <adm-ico n="sos" />
+      <span>
+        <b>{{ contadores.sos_abiertas }} SOS abiertas · {{ contadores.alertas_pendientes }} "¿Todo bien?" sin revisar</b>
+        <small>Ir a Seguridad para atenderlas</small>
+      </span>
+      <adm-ico n="mas" />
+    </button>
+  }
+
+  <section class="adm-kpis ev-kpis" aria-label="Ahora mismo">
+    <article class="adm-kpi"><span class="adm-kpi-label">Conductores libres</span><span class="adm-kpi-valor">{{ libres }}</span><span class="adm-kpi-pie">conectados y sin servicio</span></article>
+    <article class="adm-kpi"><span class="adm-kpi-label">Con servicio</span><span class="adm-kpi-valor">{{ ocupados }}</span><span class="adm-kpi-pie">de {{ conductores.length }} conectados</span></article>
+    <article class="adm-kpi"><span class="adm-kpi-label">Buscando conductor</span><span class="adm-kpi-valor">{{ buscando.length }}</span>
+      <span class="adm-kpi-pie" [class.pie-alerta]="demorados > 0">{{ demorados ? demorados + ' hace más de 2 min' : 'todos recientes' }}</span></article>
+    <article class="adm-kpi"><span class="adm-kpi-label">Sin conductor (1 h)</span><span class="adm-kpi-valor">{{ contadores.expirados_hora }}</span><span class="adm-kpi-pie">búsquedas que vencieron</span></article>
+  </section>
+
+  <div class="ev-cuerpo">
+    <section class="adm-card ev-mapa-card">
+      <div class="adm-card-head">
+        <div>
+          <h2>Mapa de Buenaventura</h2>
+          <p class="adm-card-sub">Se actualiza solo cada 10 s{{ actualizado ? ' · ' + (actualizado | date:'h:mm:ss a') : '' }}</p>
+        </div>
+        <button type="button" class="adm-btn adm-btn-borde" (click)="refrescar()"><adm-ico n="refrescar" /> Actualizar</button>
+      </div>
+      @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+      <div #mapa class="ev-mapa" role="img" aria-label="Mapa con conductores conectados y pedidos que buscan conductor"></div>
+      <ul class="ev-leyenda" aria-label="Leyenda">
+        <li><span class="ev-cond libre mini"></span> Libre</li>
+        <li><span class="ev-cond ocupado mini"></span> Con servicio</li>
+        <li><span class="ev-cond sin-senal mini"></span> Sin señal (+2 min)</li>
+        <li><span class="ev-pedido mini"></span> Pedido buscando</li>
+      </ul>
+    </section>
+
+    <section class="adm-card ev-lista-card">
+      <div class="adm-card-head">
+        <div><h2>Servicios activos</h2><p class="adm-card-sub">Toca uno para ver el detalle o cancelarlo</p></div>
+      </div>
+      <div class="adm-pills" role="tablist" aria-label="Filtrar servicios activos">
+        <button type="button" role="tab" class="adm-pill" [class.activo]="filtro === 'todos'" [attr.aria-selected]="filtro === 'todos'" (click)="filtro = 'todos'">Todos <span class="adm-pill-num">{{ servicios.length }}</span></button>
+        <button type="button" role="tab" class="adm-pill" [class.activo]="filtro === 'buscando'" [attr.aria-selected]="filtro === 'buscando'" (click)="filtro = 'buscando'">Buscando <span class="adm-pill-num">{{ buscando.length }}</span></button>
+        <button type="button" role="tab" class="adm-pill" [class.activo]="filtro === 'en_curso'" [attr.aria-selected]="filtro === 'en_curso'" (click)="filtro = 'en_curso'">Con conductor <span class="adm-pill-num">{{ servicios.length - buscando.length }}</span></button>
+      </div>
+      <ul class="adm-lista ev-lista">
+        @for (s of visibles; track s.id) {
+          <li>
+            <button type="button" class="ev-servicio" [class.urgente]="s.con_sos || s.con_alerta" [class.demorado]="demorado(s)" (click)="abrirServicio.emit(s.id)">
+              <span class="ev-servicio-top">
+                <b>#{{ s.id }} · <span class="adm-cap">{{ s.tipo_servicio === 'transporte' ? s.tipo_vehiculo : s.tipo_servicio }}</span></b>
+                <span class="adm-estado e-{{ s.estado_codigo }}">{{ s.estado_nombre }}</span>
+              </span>
+              <span class="adm-lista-sub">{{ s.pasajero_nombre || s.cliente_nombre }}{{ s.conductor_nombre ? ' con ' + s.conductor_nombre : '' }}</span>
+              <span class="adm-lista-sub ev-ruta">{{ s.origen }} → {{ s.destino }}</span>
+              <span class="ev-servicio-pie">
+                <span>{{ s.minutos }} min · ${{ s.tarifa | number:'1.0-0' }}</span>
+                @if (s.con_sos) { <span class="ev-tag rojo">SOS</span> }
+                @if (s.con_alerta) { <span class="ev-tag naranja">¿Todo bien?</span> }
+                @if (s.estado_codigo === 'buscando') { <span class="ev-tag" [class.naranja]="!s.ofertas">{{ s.ofertas ? s.ofertas + ' conductores avisados' : 'Nadie cerca' }}</span> }
+              </span>
+            </button>
+          </li>
+        } @empty {
+          <li class="adm-vacio">No hay servicios activos en este momento.</li>
+        }
+      </ul>
+
+      <div class="adm-card-head ev-sub">
+        <div><h2>Programados (24 h)</h2><p class="adm-card-sub">La búsqueda arranca unos minutos antes</p></div>
+      </div>
+      <ul class="adm-lista">
+        @for (p of proximos; track p.id) {
+          <li class="adm-lista-item">
+            <span class="adm-tipo-ico t-transporte"><adm-ico n="reloj" /></span>
+            <span class="adm-lista-txt">
+              <span class="adm-lista-nombre">{{ p.programado_para | date:'EEE d · h:mm a' }} · <span class="adm-cap">{{ p.tipo_vehiculo }}</span></span>
+              <span class="adm-lista-sub">{{ p.cliente_nombre }} · {{ p.origen }} → {{ p.destino }}</span>
+              @if (p.estado === 'fallido') { <span class="adm-lista-sub ev-fallo">No se pudo pedir: {{ p.motivo_fallo }}</span> }
+            </span>
+            @if (p.telefono) { <a class="adm-btn-ico" [href]="'tel:' + p.telefono" [attr.aria-label]="'Llamar a ' + p.cliente_nombre"><adm-ico n="telefono" /></a> }
+          </li>
+        } @empty {
+          <li class="adm-vacio">No hay viajes programados para las próximas 24 horas.</li>
+        }
+      </ul>
+    </section>
+  </div>
+</div>

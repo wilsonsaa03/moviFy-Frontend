@@ -1,0 +1,28 @@
+/* Resumen del día. Lo general viene de home-admin.css */
+.dsh { display: flex; flex-direction: column; gap: 20px; }
+.dsh-lluvia { margin: 0; padding: 12px 16px; border-radius: 14px; display: flex; align-items: center; gap: 10px; background: #E8EEF6; color: var(--azul); font-weight: 700; }
+
+.dsh-pendientes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.dsh-pendiente {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--borde); border-radius: 14px;
+  background: #FFFFFF; color: var(--texto); font-size: 14px; text-align: left; cursor: pointer;
+}
+.dsh-pendiente b { font-family: 'Baloo 2', sans-serif; font-size: 22px; min-width: 28px; }
+.dsh-pendiente span { flex: 1; }
+.dsh-pendiente:hover { border-color: var(--turquesa); }
+.dsh-pendiente.rojo { background: var(--rojo-fondo); border-color: #F5B5AF; color: var(--rojo-texto); }
+.dsh-pendiente.naranja { background: var(--naranja-fondo); border-color: #F7C99B; color: var(--naranja-texto); }
+
+.dsh-horas { height: 170px; display: grid; grid-template-columns: repeat(24, 1fr); gap: 3px; align-items: end; }
+.dsh-hora { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.dsh-hora i { width: 100%; border-radius: 4px 4px 0 0; background: var(--turquesa); }
+.dsh-hora i.vacia { background: var(--borde); }
+.dsh-hora small { font-size: 11px; color: var(--texto-3); font-weight: 700; }
+
+.dsh-dias { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.dsh-dias li { display: grid; grid-template-columns: 70px 1fr 40px; align-items: center; gap: 10px; font-size: 14px; }
+.dsh-dia { font-weight: 700; color: var(--texto-2); text-transform: capitalize; }
+.dsh-pista { height: 12px; border-radius: 999px; background: var(--gris-fondo); display: flex; overflow: hidden; }
+.dsh-pista .ok { background: #2BB673; }
+.dsh-pista .mal { background: #E5484D; }
+.dsh-dias b { text-align: right; }

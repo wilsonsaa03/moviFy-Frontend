@@ -1,0 +1,13 @@
+/* Auditoría. Lo general viene de home-admin.css */
+.aud { display: flex; flex-direction: column; gap: 16px; }
+.aud-alerta { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 16px; background: var(--rojo-fondo); color: var(--rojo-texto); font-size: 14px; }
+.aud-alerta b { display: block; }
+.aud-detalle { max-width: 420px; font-size: 13px; color: var(--texto-2); overflow-wrap: anywhere; }
+.aud-diff { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.aud-diff li { font-family: ui-monospace, monospace; font-size: 12px; color: var(--texto-2); overflow-wrap: anywhere; }
+.aud-op { display: inline-block; padding: 1px 8px; border-radius: 8px; font-size: 12px; font-weight: 800; }
+.op-I { background: var(--verde-fondo); color: var(--verde-texto); }
+.op-U { background: var(--turquesa-fondo); color: var(--turquesa-texto); }
+.op-D { background: var(--rojo-fondo); color: var(--rojo-texto); }
+.aud-pie { padding: 0 20px 16px; }
+code { font-family: ui-monospace, monospace; font-size: 12.5px; }

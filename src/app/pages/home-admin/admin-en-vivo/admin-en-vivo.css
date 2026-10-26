@@ -1,0 +1,61 @@
+/* En vivo. Lo general viene de home-admin.css */
+.ev { display: flex; flex-direction: column; gap: 20px; }
+
+.ev-alarma {
+  display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 18px; border: 1px solid #F5B5AF;
+  border-radius: 16px; background: var(--rojo-fondo); color: var(--rojo-texto); text-align: left; cursor: pointer;
+}
+.ev-alarma b { display: block; font-size: 15px; }
+.ev-alarma small { font-size: 13px; font-weight: 700; }
+.ev-alarma span { flex: 1; }
+.ev-alarma:hover { border-color: var(--rojo-texto); }
+
+.ev-cuerpo { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr); gap: 20px; align-items: start; }
+.ev-mapa-card { padding-bottom: 14px; }
+.ev-mapa { height: 520px; border-radius: 12px; overflow: hidden; background: #F2EFE9; }
+.ev-leyenda { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; font-weight: 700; color: var(--texto-2); }
+.ev-leyenda li { display: flex; align-items: center; gap: 6px; }
+
+.ev-lista-card { display: flex; flex-direction: column; gap: 12px; max-height: 760px; overflow-y: auto; }
+.ev-lista { gap: 8px; }
+.ev-servicio {
+  width: 100%; padding: 12px; border: 1px solid var(--borde); border-radius: 14px; background: #FFFFFF;
+  display: flex; flex-direction: column; gap: 3px; text-align: left; cursor: pointer; color: var(--texto);
+}
+.ev-servicio:hover { border-color: var(--turquesa); }
+.ev-servicio.demorado { border-color: #F7C99B; background: #FFFBF7; }
+.ev-servicio.urgente { border-color: #F5B5AF; background: #FFF8F7; box-shadow: inset 4px 0 0 #E5484D; }
+.ev-servicio-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ev-servicio-top b { font-size: 14px; }
+.ev-ruta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-servicio-pie { margin-top: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: var(--texto-2); }
+.ev-tag { padding: 2px 8px; border-radius: 999px; background: var(--turquesa-fondo); color: var(--turquesa-texto); font-size: 11px; }
+.ev-tag.naranja { background: var(--naranja-fondo); color: var(--naranja-texto); }
+.ev-tag.rojo { background: #E5484D; color: #FFFFFF; }
+.ev-sub { margin-top: 8px; }
+.ev-fallo { color: var(--rojo-texto) !important; font-weight: 700; }
+
+/* Marcadores del mapa (los crea Leaflet fuera de la plantilla) */
+:host ::ng-deep .ev-cond, .ev-cond {
+  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; box-sizing: border-box;
+  border: 3px solid #FFFFFF; box-shadow: 0 4px 10px rgba(3, 39, 77, .3);
+}
+:host ::ng-deep .ev-cond svg { width: 17px; height: 17px; fill: none; stroke: #03274D; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+:host ::ng-deep .ev-cond.libre, .ev-cond.libre { background: #2BB673; }
+:host ::ng-deep .ev-cond.ocupado, .ev-cond.ocupado { background: #FE7B13; }
+:host ::ng-deep .ev-cond.sin-senal, .ev-cond.sin-senal { background: #B8C3D1; }
+:host ::ng-deep .ev-pedido, .ev-pedido {
+  display: block; width: 22px; height: 22px; border-radius: 50%; box-sizing: border-box;
+  background: #02AAB4; border: 4px solid #FFFFFF; box-shadow: 0 0 0 0 rgba(2, 170, 180, .6);
+  animation: ev-pulso 1.8s ease-out infinite; cursor: pointer;
+}
+:host ::ng-deep .ev-pedido.demorado { background: #E5484D; box-shadow: 0 0 0 0 rgba(229, 72, 77, .6); }
+.mini { width: 16px !important; height: 16px !important; border-width: 2px !important; animation: none !important; }
+@keyframes ev-pulso { 70% { box-shadow: 0 0 0 14px rgba(2, 170, 180, 0); } 100% { box-shadow: 0 0 0 0 rgba(2, 170, 180, 0); } }
+@media (prefers-reduced-motion: reduce) { :host ::ng-deep .ev-pedido { animation: none; } }
+
+@media (max-width: 1100px) {
+  .ev-cuerpo { grid-template-columns: 1fr; }
+  .ev-mapa { height: 380px; }
+  .ev-lista-card { max-height: none; }
+}

@@ -1,0 +1,139 @@
+<div class="seg">
+  <div class="adm-barra-herr">
+    <div class="adm-pills" role="tablist" aria-label="Tipo de alerta">
+      <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'sos'" [attr.aria-selected]="pestana === 'sos'" (click)="pestana = 'sos'; editando = null">
+        SOS <span class="adm-pill-num" [class.seg-num-rojo]="sosAbiertas">{{ sosAbiertas }}</span>
+      </button>
+      <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'alertas'" [attr.aria-selected]="pestana === 'alertas'" (click)="pestana = 'alertas'; editando = null">
+        ¿Todo bien? <span class="adm-pill-num" [class.seg-num-rojo]="alertasPendientes">{{ alertasPendientes }}</span>
+      </button>
+    </div>
+    <label class="cat-check seg-check">
+      <input type="checkbox" [(ngModel)]="soloAbiertas"> Solo las que faltan por atender
+    </label>
+    <button type="button" class="adm-btn adm-btn-borde" (click)="cargar()"><adm-ico n="refrescar" /> Actualizar</button>
+  </div>
+
+  <p class="adm-ayuda seg-ayuda">
+    @if (pestana === 'sos') {
+      El pasajero o el conductor tocó SOS en la app. Llama primero; si hay peligro, comunícate con la Policía (123).
+    } @else {
+      La app vio un desvío de la ruta o una parada larga y preguntó "¿Todo bien?". Aquí salen las que no respondió o en las que pidió ayuda.
+    }
+  </p>
+
+  @if (errorCarga) {
+    <p class="adm-error seg-error-carga" role="alert">
+      {{ errorCarga }}
+      <button type="button" class="adm-btn adm-btn-borde" (click)="cargar()">Reintentar</button>
+    </p>
+  }
+  @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+  @if (cargando && !sos.length && !alertas.length) { <p class="adm-vacio">Cargando alertas…</p> }
+
+  <!-- ══════════ SOS ══════════ -->
+  @if (pestana === 'sos') {
+    <div class="seg-lista">
+      @for (a of sosVisibles; track a.id) {
+        <article class="adm-card seg-alerta" [class.abierta]="a.estado === 'abierta'" [class.atencion]="a.estado === 'en_atencion'">
+          <header class="seg-cabeza">
+            <span class="seg-icono"><adm-ico n="sos" /></span>
+            <div class="seg-titulo">
+              <b>{{ a.usuario_nombre }}</b>
+              <small>{{ a.rol === 'conductor' ? 'Conductor' : a.rol === 'cliente' ? 'Pasajero' : 'Usuario' }} · {{ hace(a.creado_en) }}</small>
+            </div>
+            <span class="adm-estado seg-e-{{ a.estado }}">{{ estadoSos(a.estado) }}</span>
+          </header>
+
+          <div class="seg-datos">
+            @if (a.telefono) { <a class="adm-btn adm-btn-suave" [href]="'tel:' + a.telefono"><adm-ico n="telefono" /> {{ a.telefono }}</a> }
+            @if (a.conductor_nombre && a.rol !== 'conductor') {
+              <a class="adm-btn adm-btn-borde" [href]="a.conductor_telefono ? 'tel:' + a.conductor_telefono : null">
+                <adm-ico n="telefono" /> Conductor: {{ a.conductor_nombre }}
+              </a>
+            }
+            @if (a.placa) { <span class="adm-placa">{{ a.placa }}</span> }
+            @if (mapa(a.lat, a.lng); as url) { <a class="adm-btn adm-btn-borde" [href]="url" target="_blank" rel="noopener"><adm-ico n="pin" /> Ver dónde</a> }
+            @if (a.servicio_id) { <button type="button" class="adm-btn adm-btn-borde" (click)="abrirServicio.emit(a.servicio_id)">Viaje #{{ a.servicio_id }}</button> }
+          </div>
+
+          @if (a.notas && editando !== 's' + a.id) { <p class="adm-motivo seg-nota"><span class="adm-dato-label">Notas{{ a.atendida_por_nombre ? ' · ' + a.atendida_por_nombre : '' }}</span>{{ a.notas }}</p> }
+
+          @if (!soloLectura && (a.estado === 'abierta' || a.estado === 'en_atencion')) {
+            @if (editando === 's' + a.id) {
+              <label class="adm-sr" [for]="'nota-s' + a.id">Qué se hizo</label>
+              <textarea [id]="'nota-s' + a.id" class="adm-textarea" rows="2" maxlength="500" [(ngModel)]="notas"
+                        placeholder="Qué se hizo: llamamos, contestó, estaba bien / se avisó a la Policía…"></textarea>
+              <div class="adm-pie-botones">
+                <button type="button" class="adm-btn adm-btn-borde" (click)="editando = null" [disabled]="guardando">Volver</button>
+                <button type="button" class="adm-btn adm-btn-borde" (click)="cambiarSos(a, 'falsa_alarma')" [disabled]="guardando">Falsa alarma</button>
+                <button type="button" class="adm-btn adm-btn-ok" (click)="cambiarSos(a, 'atendida')" [disabled]="guardando"><adm-ico n="check" /> Atendida</button>
+              </div>
+            } @else {
+              <div class="adm-pie-botones">
+                @if (a.estado === 'abierta') {
+                  <button type="button" class="adm-btn adm-btn-primario" (click)="notas = ''; cambiarSos(a, 'en_atencion')" [disabled]="guardando">La atiendo yo</button>
+                }
+                <button type="button" class="adm-btn adm-btn-borde" (click)="empezarNota('s' + a.id, a.notas)">Cerrar alerta…</button>
+              </div>
+            }
+          }
+        </article>
+      } @empty {
+        @if (cargoPestana) {
+          <div class="adm-card adm-vacio-ok"><adm-ico n="escudo" /> No hay alertas SOS {{ soloAbiertas ? 'por atender' : '' }}.</div>
+        }
+      }
+    </div>
+  }
+
+  <!-- ══════════ ¿TODO BIEN? ══════════ -->
+  @if (pestana === 'alertas') {
+    <div class="seg-lista">
+      @for (a of alertasVisibles; track a.id) {
+        <article class="adm-card seg-alerta" [class.abierta]="a.respuesta === 'sos' && !a.revisada_en" [class.atencion]="a.respuesta === 'sin_respuesta' && !a.revisada_en">
+          <header class="seg-cabeza">
+            <span class="seg-icono naranja"><adm-ico n="pin" /></span>
+            <div class="seg-titulo">
+              <b>{{ a.tipo === 'desvio' ? 'Se salió de la ruta' : 'Parada larga' }} · {{ a.usuario_nombre }}</b>
+              <small>{{ hace(a.creado_en) }} · {{ a.origen }} → {{ a.destino }}</small>
+            </div>
+            <span class="adm-estado" [class.seg-e-abierta]="a.respuesta === 'sos'" [class.seg-e-en_atencion]="a.respuesta === 'sin_respuesta'" [class.e-finalizado]="a.respuesta === 'estoy_bien'">
+              {{ a.respuesta === 'sos' ? 'Pidió ayuda' : a.respuesta === 'sin_respuesta' ? 'No respondió' : 'Estoy bien' }}
+            </span>
+          </header>
+
+          <div class="seg-datos">
+            @if (a.usuario_telefono) { <a class="adm-btn adm-btn-suave" [href]="'tel:' + a.usuario_telefono"><adm-ico n="telefono" /> Pasajero {{ a.usuario_telefono }}</a> }
+            @if (a.conductor_telefono) { <a class="adm-btn adm-btn-borde" [href]="'tel:' + a.conductor_telefono"><adm-ico n="telefono" /> {{ a.conductor_nombre }}</a> }
+            @if (a.placa) { <span class="adm-placa">{{ a.placa }}</span> }
+            @if (mapa(a.lat, a.lng); as url) { <a class="adm-btn adm-btn-borde" [href]="url" target="_blank" rel="noopener"><adm-ico n="pin" /> Ver dónde</a> }
+            <button type="button" class="adm-btn adm-btn-borde" (click)="abrirServicio.emit(a.servicio_id)">Viaje #{{ a.servicio_id }}</button>
+          </div>
+
+          @if (a.revisada_en) {
+            <p class="adm-motivo seg-nota"><span class="adm-dato-label">Revisada por {{ a.revisada_por_nombre }} · {{ a.revisada_en | date:'d MMM h:mm a' }}</span>{{ a.notas }}</p>
+          } @else if (a.respuesta !== 'estoy_bien' && !soloLectura) {
+            @if (editando === 'a' + a.id) {
+              <label class="adm-sr" [for]="'nota-a' + a.id">Qué se hizo</label>
+              <textarea [id]="'nota-a' + a.id" class="adm-textarea" rows="2" maxlength="500" [(ngModel)]="notas"
+                        placeholder="Qué se hizo: llamamos al pasajero, iba bien por un trancón…"></textarea>
+              <div class="adm-pie-botones">
+                <button type="button" class="adm-btn adm-btn-borde" (click)="editando = null" [disabled]="guardando">Volver</button>
+                <button type="button" class="adm-btn adm-btn-ok" (click)="revisar(a)" [disabled]="guardando"><adm-ico n="check" /> Marcar revisada</button>
+              </div>
+            } @else {
+              <div class="adm-pie-botones">
+                <button type="button" class="adm-btn adm-btn-primario" (click)="empezarNota('a' + a.id, null)">Revisar…</button>
+              </div>
+            }
+          }
+        </article>
+      } @empty {
+        @if (cargoPestana) {
+          <div class="adm-card adm-vacio-ok"><adm-ico n="escudo" /> No hay alertas "¿Todo bien?" {{ soloAbiertas ? 'por revisar' : '' }}.</div>
+        }
+      }
+    </div>
+  }
+</div>

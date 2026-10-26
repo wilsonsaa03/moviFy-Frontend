@@ -1,0 +1,92 @@
+<div class="cnd">
+  <div class="adm-barra-herr">
+    <div class="adm-pills" role="tablist" aria-label="Estado de validación">
+      @for (e of estados; track e.id) {
+        <button type="button" role="tab" class="adm-pill" [class.activo]="estado === e.id" [attr.aria-selected]="estado === e.id" (click)="elegirEstado(e.id)">
+          {{ e.nombre }} <span class="adm-pill-num">{{ conteos[e.clave] ?? 0 }}</span>
+        </button>
+      }
+    </div>
+  </div>
+  <div class="adm-barra-herr">
+    <label class="adm-buscar">
+      <span class="adm-sr">Buscar conductores</span>
+      <input type="search" [(ngModel)]="q" (ngModelChange)="escribir()" placeholder="Nombre, placa o celular">
+    </label>
+    <label class="adm-select">
+      <span class="adm-sr">Vehículo</span>
+      <select [(ngModel)]="tipo" (ngModelChange)="filtrar()">
+        <option value="">Moto y taxi</option>
+        <option value="moto">Solo moto</option>
+        <option value="taxi">Solo taxi</option>
+      </select>
+    </label>
+    <label class="adm-select">
+      <span class="adm-sr">Conexión</span>
+      <select [(ngModel)]="conectado" (ngModelChange)="filtrar()">
+        <option value="">Conectados y no</option>
+        <option value="si">Disponibles ahora</option>
+        <option value="no">No disponibles</option>
+      </select>
+    </label>
+    <span class="adm-contador">{{ total }} {{ total === 1 ? 'conductor' : 'conductores' }}</span>
+  </div>
+
+  <section class="adm-card adm-card-tabla">
+    @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+    <div class="adm-tabla-scroll">
+      <table class="adm-tabla">
+        <thead>
+          <tr><th>Conductor</th><th>Vehículo</th><th>Cédula</th><th>Celular</th><th class="der">Servicios</th><th>Estado</th><th class="der"></th></tr>
+        </thead>
+        <tbody>
+          @for (c of items; track c.conductor_id) {
+            <tr>
+              <td>
+                <div class="adm-persona">
+                  <div class="adm-avatar-sm">{{ inicial(c.nombre) }}</div>
+                  <div>
+                    <span class="adm-lista-nombre">{{ c.nombre }}
+                      @if (c.en_linea) { <span class="cnd-linea" title="Disponible ahora">En línea</span> }
+                    </span>
+                    <span class="adm-lista-sub">{{ c.calificacion ? (c.calificacion | number:'1.1-1') + ' ★' : 'Sin calificación' }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="adm-nowrap">
+                <span class="adm-cap">{{ c.tipo_vehiculo || '—' }}</span>
+                @if (c.placa) { <span class="adm-placa cnd-placa">{{ c.placa }}</span> }
+                <span class="adm-lista-sub">{{ c.modelo }}</span>
+              </td>
+              <td class="adm-nowrap">{{ c.documento || '—' }}</td>
+              <td class="adm-nowrap">{{ c.telefono || '—' }}</td>
+              <td class="der adm-nowrap">
+                {{ c.total_servicios }}
+                @if (tasa(c) > 20) { <span class="cnd-tasa" title="Cancela más del 20 %">{{ tasa(c) }} % cancela</span> }
+              </td>
+              <td class="adm-nowrap">
+                <span class="adm-estado e-{{ c.estado }}">{{ c.estado_nombre }}</span>
+                @if (c.documentos_por_revisar) { <span class="cnd-aviso">{{ c.documentos_por_revisar }} por revisar</span> }
+                @if (c.documentos_por_vencer) { <span class="cnd-aviso rojo">{{ c.documentos_por_vencer }} por vencer</span> }
+              </td>
+              <td class="der">
+                <button type="button" class="adm-btn" [class.adm-btn-primario]="c.estado === 'pendiente'" [class.adm-btn-borde]="c.estado !== 'pendiente'" (click)="revisar.emit(c.conductor_id)">
+                  {{ c.estado === 'pendiente' ? 'Revisar y validar' : 'Ver expediente' }}
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7" class="adm-vacio">{{ cargando ? 'Cargando conductores…' : 'No hay conductores con esos filtros.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (total > tamano) {
+      <nav class="adm-mas" aria-label="Páginas">
+        <button type="button" class="adm-btn adm-btn-borde" (click)="ir(pagina - 1)" [disabled]="pagina === 0 || cargando">Anterior</button>
+        <span>Página {{ pagina + 1 }} de {{ paginas }}</span>
+        <button type="button" class="adm-btn adm-btn-borde" (click)="ir(pagina + 1)" [disabled]="pagina + 1 >= paginas || cargando">Siguiente</button>
+      </nav>
+    }
+  </section>
+</div>

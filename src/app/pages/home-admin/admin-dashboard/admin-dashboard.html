@@ -1,0 +1,83 @@
+<div class="dsh">
+  @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+
+  @if (r) {
+    @if (r.lluvia_activa) {
+      <p class="dsh-lluvia" role="status"><adm-ico n="tarifas" /> El recargo por lluvia está activo. Apágalo en Tarifas cuando escampe.</p>
+    }
+
+    <!-- Lo que necesita a alguien del equipo -->
+    @if (pendientes.length) {
+      <section class="dsh-pendientes" aria-label="Necesita atención">
+        @for (p of pendientes; track p.texto) {
+          <button type="button" class="dsh-pendiente {{ p.tono }}" (click)="ir.emit(p.seccion)">
+            <b>{{ p.n }}</b><span>{{ p.texto }}</span><adm-ico n="mas" />
+          </button>
+        }
+      </section>
+    } @else {
+      <div class="adm-card adm-vacio-ok"><adm-ico n="escudo" /> Todo en orden: no hay alertas, validaciones ni PQRS pendientes.</div>
+    }
+
+    <!-- Hoy -->
+    <section class="adm-kpis" aria-label="Hoy">
+      <article class="adm-kpi">
+        <span class="adm-kpi-label">Solicitudes hoy</span>
+        <span class="adm-kpi-valor">{{ r.servicios_hoy }}</span>
+        <span class="adm-kpi-pie">{{ r.finalizados_hoy }} terminadas</span>
+      </article>
+      <article class="adm-kpi">
+        <span class="adm-kpi-label">En este momento</span>
+        <span class="adm-kpi-valor">{{ r.en_curso + r.buscando }}</span>
+        <span class="adm-kpi-pie" [class.pie-alerta]="r.buscando_demorados">{{ r.en_curso }} en curso · {{ r.buscando }} buscando</span>
+      </article>
+      <article class="adm-kpi">
+        <span class="adm-kpi-label">Conductores conectados</span>
+        <span class="adm-kpi-valor">{{ r.conductores_conectados }}</span>
+        <span class="adm-kpi-pie">{{ r.conductores_ocupados }} con servicio · {{ r.conductores_aprobados }} aprobados</span>
+      </article>
+      <article class="adm-kpi">
+        <span class="adm-kpi-label">Perdidas hoy</span>
+        <span class="adm-kpi-valor">{{ r.cancelados_hoy + r.sin_conductor_hoy }}</span>
+        <span class="adm-kpi-pie" [class.pie-alerta]="tasaPerdida >= 25">
+          {{ r.cancelados_cliente_hoy }} cliente · {{ r.cancelados_conductor_hoy }} conductor · {{ r.sin_conductor_hoy }} sin conductor
+        </span>
+      </article>
+      <article class="adm-kpi">
+        <span class="adm-kpi-label">Movido en efectivo hoy</span>
+        <span class="adm-kpi-valor">${{ r.efectivo_hoy | number:'1.0-0' }}</span>
+        <span class="adm-kpi-pie">servicios terminados (no son pagos a MoviFY)</span>
+      </article>
+    </section>
+
+    <div class="adm-grid-2">
+      <section class="adm-card">
+        <div class="adm-card-head"><div><h2>Solicitudes por hora (hoy)</h2><p class="adm-card-sub">Hora de Colombia</p></div></div>
+        <div class="dsh-horas" role="img" [attr.aria-label]="'Solicitudes por hora de hoy'">
+          @for (h of horas; track h.hora) {
+            <span class="dsh-hora" [title]="h.hora + ':00 · ' + h.total + ' solicitudes'">
+              <i [style.height.%]="h.alto || 2" [class.vacia]="!h.total"></i>
+              @if (h.hora % 3 === 0) { <small>{{ h.hora }}</small> }
+            </span>
+          }
+        </div>
+      </section>
+      <section class="adm-card">
+        <div class="adm-card-head"><div><h2>Últimos 7 días</h2><p class="adm-card-sub">Terminadas y perdidas por día</p></div></div>
+        <ul class="dsh-dias">
+          @for (d of dias; track d.etiqueta) {
+            <li>
+              <span class="dsh-dia">{{ d.etiqueta }}</span>
+              <span class="dsh-pista"><i class="ok" [style.width.%]="d.total ? d.finalizados / d.total * d.alto : 0"></i><i class="mal" [style.width.%]="d.total ? d.perdidos / d.total * d.alto : 0"></i></span>
+              <b>{{ d.total }}</b>
+            </li>
+          } @empty {
+            <li class="adm-vacio">Sin solicitudes en la última semana.</li>
+          }
+        </ul>
+      </section>
+    </div>
+  } @else if (!error) {
+    <p class="adm-vacio">Cargando el resumen…</p>
+  }
+</div>

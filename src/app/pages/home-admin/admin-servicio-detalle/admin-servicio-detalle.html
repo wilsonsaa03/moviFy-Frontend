@@ -1,0 +1,144 @@
+<div class="adm-modal-fondo" (click)="cerrar.emit()">
+  <div class="adm-modal adm-modal-grande" role="dialog" aria-modal="true" aria-labelledby="titulo-servicio" (click)="$event.stopPropagation()">
+    <div class="adm-modal-head">
+      <h2 id="titulo-servicio">Servicio #{{ servicioId }}</h2>
+      <button type="button" class="adm-btn-ico" (click)="cerrar.emit()" aria-label="Cerrar"><adm-ico n="x" /></button>
+    </div>
+
+    @if (cargando && !s) {
+      <p class="adm-vacio">Cargando el servicio…</p>
+    }
+
+    @if (s) {
+      <div class="adm-modal-cuerpo sd">
+        <div class="sd-cabeza">
+          <span class="adm-estado e-{{ s.estado_codigo }}">{{ s.estado_nombre }}</span>
+          <span class="sd-tipo adm-cap">{{ s.tipo_servicio }} en {{ s.tipo_vehiculo }}</span>
+          <span class="sd-valor">${{ s.tarifa | number:'1.0-0' }}</span>
+        </div>
+        @if (ofrecioDeMas > 0) {
+          <p class="adm-ayuda">El pasajero ofreció ${{ ofrecioDeMas | number:'1.0-0' }} más de lo cotizado ({{ s.aumentos_tarifa || 0 }} {{ s.aumentos_tarifa === 1 ? 'aumento' : 'aumentos' }}).</p>
+        }
+
+        <div class="adm-datos">
+          <div>
+            <span class="adm-dato-label">Pidió</span>
+            <span class="adm-dato">{{ s.usuario_nombre }}</span>
+            @if (s.usuario_telefono) { <a class="sd-tel" [href]="'tel:' + s.usuario_telefono">{{ s.usuario_telefono }}</a> }
+          </div>
+          @if (s.pasajero_nombre) {
+            <div>
+              <span class="adm-dato-label">Viaja</span>
+              <span class="adm-dato">{{ s.pasajero_nombre }}</span>
+              @if (s.pasajero_telefono) { <a class="sd-tel" [href]="'tel:' + s.pasajero_telefono">{{ s.pasajero_telefono }}</a> }
+            </div>
+          }
+          <div>
+            <span class="adm-dato-label">Conductor</span>
+            @if (s.conductor_nombre) {
+              <span class="adm-dato">{{ s.conductor_nombre }}</span>
+              @if (s.conductor_telefono) { <a class="sd-tel" [href]="'tel:' + s.conductor_telefono">{{ s.conductor_telefono }}</a> }
+            } @else {
+              <span class="adm-dato adm-tenue">Sin asignar</span>
+            }
+          </div>
+          @if (s.conductor_placa) {
+            <div>
+              <span class="adm-dato-label">Vehículo</span>
+              <span class="adm-placa">{{ s.conductor_placa }}</span>
+              <span class="adm-lista-sub">{{ s.conductor_modelo }}{{ s.conductor_color ? ' · ' + s.conductor_color : '' }}</span>
+            </div>
+          }
+        </div>
+
+        <h3 class="adm-modal-sub">Recorrido</h3>
+        <ol class="sd-ruta">
+          <li class="o"><b>{{ s.origen }}</b>@if (s.origen_referencia) { <small>{{ s.origen_referencia }}</small> }</li>
+          @if (s.parada) { <li class="p"><small>Parada</small><b>{{ s.parada }}</b></li> }
+          <li class="d"><b>{{ s.destino }}</b>@if (s.destino_cambiado_en) { <small>El pasajero cambió el destino a las {{ s.destino_cambiado_en | date:'h:mm a' }}</small> }</li>
+        </ol>
+        <p class="adm-ayuda">
+          {{ s.distancia_km ? (s.distancia_km | number:'1.1-1') + ' km' : '' }}{{ s.duracion_estimada_min ? ' · ' + s.duracion_estimada_min + ' min aprox.' : '' }}
+          @if (preferencias) { · Pidió: <b>{{ preferencias }}</b> }
+        </p>
+        @if (s.descripcion) { <p class="adm-motivo"><span class="adm-dato-label">Descripción</span>{{ s.descripcion }}</p> }
+        @if (s.motivo_cancelacion) {
+          <div class="adm-motivo"><span class="adm-dato-label">Motivo de cancelación</span><p>{{ s.motivo_cancelacion }}{{ s.detalle_cancelacion ? ' — ' + s.detalle_cancelacion : '' }}</p></div>
+        }
+
+        <div class="sd-columnas">
+          <section>
+            <h3 class="adm-modal-sub">Línea de tiempo</h3>
+            <ol class="sd-linea">
+              @for (c of cambios; track $index) {
+                <li><b>{{ c.estado_nombre }}</b><small>{{ c.creado_en | date:'d MMM · h:mm:ss a' }} · {{ quien(c) }}</small>
+                  @if (c.motivo) { <small class="sd-motivo">{{ c.motivo }}</small> }
+                </li>
+              } @empty {
+                <li class="adm-tenue">Sin cambios registrados.</li>
+              }
+            </ol>
+          </section>
+          <section>
+            <h3 class="adm-modal-sub">Chat del viaje <span class="adm-pill-num">{{ mensajes.length }}</span></h3>
+            <div class="sd-chat" aria-label="Mensajes entre cliente y conductor">
+              @for (m of mensajes; track m.id) {
+                <p class="sd-burbuja" [class.der]="esDelConductor(m)">
+                  <small>{{ esDelConductor(m) ? 'Conductor' : 'Cliente' }} · {{ m.creado_en | date:'h:mm a' }}</small>
+                  {{ m.contenido }}
+                </p>
+              } @empty {
+                <p class="adm-tenue">No se escribieron mensajes.</p>
+              }
+            </div>
+          </section>
+        </div>
+
+        @if (error) { <p class="adm-error-modal" role="alert"><adm-ico n="x" /> {{ error }}</p> }
+
+        @if (activo && puedeCancelar) {
+          @if (reasignando) {
+            <div class="sd-cancelar sd-reasignar">
+              <h3 class="adm-modal-sub">Reasignar a otro conductor</h3>
+              <p class="adm-ayuda">El servicio vuelve a buscar conductor con el mismo precio. Al conductor actual le avisamos y no le cuenta como cancelación.</p>
+              <label class="adm-sr" for="sd-reasignar">Motivo</label>
+              <textarea id="sd-reasignar" class="adm-textarea" rows="2" maxlength="300" [(ngModel)]="motivoReasignar"
+                        placeholder="Por qué (ej.: el conductor no avanza hace 10 minutos y no contesta)"></textarea>
+              <div class="adm-pie-botones">
+                <button type="button" class="adm-btn adm-btn-borde" (click)="reasignando = false" [disabled]="enviando">Volver</button>
+                <button type="button" class="adm-btn adm-btn-primario" (click)="reasignar()" [disabled]="enviando">{{ enviando ? 'Reasignando…' : 'Sí, reasignar' }}</button>
+              </div>
+            </div>
+          } @else if (!cancelando) {
+            <div class="adm-pie-botones">
+              @if (puedeReasignar) {
+                <button type="button" class="adm-btn adm-btn-borde" (click)="reasignando = true"><adm-ico n="refrescar" /> Reasignar conductor</button>
+              }
+              <button type="button" class="adm-btn adm-btn-peligro" (click)="cancelando = true"><adm-ico n="cancelar" /> Cancelar servicio</button>
+            </div>
+          } @else {
+            <div class="sd-cancelar">
+              <h3 class="adm-modal-sub">Cancelar el servicio</h3>
+              <div class="adm-pills" role="radiogroup" aria-label="Motivo">
+                @for (m of motivos; track m.id) {
+                  <button type="button" role="radio" class="adm-pill" [class.activo]="motivoId === m.id" [attr.aria-checked]="motivoId === m.id" (click)="motivoId = m.id">{{ m.texto }}</button>
+                }
+              </div>
+              <label class="adm-sr" for="sd-detalle">Detalle</label>
+              <textarea id="sd-detalle" class="adm-textarea" rows="2" maxlength="300" [(ngModel)]="detalle"
+                        placeholder="Qué pasó (por ejemplo: el pasajero llamó a la línea y pidió cancelar)"></textarea>
+              <div class="adm-pie-botones">
+                <button type="button" class="adm-btn adm-btn-borde" (click)="cancelando = false" [disabled]="enviando">Volver</button>
+                <button type="button" class="adm-btn adm-btn-peligro-solido" (click)="cancelar()" [disabled]="enviando">
+                  {{ enviando ? 'Cancelando…' : 'Sí, cancelar' }}
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    } @else if (error) {
+      <p class="adm-error" role="alert">{{ error }}</p>
+    }
+  </div>
+</div>

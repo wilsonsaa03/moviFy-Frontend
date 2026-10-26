@@ -44,10 +44,14 @@
       @for (s of secciones; track s.id) {
         <button type="button" class="adm-nav-item" [class.activo]="seccionActiva === s.id"
                 [attr.aria-current]="seccionActiva === s.id ? 'page' : null" (click)="irA(s.id)">
-          <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: s.id }" />
+          @if (iconoLocal(s.id)) {
+            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: s.id }" />
+          } @else {
+            <adm-ico [n]="s.id" />
+          }
           <span>{{ s.titulo }}</span>
-          @if (s.id === 'conductores' && conductoresPendientes > 0) {
-            <span class="adm-nav-badge" [attr.aria-label]="conductoresPendientes + ' pendientes'">{{ conductoresPendientes }}</span>
+          @if (badge(s.id) > 0) {
+            <span class="adm-nav-badge" [class.adm-nav-badge-rojo]="s.id === 'seguridad'" [attr.aria-label]="badge(s.id) + ' pendientes'">{{ badge(s.id) }}</span>
           }
         </button>
       }
@@ -105,430 +109,77 @@
 
       <!-- ══════════ RESUMEN ══════════ -->
       @if (seccionActiva === 'dashboard') {
-
-        @if (conductoresPendientes > 0) {
-          <div class="adm-aviso">
-            <div class="adm-aviso-ico"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'alerta' }" /></div>
-            <div class="adm-aviso-txt">
-              <strong>{{ conductoresPendientes }} {{ conductoresPendientes === 1 ? 'conductor espera' : 'conductores esperan' }} validación.</strong>
-              Revisa sus documentos para que puedan empezar a recibir servicios.
-            </div>
-            <button type="button" class="adm-btn adm-btn-primario" (click)="irA('conductores', 'pendiente')">Revisar ahora</button>
-          </div>
-        }
-
-        <!-- Indicadores -->
-        <section class="adm-kpis" aria-label="Indicadores">
-          <article class="adm-kpi">
-            <div class="adm-kpi-ico k-turquesa"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'usuarios' }" /></div>
-            <span class="adm-kpi-label">Clientes registrados</span>
-            <span class="adm-kpi-valor">{{ totalClientes }}</span>
-            <span class="adm-kpi-pie">{{ totalUsuarios }} cuentas en total</span>
-          </article>
-          <article class="adm-kpi">
-            <div class="adm-kpi-ico k-azul"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'conductores' }" /></div>
-            <span class="adm-kpi-label">Conductores aprobados</span>
-            <span class="adm-kpi-valor">{{ totalConductores }}</span>
-            <span class="adm-kpi-pie" [class.pie-alerta]="conductoresPendientes > 0">{{ conductoresPendientes }} por validar</span>
-          </article>
-          <article class="adm-kpi">
-            <div class="adm-kpi-ico k-naranja"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'servicios' }" /></div>
-            <span class="adm-kpi-label">Servicios hoy</span>
-            <span class="adm-kpi-valor">{{ totalServicios }}</span>
-            <span class="adm-kpi-pie">{{ serviciosEnCurso }} en curso · {{ serviciosPendientes }} sin conductor</span>
-          </article>
-          <article class="adm-kpi">
-            <div class="adm-kpi-ico k-verde"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'dinero' }" /></div>
-            <span class="adm-kpi-label">Servicios finalizados este mes</span>
-            <span class="adm-kpi-valor">${{ totalGanancias | number:'1.0-0' }}</span>
-            <span class="adm-kpi-pie">Suma de tarifas estimadas · aún sin pagos</span>
-          </article>
-        </section>
-
-        <div class="adm-grid-2">
-          <!-- Servicios de la semana -->
-          <section class="adm-card">
-            <div class="adm-card-head">
-              <div>
-                <h2>Servicios de los últimos 7 días</h2>
-                <p class="adm-card-sub">
-                  {{ totalSemana }} solicitudes
-                  @if (variacionSemana !== null) {
-                    · <span [class.sube]="variacionSemana >= 0" [class.baja]="variacionSemana < 0">{{ variacionSemana >= 0 ? '+' : '' }}{{ variacionSemana }}% frente a los 7 días anteriores</span>
-                  } @else {
-                    · aún no hay semana anterior para comparar
-                  }
-                </p>
-              </div>
-            </div>
-            @if (cargandoServicios) {
-              <p class="adm-vacio">Cargando servicios…</p>
-            } @else if (errorServicios) {
-              <p class="adm-error" role="alert">{{ errorServicios }}</p>
-            } @else {
-              <div class="adm-barras" role="img" [attr.aria-label]="'Servicios por día en los últimos 7 días: ' + totalSemana + ' en total'">
-                @for (d of serviciosSemana; track $index) {
-                  <div class="adm-barra-col">
-                    <span class="adm-barra-num">{{ d.total }}</span>
-                    <div class="adm-barra-pista"><div class="adm-barra" [class.hoy]="d.esHoy" [style.height.%]="d.altura || 2"></div></div>
-                    <span class="adm-barra-dia" [class.hoy]="d.esHoy">{{ d.esHoy ? 'Hoy' : d.etiqueta }}</span>
-                  </div>
-                }
-              </div>
-            }
-          </section>
-
-          <!-- Por tipo de servicio -->
-          <section class="adm-card">
-            <div class="adm-card-head">
-              <div>
-                <h2>Por tipo de servicio</h2>
-                <p class="adm-card-sub">Solicitudes de este mes</p>
-              </div>
-            </div>
-            <div class="adm-dist">
-              <div class="adm-dist-fila">
-                <span class="adm-dist-ico t-transporte"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'transporte' }" /></span>
-                <span class="adm-dist-nombre">Transporte</span>
-                <div class="adm-dist-pista"><div class="adm-dist-barra t-transporte" [style.width.%]="porcentajeTransporte"></div></div>
-                <span class="adm-dist-num">{{ transportesMes }}</span>
-              </div>
-              <div class="adm-dist-fila">
-                <span class="adm-dist-ico t-domicilio"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'domicilio' }" /></span>
-                <span class="adm-dist-nombre">Domicilios</span>
-                <div class="adm-dist-pista"><div class="adm-dist-barra t-domicilio" [style.width.%]="porcentajeDomicilio"></div></div>
-                <span class="adm-dist-num">{{ domiciliosMes }}</span>
-              </div>
-              <div class="adm-dist-fila">
-                <span class="adm-dist-ico t-encomienda"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'encomienda' }" /></span>
-                <span class="adm-dist-nombre">Encomiendas</span>
-                <div class="adm-dist-pista"><div class="adm-dist-barra t-encomienda" [style.width.%]="porcentajeEncomienda"></div></div>
-                <span class="adm-dist-num">{{ encomiendaMes }}</span>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <div class="adm-grid-2">
-          <!-- Conductores por validar -->
-          <section class="adm-card">
-            <div class="adm-card-head">
-              <div>
-                <h2>Conductores por validar</h2>
-                <p class="adm-card-sub">Esperan la revisión de sus documentos</p>
-              </div>
-              @if (conductoresPendientes > 0) {
-                <button type="button" class="adm-link" (click)="irA('conductores', 'pendiente')">Ver todos</button>
-              }
-            </div>
-            @if (cargando) {
-              <p class="adm-vacio">Cargando conductores…</p>
-            } @else if (pendientesLista.length === 0) {
-              <div class="adm-vacio adm-vacio-ok">
-                <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" />
-                Todo al día: no hay conductores esperando validación.
-              </div>
-            } @else {
-              <ul class="adm-lista">
-                @for (c of pendientesLista | slice:0:4; track c.conductor_id) {
-                  <li class="adm-lista-item">
-                    <div class="adm-avatar-sm">{{ inicial(c.nombre) }}</div>
-                    <div class="adm-lista-txt">
-                      <span class="adm-lista-nombre">{{ c.nombre }}</span>
-                      <span class="adm-lista-sub">{{ c.placa || 'Sin placa' }} · {{ c.correo }}</span>
-                    </div>
-                    <button type="button" class="adm-btn adm-btn-suave" (click)="verDocumentos(c)">
-                      <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'documento' }" />
-                      Revisar
-                    </button>
-                  </li>
-                }
-              </ul>
-            }
-          </section>
-
-          <!-- Actividad reciente -->
-          <section class="adm-card">
-            <div class="adm-card-head">
-              <div>
-                <h2>Actividad reciente</h2>
-                <p class="adm-card-sub">Últimas solicitudes de la plataforma</p>
-              </div>
-              <button type="button" class="adm-link" (click)="irA('servicios')">Ver todas</button>
-            </div>
-            @if (cargandoServicios) {
-              <p class="adm-vacio">Cargando servicios…</p>
-            } @else if (servicios.length === 0) {
-              <p class="adm-vacio">Todavía no hay servicios registrados.</p>
-            } @else {
-              <ul class="adm-lista">
-                @for (s of servicios | slice:0:5; track $index) {
-                  <li class="adm-lista-item">
-                    <span class="adm-tipo-ico t-{{ s.tipo?.toLowerCase() }}"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: s.tipo?.toLowerCase() }" /></span>
-                    <div class="adm-lista-txt">
-                      <span class="adm-lista-nombre">{{ s.tipoEtiqueta }} · {{ s.cliente }}</span>
-                      <span class="adm-lista-sub">{{ s.fecha ? (s.fecha | date:'d MMM, h:mm a') : 'Sin fecha' }} · {{ s.conductor }}</span>
-                    </div>
-                    <span class="adm-estado e-{{ s.estado }}">{{ s.estadoEtiqueta }}</span>
-                  </li>
-                }
-              </ul>
-            }
-          </section>
-        </div>
+        <app-admin-dashboard (ir)="irA($any($event))" />
       }
 
       <!-- ══════════ CONDUCTORES ══════════ -->
       @if (seccionActiva === 'conductores') {
-        <div class="adm-barra-herr">
-          <div class="adm-pills" role="tablist" aria-label="Filtrar conductores">
-            @for (f of ['todos', 'pendiente', 'aprobado', 'rechazado', 'suspendido']; track f) {
-              <button type="button" role="tab" class="adm-pill" [class.activo]="filtroConductor === f"
-                      [attr.aria-selected]="filtroConductor === f" (click)="filtroConductor = f">
-                {{ f === 'todos' ? 'Todos' : f === 'pendiente' ? 'Pendientes' : f === 'aprobado' ? 'Aprobados' : f === 'rechazado' ? 'Rechazados' : 'Suspendidos' }}
-                <span class="adm-pill-num">{{ contarConductores(f) }}</span>
-              </button>
-            }
-          </div>
-        </div>
-
-        <section class="adm-card adm-card-tabla">
-          <div class="adm-tabla-scroll">
-            <table class="adm-tabla">
-              <thead>
-                <tr><th>Conductor</th><th>Placa</th><th>Modelo</th><th>Teléfono</th><th>Estado</th><th class="der">Acciones</th></tr>
-              </thead>
-              <tbody>
-                @for (c of conductoresFiltrados(); track c.conductor_id) {
-                  <tr>
-                    <td>
-                      <div class="adm-persona">
-                        <div class="adm-avatar-sm">{{ inicial(c.nombre) }}</div>
-                        <div><span class="adm-lista-nombre">{{ c.nombre }}</span><span class="adm-lista-sub">{{ c.correo }}</span></div>
-                      </div>
-                    </td>
-                    <td><span class="adm-placa">{{ c.placa || '—' }}</span></td>
-                    <td>{{ c.modelo || '—' }}</td>
-                    <td>{{ c.telefono || '—' }}</td>
-                    <td><span class="adm-estado e-{{ c.estado }}">{{ c.estado }}</span></td>
-                    <td class="der">
-                      <div class="adm-acciones">
-                        <button type="button" class="adm-btn-ico" (click)="verDocumentos(c)" aria-label="Ver documentos" title="Ver documentos">
-                          <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'ojo' }" />
-                        </button>
-                        @if (c.estado === 'pendiente') {
-                          <button type="button" class="adm-btn adm-btn-ok" (click)="aprobarConductor(c)" [disabled]="procesandoConductor">
-                            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" /> Aprobar
-                          </button>
-                          <button type="button" class="adm-btn adm-btn-peligro" (click)="rechazarConductor(c)">
-                            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" /> Rechazar
-                          </button>
-                        }
-                        @if (c.estado === 'aprobado') {
-                          <button type="button" class="adm-btn adm-btn-borde" (click)="bloquearConductor(c)" [disabled]="procesandoConductor">
-                            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'bloquear' }" /> Suspender
-                          </button>
-                        }
-                      </div>
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr><td colspan="6" class="adm-vacio">{{ cargando ? 'Cargando conductores…' : 'No hay conductores en esta categoría.' }}</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <app-admin-conductores [recargar]="versionConductores" [estadoInicial]="filtroConductor === 'todos' ? '' : filtroConductor"
+                               (revisar)="verConductor($event)" />
+        <app-admin-documentos-vencer (verConductor)="verConductor($event)" />
       }
 
-      <!-- ══════════ USUARIOS ══════════ -->
+      <!-- ══════════ CLIENTES Y USUARIOS ══════════ -->
       @if (seccionActiva === 'usuarios') {
-        <div class="adm-barra-herr">
-          <label class="adm-buscar">
-            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'buscar' }" />
-            <span class="adm-sr">Buscar usuarios</span>
-            <input type="search" [(ngModel)]="busquedaUsuarios" placeholder="Buscar por nombre, correo o teléfono">
-          </label>
-          <span class="adm-contador">{{ usuariosFiltrados().length }} de {{ totalUsuarios }}</span>
-        </div>
-
-        <section class="adm-card adm-card-tabla">
-          @if (errorUsuarios) { <p class="adm-error" role="alert">{{ errorUsuarios }}</p> }
-          <div class="adm-tabla-scroll">
-            <table class="adm-tabla">
-              <thead>
-                <tr><th>Usuario</th><th>Teléfono</th><th>Rol</th><th>Estado</th><th class="der">Acciones</th></tr>
-              </thead>
-              <tbody>
-                @for (u of usuariosFiltrados(); track u.id) {
-                  <tr>
-                    <td>
-                      <div class="adm-persona">
-                        @if (u.foto) {
-                          <img [src]="u.foto" alt="" class="adm-avatar-sm">
-                        } @else {
-                          <div class="adm-avatar-sm">{{ inicial(u.nombre) }}</div>
-                        }
-                        <div><span class="adm-lista-nombre">{{ u.nombre }}</span><span class="adm-lista-sub">{{ u.correo || 'Sin correo' }}</span></div>
-                      </div>
-                    </td>
-                    <td>{{ u.telefono || '—' }}</td>
-                    <td><span class="adm-rol {{ rolClase(u.rol) }}">{{ rolEtiquetaDe(u.rol) }}</span></td>
-                    <td><span class="adm-estado e-{{ u.estado }}">{{ u.estado || '—' }}</span></td>
-                    <td class="der">
-                      <div class="adm-acciones">
-                        @if (u.estado === 'activo' && u.rol !== 'admin') {
-                          <button type="button" class="adm-btn adm-btn-borde" (click)="bloquearUsuario(u)">
-                            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'bloquear' }" /> Bloquear
-                          </button>
-                        }
-                        @if (u.estado !== 'activo') {
-                          <button type="button" class="adm-btn adm-btn-ok" (click)="activarUsuario(u)">
-                            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" /> Activar
-                          </button>
-                        }
-                      </div>
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr><td colspan="5" class="adm-vacio">{{ cargandoUsuarios ? 'Cargando usuarios…' : 'No hay usuarios que coincidan con la búsqueda.' }}</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <app-admin-usuarios [soloLectura]="esSoporte" (aviso)="mostrarAviso($event)" (abrirServicio)="abrirServicio($event)" />
       }
 
-      <!-- ══════════ SERVICIOS ══════════ -->
+      <!-- ══════════ SOLICITUDES ══════════ -->
       @if (seccionActiva === 'servicios') {
-        <div class="adm-barra-herr">
-          <label class="adm-buscar">
-            <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'buscar' }" />
-            <span class="adm-sr">Buscar servicios</span>
-            <input type="search" [(ngModel)]="busquedaServicios" (ngModelChange)="limiteServicios = 20" placeholder="Buscar por cliente, conductor o destino">
-          </label>
-          <label class="adm-select">
-            <span class="adm-sr">Tipo de servicio</span>
-            <select [(ngModel)]="filtroTipoServicio" (ngModelChange)="limiteServicios = 20">
-              <option value="todos">Todos los tipos</option>
-              <option value="TRANSPORTE">Transporte</option>
-              <option value="DOMICILIO">Domicilio</option>
-              <option value="ENCOMIENDA">Encomienda</option>
-            </select>
-          </label>
-          <label class="adm-select">
-            <span class="adm-sr">Estado</span>
-            <select [(ngModel)]="filtroEstadoServicio" (ngModelChange)="limiteServicios = 20">
-              <option value="todos">Todos los estados</option>
-              @for (e of estadosDisponibles; track e) { <option [value]="e">{{ etiquetaEstado(e) }}</option> }
-            </select>
-          </label>
-          <span class="adm-contador">{{ serviciosFiltrados().length }} de {{ servicios.length }}</span>
-        </div>
-
-        <section class="adm-card adm-card-tabla">
-          @if (errorServicios) { <p class="adm-error" role="alert">{{ errorServicios }}</p> }
-          <div class="adm-tabla-scroll">
-            <table class="adm-tabla">
-              <thead>
-                <tr><th>Servicio</th><th>Fecha</th><th>Cliente</th><th>Conductor</th><th>Destino</th><th class="der">Tarifa</th><th>Estado</th></tr>
-              </thead>
-              <tbody>
-                @for (s of serviciosFiltrados() | slice:0:limiteServicios; track $index) {
-                  <tr>
-                    <td>
-                      <div class="adm-persona adm-persona-corta">
-                        <span class="adm-tipo-ico t-{{ s.tipo?.toLowerCase() }}"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: s.tipo?.toLowerCase() }" /></span>
-                        <span class="adm-lista-nombre">{{ s.tipoEtiqueta }}</span>
-                      </div>
-                    </td>
-                    <td class="adm-nowrap">{{ s.fecha ? (s.fecha | date:'d MMM yy · h:mm a') : '—' }}</td>
-                    <td class="adm-nowrap">{{ s.cliente }}</td>
-                    <td class="adm-nowrap" [class.adm-tenue]="s.conductor === 'Sin asignar'">{{ s.conductor }}</td>
-                    <td class="adm-truncar" [title]="s.destino">{{ s.destino }}</td>
-                    <td class="der adm-nowrap">${{ s.precio | number:'1.0-0' }}</td>
-                    <td><span class="adm-estado e-{{ s.estado }}">{{ s.estadoEtiqueta }}</span></td>
-                  </tr>
-                } @empty {
-                  <tr><td colspan="7" class="adm-vacio">{{ cargandoServicios ? 'Cargando servicios…' : 'No hay servicios con esos filtros.' }}</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
-          @if (serviciosFiltrados().length > limiteServicios) {
-            <div class="adm-mas">
-              <span>Mostrando {{ limiteServicios }} de {{ serviciosFiltrados().length }}</span>
-              <button type="button" class="adm-btn adm-btn-borde" (click)="limiteServicios = limiteServicios + 20">Ver 20 más</button>
-            </div>
-          }
-        </section>
+        <app-admin-servicios [recargar]="versionServicios" (abrir)="abrirServicio($event)" />
       }
 
       <!-- ══════════ REPORTES ══════════ -->
       @if (seccionActiva === 'reportes') {
-        <section class="adm-kpis" aria-label="Indicadores del mes">
-          <article class="adm-kpi">
-            <div class="adm-kpi-ico k-turquesa"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'transporte' }" /></div>
-            <span class="adm-kpi-label">Transportes este mes</span>
-            <span class="adm-kpi-valor">{{ transportesMes }}</span>
-            <span class="adm-kpi-pie">{{ porcentajeTransporte }}% de las solicitudes</span>
-          </article>
-          <article class="adm-kpi">
-            <div class="adm-kpi-ico k-naranja"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'domicilio' }" /></div>
-            <span class="adm-kpi-label">Domicilios este mes</span>
-            <span class="adm-kpi-valor">{{ domiciliosMes }}</span>
-            <span class="adm-kpi-pie">{{ porcentajeDomicilio }}% de las solicitudes</span>
-          </article>
-          <article class="adm-kpi">
-            <div class="adm-kpi-ico k-azul"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'encomienda' }" /></div>
-            <span class="adm-kpi-label">Encomiendas este mes</span>
-            <span class="adm-kpi-valor">{{ encomiendaMes }}</span>
-            <span class="adm-kpi-pie">{{ porcentajeEncomienda }}% de las solicitudes</span>
-          </article>
-          <article class="adm-kpi adm-kpi-proximo">
-            <div class="adm-kpi-ico k-gris"><ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'estrella' }" /></div>
-            <span class="adm-kpi-label">Calificación promedio</span>
-            <span class="adm-kpi-valor adm-kpi-na">—</span>
-            <span class="adm-kpi-pie">Disponible cuando se implementen las calificaciones</span>
-          </article>
-        </section>
+        <app-admin-estadisticas [puedeExportar]="!esSoporte" (aviso)="mostrarAviso($event)" />
+      }
 
-        <div class="adm-grid-2">
-          <section class="adm-card">
-            <div class="adm-card-head"><div><h2>Servicios por estado</h2><p class="adm-card-sub">Todos los servicios registrados ({{ servicios.length }})</p></div></div>
-            @if (serviciosPorEstado.length === 0) {
-              <p class="adm-vacio">Todavía no hay servicios registrados.</p>
-            } @else {
-              <div class="adm-dist">
-                @for (e of serviciosPorEstado; track e.clave) {
-                  <div class="adm-dist-fila">
-                    <span class="adm-estado e-{{ e.clave.toLowerCase() }} adm-dist-estado">{{ e.etiqueta }}</span>
-                    <div class="adm-dist-pista"><div class="adm-dist-barra b-{{ e.clave.toLowerCase() }}" [style.width.%]="e.porcentaje"></div></div>
-                    <span class="adm-dist-num">{{ e.total }}</span>
-                  </div>
-                }
-              </div>
-            }
-          </section>
+      <!-- ══════════ CALIFICACIONES ══════════ -->
+      @if (seccionActiva === 'calificaciones') {
+        <app-admin-calificaciones (abrirServicio)="abrirServicio($event)" (verPersona)="verPersona($event)" />
+      }
 
-          <section class="adm-card">
-            <div class="adm-card-head"><div><h2>Conductores</h2><p class="adm-card-sub">Estado de validación de todos los conductores ({{ conductores.length }})</p></div></div>
-            <div class="adm-dist">
-              @for (f of ['aprobado', 'pendiente', 'rechazado', 'suspendido']; track f) {
-                <div class="adm-dist-fila">
-                  <span class="adm-estado e-{{ f }} adm-dist-estado">{{ f }}</span>
-                  <div class="adm-dist-pista"><div class="adm-dist-barra b-{{ f }}" [style.width.%]="conductores.length ? (contarConductores(f) / conductores.length) * 100 : 0"></div></div>
-                  <span class="adm-dist-num">{{ contarConductores(f) }}</span>
-                </div>
-              }
-            </div>
-          </section>
-        </div>
+      <!-- ══════════ EQUIPO Y PERMISOS ══════════ -->
+      @if (seccionActiva === 'equipo' && !esSoporte) {
+        <app-admin-equipo (aviso)="mostrarAviso($event)" (abrirServicio)="abrirServicio($event)" />
+      }
+
+      <!-- ══════════ EN VIVO ══════════ -->
+      @if (seccionActiva === 'vivo') {
+        <app-admin-en-vivo (abrirServicio)="abrirServicio($event)" (ir)="irA($any($event))" />
+      }
+
+      <!-- ══════════ SEGURIDAD ══════════ -->
+      @if (seccionActiva === 'seguridad') {
+        <app-admin-seguridad (abrirServicio)="abrirServicio($event)" (aviso)="mostrarAviso($event)"
+                             (pendientes)="pendientesSeguridad = $event" />
+      }
+
+      <!-- ══════════ SOPORTE (PQRS) ══════════ -->
+      @if (seccionActiva === 'soporte') {
+        <app-admin-reportes (abrirServicio)="abrirServicio($event)" (aviso)="mostrarAviso($event)"
+                            (pendientes)="pqrsAbiertas = $event" />
+      }
+
+      <!-- ══════════ TARIFAS ══════════ -->
+      @if (seccionActiva === 'tarifas') {
+        <app-admin-tarifas [soloLectura]="esSoporte" (aviso)="mostrarAviso($event)" />
+      }
+
+      <!-- ══════════ CONFIGURACIÓN ══════════ -->
+      @if (seccionActiva === 'configuracion' && !esSoporte) {
+        <app-admin-configuracion (aviso)="mostrarAviso($event)" />
+      }
+
+      <!-- ══════════ AUDITORÍA ══════════ -->
+      @if (seccionActiva === 'auditoria' && !esSoporte) {
+        <app-admin-auditoria />
       }
 
       <!-- ══════════ DATOS BÁSICOS ══════════ -->
       @if (seccionActiva === 'catalogos') {
         <app-admin-catalogos [soloLectura]="esSoporte" />
+        <app-admin-operacion [soloLectura]="esSoporte" (aviso)="mostrarAviso($event)" (ir)="irA($any($event))" />
       }
 
     </main>
@@ -587,6 +238,26 @@
               </div>
             }
 
+            @if (expediente) {
+              <h3 class="adm-modal-sub">
+                Requisitos para {{ expediente.tipo_vehiculo === 'taxi' ? 'taxi' : expediente.tipo_vehiculo === 'moto' ? 'moto' : 'el vehículo' }}
+                @if (expediente.obligatorios_sin_aprobar) { <span class="adm-sub-nota">{{ expediente.obligatorios_sin_aprobar }} sin aprobar</span> }
+              </h3>
+              <ul class="adm-checklist">
+                @for (r of expediente.requisitos; track r.codigo) {
+                  <li [class.ok]="r.estado === 'aprobado'" [class.mal]="r.obligatorio && (!r.estado || r.estado === 'rechazado' || r.estado === 'vencido')">
+                    <span class="adm-check-marca" aria-hidden="true">{{ r.estado === 'aprobado' ? '✓' : r.estado === 'pendiente' ? '•' : r.estado ? '!' : '○' }}</span>
+                    <span class="adm-check-txt">
+                      <b>{{ r.nombre }}</b>
+                      <small>{{ r.obligatorio ? 'Obligatorio' : 'Opcional' }}{{ r.exigir_desde_anios ? ' desde ' + r.exigir_desde_anios + ' años del vehículo' : '' }}
+                        · {{ r.estado ? (r.estado === 'pendiente' ? 'por revisar' : r.estado) : 'no lo ha subido' }}
+                        {{ r.dias_para_vencer !== null && r.dias_para_vencer !== undefined ? (r.dias_para_vencer < 0 ? '· venció' : '· vence en ' + r.dias_para_vencer + ' días') : '' }}</small>
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+
             <h3 class="adm-modal-sub">
               Documentos enviados
               @if (documentosPorRevisar) { <span class="adm-sub-nota">{{ documentosPorRevisar }} por revisar</span> }
@@ -635,6 +306,41 @@
               }
             </div>
 
+            @if (expediente) {
+              <h3 class="adm-modal-sub">Actividad</h3>
+              <div class="adm-datos">
+                <div><span class="adm-dato-label">Servicios terminados</span><span class="adm-dato">{{ expediente.actividad.total_servicios }}</span></div>
+                <div><span class="adm-dato-label">Cancelaciones</span><span class="adm-dato" [class.adm-texto-rojo]="expediente.actividad.tasa_cancelacion > 20">{{ expediente.actividad.total_cancelaciones }} ({{ expediente.actividad.tasa_cancelacion }} %)</span></div>
+                <div><span class="adm-dato-label">Calificación</span><span class="adm-dato">{{ expediente.actividad.calificacion_promedio ? (expediente.actividad.calificacion_promedio | number:'1.1-1') + ' ★' : 'Sin calificaciones' }}</span></div>
+                <div><span class="adm-dato-label">Cobrado (30 días)</span><span class="adm-dato">${{ expediente.actividad.cobrado_30_dias | number:'1.0-0' }}</span></div>
+              </div>
+              <div class="adm-exp-columnas">
+                <section>
+                  <h3 class="adm-modal-sub">Últimos servicios</h3>
+                  <ul class="adm-lista">
+                    @for (sv of expediente.servicios; track sv.id) {
+                      <li class="adm-lista-item adm-clic" tabindex="0" (click)="abrirServicio(sv.id)" (keydown.enter)="abrirServicio(sv.id)">
+                        <span class="adm-lista-txt"><span class="adm-lista-nombre">#{{ sv.id }} · {{ sv.solicitado_en | date:'d MMM, h:mm a' }}</span><span class="adm-lista-sub">{{ sv.destino }}</span></span>
+                        <span class="adm-estado e-{{ sv.estado_codigo }}">{{ sv.estado_nombre }}</span>
+                      </li>
+                    } @empty { <li class="adm-tenue">Todavía no tiene servicios.</li> }
+                  </ul>
+                </section>
+                <section>
+                  <h3 class="adm-modal-sub">Calificaciones y cambios</h3>
+                  <ul class="adm-lista">
+                    @for (c of expediente.calificaciones; track c.servicio_id) {
+                      <li class="adm-lista-item"><span class="adm-lista-txt"><span class="adm-lista-nombre">{{ c.puntuacion }} ★</span><span class="adm-lista-sub">{{ c.comentario || 'Sin comentario' }}</span></span></li>
+                    }
+                    @for (h of expediente.historial_estado; track $index) {
+                      <li class="adm-lista-item"><span class="adm-lista-txt"><span class="adm-lista-nombre adm-cap">{{ h.accion.replace('_', ' ') }}</span><span class="adm-lista-sub">{{ h.creado_en | date:'d MMM y' }} · {{ h.por || 'Sistema' }}</span></span></li>
+                    }
+                    @if (!expediente.calificaciones.length && !expediente.historial_estado.length) { <li class="adm-tenue">Sin calificaciones ni cambios.</li> }
+                  </ul>
+                </section>
+              </div>
+            }
+
             @if (errorModal) {
               <p class="adm-error-modal" role="alert">
                 <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'alerta' }" /> {{ errorModal }}
@@ -642,18 +348,33 @@
             }
           </div>
 
-          @if (conductorDetalle.estado === 'pendiente' || conductorDetalle.estado === 'rechazado') {
+          @if (!esSoporte) {
             <div class="adm-modal-pie adm-modal-pie-nota">
-              <p class="adm-ayuda">Solo los conductores aprobados pueden conectarse y recibir servicios. Al aprobar, los documentos que sigan por revisar quedan aprobados.</p>
+              @if (conductorDetalle.estado === 'pendiente' || conductorDetalle.estado === 'rechazado' || conductorDetalle.estado === 'suspendido') {
+                <p class="adm-ayuda">
+                  @if (faltanRequisitos) {
+                    <b>No se puede aprobar todavía:</b> falta subir o corregir {{ faltanRequisitos }} documento(s) obligatorio(s) para {{ expediente?.tipo_vehiculo }}.
+                  } @else {
+                    Revisaste los documentos: al aprobar, los que siguen "por revisar" quedan aprobados y el conductor puede conectarse.
+                  }
+                </p>
+              }
               <div class="adm-pie-botones">
                 @if (conductorDetalle.estado === 'pendiente') {
                   <button type="button" class="adm-btn adm-btn-peligro" (click)="rechazarDesdeModal(conductorDetalle)">
                     <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" /> Rechazar
                   </button>
                 }
-                <button type="button" class="adm-btn adm-btn-ok" (click)="aprobarDesdeModal(conductorDetalle)" [disabled]="procesandoConductor">
-                  <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" /> Aprobar conductor
-                </button>
+                @if (conductorDetalle.estado === 'aprobado') {
+                  <button type="button" class="adm-btn adm-btn-peligro" (click)="suspenderDesdeModal(conductorDetalle)">
+                    <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'bloquear' }" /> Suspender
+                  </button>
+                } @else {
+                  <button type="button" class="adm-btn adm-btn-ok" (click)="aprobarDesdeModal(conductorDetalle)" [disabled]="procesandoConductor || faltanRequisitos > 0">
+                    <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'check' }" />
+                    {{ conductorDetalle.estado === 'suspendido' ? 'Reactivar conductor' : 'Aprobar conductor' }}
+                  </button>
+                }
               </div>
             </div>
           }
@@ -692,4 +413,10 @@
       </div>
     </div>
   }
+
+  <!-- ═══════════════ MODAL: DETALLE DE UN SERVICIO ═══════════════ -->
+  @if (servicioAbierto) {
+    <app-admin-servicio-detalle [servicioId]="servicioAbierto" (cerrar)="servicioAbierto = null" (cambio)="servicioCambio($event)" />
+  }
+
 </div>

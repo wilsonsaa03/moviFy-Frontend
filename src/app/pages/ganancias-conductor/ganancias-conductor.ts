@@ -5,7 +5,9 @@ import { FormsModule } from '@angular/forms';
 import { ConductorService } from '../../Base_de_datos/conductor.service';
 import { ApiService } from '../../core/api.service';
 
-// Declaramos Chart.js como global (se carga por CDN o se importa abajo)
+import { cargarChartJs } from '../../core/cargar-script';
+
+// Chart.js es global: se descarga solo al abrir esta pantalla (cargarChartJs), no desde index.html
 declare var Chart: any;
 
 @Component({
@@ -118,7 +120,8 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
     Promise.all([
       this.cargarStats(),
       this.cargarTransacciones(),
-      this.cargarGrafica()
+      this.cargarGrafica(),
+      cargarChartJs().catch(() => undefined) // sin CDN: los datos se ven igual, sin las gráficas
     ]).finally(() => {
       this.cargando = false;
       // Pequeño delay para que el DOM renderice el canvas

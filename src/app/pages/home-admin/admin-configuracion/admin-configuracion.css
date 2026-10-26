@@ -1,0 +1,18 @@
+/* Configuración del sistema. Lo general viene de home-admin.css */
+.conf { display: flex; flex-direction: column; gap: 16px; }
+.conf-cabeza { padding: 16px 20px 6px; }
+.conf-cabeza h2 { margin: 0; font-size: 16px; font-weight: 800; }
+.conf-lista { list-style: none; margin: 0; padding: 0; }
+.conf-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 14px 20px; border-top: 1px solid var(--borde); }
+.conf-fila.editando { background: #FAFCFD; }
+.conf-txt { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.conf-txt b { font-size: 15px; }
+.conf-txt small { font-size: 13px; color: var(--texto-2); }
+.conf-txt code { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--texto-3); }
+.conf-valor { display: flex; align-items: center; gap: 8px; }
+.conf-num { min-width: 64px; padding: 6px 12px; border-radius: 10px; background: var(--gris-fondo); font-weight: 800; font-size: 16px; text-align: right; font-variant-numeric: tabular-nums; }
+.conf-num.vacio { color: var(--texto-3); font-style: italic; font-weight: 700; }
+.conf-unidad { min-width: 70px; font-size: 13px; font-weight: 700; color: var(--texto-3); }
+.conf-editar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.conf-editar .cat-input { width: 180px; }
+.conf-error { flex-basis: 100%; margin: 0; }

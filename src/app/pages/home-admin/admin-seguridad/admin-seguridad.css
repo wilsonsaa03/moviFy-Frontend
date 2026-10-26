@@ -1,0 +1,33 @@
+/* Seguridad (SOS y "¿Todo bien?"). Lo general viene de home-admin.css */
+.seg { display: flex; flex-direction: column; gap: 16px; }
+.seg-check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.seg-check input { width: 18px; height: 18px; accent-color: var(--turquesa); }
+.seg-ayuda { margin: 0; }
+.seg-num-rojo { background: #E5484D !important; color: #FFFFFF !important; }
+
+.seg-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 16px; }
+.seg-alerta { display: flex; flex-direction: column; gap: 12px; border-left: 4px solid var(--borde); }
+.seg-alerta.abierta { border-left-color: #E5484D; background: #FFF8F7; }
+.seg-alerta.atencion { border-left-color: var(--naranja); }
+
+.seg-cabeza { display: flex; align-items: center; gap: 12px; }
+.seg-icono { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center; background: var(--rojo-fondo); color: var(--rojo-texto); }
+.seg-icono.naranja { background: var(--naranja-fondo); color: var(--naranja-texto); }
+.seg-titulo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.seg-titulo b { font-size: 15px; }
+.seg-titulo small { font-size: 13px; color: var(--texto-3); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.seg-datos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.seg-datos a { text-decoration: none; }
+.seg-nota { margin: 0; }
+
+.seg-e-abierta { background: #E5484D; color: #FFFFFF; }
+.seg-e-abierta::before { background: #FFFFFF !important; }
+.seg-e-en_atencion { background: var(--naranja-fondo); color: var(--naranja-texto); }
+.seg-e-atendida { background: var(--verde-fondo); color: var(--verde-texto); }
+.seg-e-falsa_alarma { background: #EEF1F5; color: #4F5D70; }
+
+@media (max-width: 520px) {
+  .seg-lista { grid-template-columns: 1fr; }
+}
+.seg-error-carga { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }

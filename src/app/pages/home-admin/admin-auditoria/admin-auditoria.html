@@ -1,0 +1,91 @@
+<div class="aud">
+  @if (accesos.length) {
+    <div class="aud-alerta" role="alert">
+      <adm-ico n="candado" />
+      <span><b>{{ accesos.length }} {{ accesos.length === 1 ? 'IP' : 'IPs' }} con muchos intentos fallidos en la última hora.</b>
+        Puede ser alguien probando claves. Revisa la pestaña "Accesos sospechosos".</span>
+    </div>
+  }
+
+  <div class="adm-barra-herr">
+    <div class="adm-pills" role="tablist" aria-label="Auditoría">
+      <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'acciones'" [attr.aria-selected]="pestana === 'acciones'" (click)="pestana = 'acciones'">Acciones del equipo <span class="adm-pill-num">{{ acciones.length }}</span></button>
+      <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'cambios'" [attr.aria-selected]="pestana === 'cambios'" (click)="pestana = 'cambios'">Cambios en la base <span class="adm-pill-num">{{ cambios.length }}</span></button>
+      <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'accesos'" [attr.aria-selected]="pestana === 'accesos'" (click)="pestana = 'accesos'">Accesos sospechosos <span class="adm-pill-num">{{ accesos.length }}</span></button>
+    </div>
+    @if (pestana !== 'accesos') {
+      <label class="adm-buscar">
+        <span class="adm-sr">Buscar en la auditoría</span>
+        <input type="search" [(ngModel)]="busqueda" placeholder="Buscar persona, acción o tabla">
+      </label>
+    }
+    <button type="button" class="adm-btn adm-btn-borde" (click)="cargar()"><adm-ico n="refrescar" /> Actualizar</button>
+  </div>
+
+  <section class="adm-card adm-card-tabla">
+    @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+    <div class="adm-tabla-scroll">
+      @if (pestana === 'acciones') {
+        <table class="adm-tabla">
+          <thead><tr><th>Cuándo</th><th>Quién</th><th>Qué hizo</th><th>Sobre</th><th>Detalle</th></tr></thead>
+          <tbody>
+            @for (a of accionesVisibles; track a.id) {
+              <tr>
+                <td class="adm-nowrap">{{ a.creado_en | date:'d MMM y, h:mm a' }}</td>
+                <td class="adm-nowrap"><b>{{ a.admin_nombre || '—' }}</b></td>
+                <td>{{ accion(a) }}</td>
+                <td class="adm-nowrap"><code>{{ a.entidad }}{{ a.entidad_id ? ' #' + a.entidad_id : '' }}</code></td>
+                <td class="aud-detalle">{{ texto(a.detalle) || '—' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="adm-vacio">{{ cargando ? 'Cargando…' : 'Sin acciones registradas.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (pestana === 'cambios') {
+        <table class="adm-tabla">
+          <thead><tr><th>Cuándo</th><th>Quién</th><th>Qué</th><th>Registro</th><th>Cambios</th></tr></thead>
+          <tbody>
+            @for (c of cambiosVisibles; track c.id) {
+              <tr>
+                <td class="adm-nowrap">{{ c.creado_en | date:'d MMM y, h:mm a' }}</td>
+                <td class="adm-nowrap">{{ c.usuario_nombre || 'Sistema' }} <span class="adm-lista-sub adm-cap">{{ c.actor_rol }}</span></td>
+                <td class="adm-nowrap"><span class="aud-op op-{{ c.operacion }}">{{ operacion(c) }}</span> {{ c.tabla }}</td>
+                <td><code>#{{ c.registro_id }}</code></td>
+                <td>
+                  <ul class="aud-diff">
+                    @for (d of diferencias(c); track $index) { <li>{{ d }}</li> } @empty { <li class="adm-tenue">Sin cambios visibles</li> }
+                  </ul>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="adm-vacio">{{ cargando ? 'Cargando…' : 'Sin cambios registrados.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (pestana === 'accesos') {
+        <table class="adm-tabla">
+          <thead><tr><th>IP</th><th class="der">Intentos fallidos</th><th class="der">Cuentas distintas</th><th>Desde</th><th>Hasta</th></tr></thead>
+          <tbody>
+            @for (a of accesos; track a.ip_origen) {
+              <tr>
+                <td><code>{{ a.ip_origen }}</code></td>
+                <td class="der"><b>{{ a.intentos_fallidos }}</b></td>
+                <td class="der">{{ a.cuentas_distintas }}</td>
+                <td class="adm-nowrap">{{ a.desde | date:'h:mm a' }}</td>
+                <td class="adm-nowrap">{{ a.hasta | date:'h:mm a' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5"><div class="adm-vacio-ok"><adm-ico n="escudo" /> Ninguna IP con muchos intentos fallidos en la última hora.</div></td></tr>
+            }
+          </tbody>
+        </table>
+        <p class="adm-ayuda aud-pie">Si una IP prueba muchas cuentas distintas, bloquéala en el firewall del servidor. Cada cuenta ya se bloquea sola por unos minutos tras varios intentos fallidos (ver "Cuentas y acceso" en Configuración).</p>
+      }
+    </div>
+  </section>
+</div>

@@ -1,0 +1,184 @@
+<div class="usr">
+  <div class="adm-barra-herr">
+    <label class="adm-buscar">
+      <span class="adm-sr">Buscar usuarios</span>
+      <input type="search" [(ngModel)]="q" (ngModelChange)="escribir()" placeholder="Nombre, correo o celular completo">
+    </label>
+    <label class="adm-select">
+      <span class="adm-sr">Rol</span>
+      <select [(ngModel)]="rol" (ngModelChange)="filtrar()">
+        <option value="">Todos los roles</option>
+        <option value="cliente">Clientes</option>
+        <option value="conductor">Conductores</option>
+        <option value="aspirante">Aspirantes a conductor</option>
+        <option value="equipo">Equipo (admin y soporte)</option>
+      </select>
+    </label>
+    <label class="adm-select">
+      <span class="adm-sr">Estado</span>
+      <select [(ngModel)]="estado" (ngModelChange)="filtrar()">
+        <option value="">Todos los estados</option>
+        <option value="activo">Activos</option>
+        <option value="bloqueado">Bloqueados</option>
+      </select>
+    </label>
+    <span class="adm-contador">{{ total | number }} {{ total === 1 ? 'usuario' : 'usuarios' }} · datos parciales: ábrelo para ver todo</span>
+  </div>
+
+  <section class="adm-card adm-card-tabla">
+    @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+    <div class="adm-tabla-scroll">
+      <table class="adm-tabla">
+        <thead><tr><th>Usuario</th><th>Celular</th><th>Roles</th><th class="der">Pedidos</th><th>Registro</th><th>Estado</th></tr></thead>
+        <tbody>
+          @for (u of items; track u.id) {
+            <tr class="adm-fila-clic" tabindex="0" (click)="abrir(u)" (keydown.enter)="abrir(u)" [attr.aria-label]="'Abrir el perfil de ' + u.nombre">
+              <td>
+                <div class="adm-persona">
+                  <div class="adm-avatar-sm">{{ inicial(u.nombre) }}</div>
+                  <div><span class="adm-lista-nombre">{{ u.nombre }}</span><span class="adm-lista-sub">{{ u.correo || 'Sin correo' }}</span></div>
+                </div>
+              </td>
+              <td class="adm-nowrap">{{ u.telefono || '—' }}</td>
+              <td class="adm-nowrap">@for (r of rolesDe(u); track r) { <span class="adm-rol rol-{{ r }} usr-rol">{{ nombreRol(r) }}</span> }</td>
+              <td class="der">{{ u.servicios_pedidos }}</td>
+              <td class="adm-nowrap">{{ u.creado_en | date:'d MMM y' }}</td>
+              <td><span class="adm-estado e-{{ u.estado }}">{{ u.estado }}</span></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="adm-vacio">{{ cargando ? 'Cargando usuarios…' : 'Nadie coincide con la búsqueda.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (total > tamano) {
+      <nav class="adm-mas" aria-label="Páginas">
+        <button type="button" class="adm-btn adm-btn-borde" (click)="ir(pagina - 1)" [disabled]="pagina === 0 || cargando">Anterior</button>
+        <span>Página {{ pagina + 1 }} de {{ paginas }}</span>
+        <button type="button" class="adm-btn adm-btn-borde" (click)="ir(pagina + 1)" [disabled]="pagina + 1 >= paginas || cargando">Siguiente</button>
+      </nav>
+    }
+  </section>
+</div>
+
+@if (detalle || cargandoDetalle || errorDetalle) {
+  <div class="adm-modal-fondo" (click)="cerrar()">
+    <div class="adm-modal adm-modal-grande" role="dialog" aria-modal="true" aria-labelledby="titulo-usuario" (click)="$event.stopPropagation()">
+      <div class="adm-modal-head">
+        <h2 id="titulo-usuario">{{ detalle?.nombre || 'Perfil' }}</h2>
+        <button type="button" class="adm-btn-ico" (click)="cerrar()" aria-label="Cerrar"><adm-ico n="x" /></button>
+      </div>
+      @if (cargandoDetalle) { <p class="adm-vacio">Cargando el perfil…</p> }
+      @if (detalle; as d) {
+        <div class="adm-modal-cuerpo">
+          <div class="adm-detalle-top">
+            <div class="adm-avatar-lg">{{ inicial(d.nombre) }}</div>
+            <div>
+              <div class="adm-detalle-nombre">{{ d.nombre }}</div>
+              <span class="adm-estado e-{{ d.estado }}">{{ d.estado }}</span>
+              @for (r of rolesDe(d); track r) { <span class="adm-rol rol-{{ r }} usr-rol">{{ nombreRol(r) }}</span> }
+            </div>
+          </div>
+
+          <div class="adm-datos">
+            <div><span class="adm-dato-label">Celular</span><span class="adm-dato">{{ d.telefono || '—' }}
+              @if (d.telefono) { <span class="adm-verif" [class.no]="!d.telefono_verificado">{{ d.telefono_verificado ? 'Verificado' : 'Sin verificar' }}</span> }</span></div>
+            <div><span class="adm-dato-label">Correo</span><span class="adm-dato">{{ d.correo || '—' }}</span></div>
+            <div><span class="adm-dato-label">Registro</span><span class="adm-dato">{{ d.creado_en | date:'d MMM y' }}</span></div>
+            <div><span class="adm-dato-label">Último acceso</span><span class="adm-dato">{{ d.ultimo_acceso ? (d.ultimo_acceso | date:'d MMM y, h:mm a') : '—' }}</span></div>
+            <div><span class="adm-dato-label">Calificación</span><span class="adm-dato">{{ d.calificacion_promedio ? (d.calificacion_promedio | number:'1.1-1') + ' ★ (' + d.total_calificaciones + ')' : 'Sin calificaciones' }}</span></div>
+            <div><span class="adm-dato-label">Pedidos</span><span class="adm-dato">{{ d.actividad.pedidos }} · {{ d.actividad.finalizados }} terminados · {{ d.actividad.cancelados_por_el }} cancelados por él</span></div>
+          </div>
+          @if (d.estado === 'bloqueado' && d.motivo_bloqueo) {
+            <div class="adm-motivo"><span class="adm-dato-label">Motivo del bloqueo</span><p>{{ d.motivo_bloqueo }}</p></div>
+          }
+
+          <div class="usr-columnas">
+            <section>
+              <h3 class="adm-modal-sub">Últimos servicios</h3>
+              <ul class="adm-lista">
+                @for (s of d.servicios; track s.id) {
+                  <li class="adm-lista-item usr-clic" tabindex="0" (click)="abrirServicio.emit(s.id)" (keydown.enter)="abrirServicio.emit(s.id)">
+                    <span class="adm-lista-txt">
+                      <span class="adm-lista-nombre">#{{ s.id }} · <span class="adm-cap">{{ s.tipo_servicio === 'transporte' ? s.tipo_vehiculo : s.tipo_servicio }}</span> · como {{ s.como }}</span>
+                      <span class="adm-lista-sub">{{ s.solicitado_en | date:'d MMM, h:mm a' }} · {{ s.destino }}</span>
+                    </span>
+                    <span class="adm-estado e-{{ s.estado_codigo }}">{{ s.estado_nombre }}</span>
+                  </li>
+                } @empty { <li class="adm-tenue">Sin servicios.</li> }
+              </ul>
+            </section>
+            <section>
+              <h3 class="adm-modal-sub">Calificaciones recibidas</h3>
+              <ul class="adm-lista">
+                @for (c of d.calificaciones; track c.servicio_id) {
+                  <li class="adm-lista-item"><span class="adm-lista-txt">
+                    <span class="adm-lista-nombre" [class.usr-baja]="c.puntuacion <= 2">{{ c.puntuacion }} ★ · {{ c.de }}</span>
+                    <span class="adm-lista-sub">{{ c.comentario || 'Sin comentario' }}</span></span></li>
+                } @empty { <li class="adm-tenue">Sin calificaciones.</li> }
+              </ul>
+            </section>
+          </div>
+
+          <div class="usr-columnas">
+            <section>
+              <h3 class="adm-modal-sub">Reportes en su contra <span class="adm-pill-num">{{ d.reportes_en_contra.length }}</span></h3>
+              <ul class="adm-lista">
+                @for (t of d.reportes_en_contra; track t.id) {
+                  <li class="adm-lista-item"><span class="adm-lista-txt"><span class="adm-lista-nombre">{{ t.asunto }}</span>
+                    <span class="adm-lista-sub">{{ t.reporta }} · {{ t.creado_en | date:'d MMM y' }} · {{ t.estado }}</span></span></li>
+                } @empty { <li class="adm-tenue">Nadie lo ha reportado.</li> }
+              </ul>
+            </section>
+            <section>
+              <h3 class="adm-modal-sub">Historial de la cuenta</h3>
+              <ul class="adm-lista">
+                @for (h of d.historial_estado; track $index) {
+                  <li class="adm-lista-item"><span class="adm-lista-txt"><span class="adm-lista-nombre adm-cap">{{ accion(h.accion) }}</span>
+                    <span class="adm-lista-sub">{{ h.creado_en | date:'d MMM y, h:mm a' }} · {{ h.por || 'Sistema' }} {{ texto(h.detalle) ? '· ' + texto(h.detalle) : '' }}</span></span></li>
+                } @empty { <li class="adm-tenue">Sin cambios hechos por el equipo.</li> }
+              </ul>
+            </section>
+          </div>
+
+          @if (!soloLectura) {
+            <h3 class="adm-modal-sub">Roles</h3>
+            <div class="adm-pills usr-roles">
+              @for (r of roles; track r) {
+                <label class="cat-check usr-rol-check">
+                  <input type="checkbox" [checked]="tieneRol(r)" [disabled]="guardando || r === 'conductor'" (change)="alternarRol(r)">
+                  {{ nombreRol(r) }}
+                </label>
+              }
+            </div>
+            <p class="adm-ayuda">El rol de conductor se da al aprobar sus documentos (sección Conductores).</p>
+          }
+
+          @if (errorDetalle) { <p class="adm-error-modal" role="alert"><adm-ico n="x" /> {{ errorDetalle }}</p> }
+
+          @if (bloqueando) {
+            <div class="usr-bloquear">
+              <label class="adm-dato-label" for="usr-motivo">¿Por qué se bloquea? (queda en el historial)</label>
+              <textarea id="usr-motivo" class="adm-textarea" rows="2" maxlength="200" [(ngModel)]="motivo"
+                        placeholder="Ej.: varios reportes de acoso de conductores, verificados por soporte"></textarea>
+            </div>
+          }
+        </div>
+        <div class="adm-modal-pie">
+          @if (d.estado === 'activo') {
+            @if (bloqueando) {
+              <button type="button" class="adm-btn adm-btn-borde" (click)="bloqueando = false" [disabled]="guardando">Volver</button>
+              <button type="button" class="adm-btn adm-btn-peligro-solido" (click)="bloquear()" [disabled]="guardando">{{ guardando ? 'Bloqueando…' : 'Sí, bloquear' }}</button>
+            } @else {
+              <button type="button" class="adm-btn adm-btn-peligro" (click)="bloqueando = true"><adm-ico n="cancelar" /> Bloquear cuenta…</button>
+            }
+          } @else {
+            <button type="button" class="adm-btn adm-btn-ok" (click)="activar()" [disabled]="guardando"><adm-ico n="check" /> Reactivar cuenta</button>
+          }
+        </div>
+      } @else if (errorDetalle) {
+        <p class="adm-error" role="alert">{{ errorDetalle }}</p>
+      }
+    </div>
+  </div>
+}

@@ -132,3 +132,11 @@ button:disabled { opacity: .6; cursor: default; }
   .tabla-fila { grid-template-columns: 1fr 1fr; }
   .dos-col, .resumen { grid-template-columns: 1fr; }
 }
+
+/* Abrir el detalle del viaje (línea de tiempo y chat) para resolver el caso */
+.ver-viaje {
+  margin-top: 8px; padding: 8px 12px; border: 1px solid var(--borde); border-radius: 10px;
+  background: #ffffff; color: var(--teal-d); font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer;
+}
+.ver-viaje:hover { border-color: var(--teal); }
+.ver-viaje:focus-visible { outline: 3px solid #5fd3d9; outline-offset: 2px; }

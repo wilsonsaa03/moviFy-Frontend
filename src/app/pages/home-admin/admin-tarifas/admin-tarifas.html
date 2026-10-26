@@ -1,0 +1,118 @@
+<div class="tar">
+  <section class="adm-card tar-lluvia" [class.activa]="lluvia">
+    <adm-ico n="tarifas" />
+    <span class="tar-lluvia-txt">
+      <b>{{ lluvia ? 'Recargo por lluvia prendido' : 'Recargo por lluvia apagado' }}</b>
+      <small>Cuando llueve fuerte hay menos conductores. Prenderlo suma el % de lluvia de cada tarifa a los servicios nuevos.</small>
+    </span>
+    @if (!soloLectura) {
+      <button type="button" class="adm-btn" [class.adm-btn-primario]="!lluvia" [class.adm-btn-borde]="lluvia" (click)="alternarLluvia()" [disabled]="cambiandoLluvia">
+        {{ lluvia ? 'Ya escampó: apagar' : 'Está lloviendo: prender' }}
+      </button>
+    }
+  </section>
+  <p class="adm-ayuda tar-ayuda">
+    El precio se calcula igual en la app y en el servidor: <b>base + km × valor del km + minutos × valor del minuto</b>,
+    de noche se suma el recargo, nunca baja de la mínima y se redondea a la centena. Ejemplo: un viaje de
+    {{ ejemploKm }} km y {{ ejemploMin }} min.
+  </p>
+  @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+  @if (cargando && !combinaciones.length) { <p class="adm-vacio">Cargando tarifas…</p> }
+
+  <div class="tar-grid">
+    @for (c of combinaciones; track c.clave) {
+      <article class="adm-card tar-card">
+        <header class="adm-card-head">
+          <div>
+            <h2>{{ c.nombre }}</h2>
+            <p class="adm-card-sub">{{ c.activa ? 'Vigente desde ' + (c.activa.vigente_desde | date:'d MMM y') : 'Sin tarifa activa: no se puede pedir' }}</p>
+          </div>
+          @if (!soloLectura) {
+            <button type="button" class="adm-btn adm-btn-borde" (click)="editar(c)"><adm-ico n="editar" /> Cambiar</button>
+          }
+        </header>
+        @if (c.activa; as t) {
+          <div class="tar-ejemplo">
+            <span><small>De día</small><b>${{ precio(t, false) | number:'1.0-0' }}</b></span>
+            <span><small>De noche (+{{ t.recargo_nocturno_pct | number:'1.0-0' }} %)</small><b>${{ precio(t, true) | number:'1.0-0' }}</b></span>
+            <span><small>Con lluvia (+{{ t.recargo_lluvia_pct | number:'1.0-0' }} %)</small><b>${{ precio(t, false, true) | number:'1.0-0' }}</b></span>
+          </div>
+          <dl class="tar-valores">
+            <div><dt>Base</dt><dd>${{ t.tarifa_base | number:'1.0-0' }}</dd></div>
+            <div><dt>Por km</dt><dd>${{ t.valor_km | number:'1.0-0' }}</dd></div>
+            <div><dt>Por minuto</dt><dd>${{ t.valor_minuto | number:'1.0-0' }}</dd></div>
+            <div><dt>Mínima</dt><dd>${{ t.tarifa_minima | number:'1.0-0' }}</dd></div>
+          </dl>
+        } @else {
+          <p class="adm-error">Sin tarifa activa. Crea una para que los clientes puedan pedir este servicio.</p>
+        }
+        @if (c.historial.length) {
+          <button type="button" class="adm-link" [attr.aria-expanded]="historialAbierto === c.clave" (click)="historialAbierto = historialAbierto === c.clave ? null : c.clave">
+            {{ historialAbierto === c.clave ? 'Ocultar' : 'Ver' }} tarifas anteriores ({{ c.historial.length }})
+          </button>
+          @if (historialAbierto === c.clave) {
+            <table class="adm-tabla tar-historial">
+              <thead><tr><th>Desde</th><th class="der">Base</th><th class="der">Km</th><th class="der">Min</th><th class="der">Mínima</th><th class="der">Noche</th></tr></thead>
+              <tbody>
+                @for (h of c.historial; track h.id) {
+                  <tr>
+                    <td>{{ h.vigente_desde | date:'d MMM y' }}</td>
+                    <td class="der">${{ h.tarifa_base | number:'1.0-0' }}</td>
+                    <td class="der">${{ h.valor_km | number:'1.0-0' }}</td>
+                    <td class="der">${{ h.valor_minuto | number:'1.0-0' }}</td>
+                    <td class="der">${{ h.tarifa_minima | number:'1.0-0' }}</td>
+                    <td class="der">{{ h.recargo_nocturno_pct | number:'1.0-0' }} %</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        }
+      </article>
+    }
+  </div>
+</div>
+
+@if (editando; as c) {
+  <div class="adm-modal-fondo" (click)="editando = null">
+    <div class="adm-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-tarifa" (click)="$event.stopPropagation()">
+      <div class="adm-modal-head">
+        <h2 id="titulo-tarifa">Nueva tarifa · {{ c.nombre }}</h2>
+        <button type="button" class="adm-btn-ico" (click)="editando = null" aria-label="Cerrar"><adm-ico n="x" /></button>
+      </div>
+      <form class="adm-modal-cuerpo cat-form" (ngSubmit)="guardar()">
+        <div class="cat-fila">
+          <label class="cat-campo"><span class="adm-dato-label">Base ($)</span>
+            <input class="cat-input" type="number" min="0" step="100" name="base" [(ngModel)]="form.tarifa_base" required></label>
+          <label class="cat-campo"><span class="adm-dato-label">Por km ($)</span>
+            <input class="cat-input" type="number" min="0" step="50" name="km" [(ngModel)]="form.valor_km" required></label>
+        </div>
+        <div class="cat-fila">
+          <label class="cat-campo"><span class="adm-dato-label">Por minuto ($)</span>
+            <input class="cat-input" type="number" min="0" step="10" name="min" [(ngModel)]="form.valor_minuto" required></label>
+          <label class="cat-campo"><span class="adm-dato-label">Mínima ($)</span>
+            <input class="cat-input" type="number" min="0" step="100" name="minima" [(ngModel)]="form.tarifa_minima" required></label>
+          <label class="cat-campo cat-corto"><span class="adm-dato-label">Noche (%)</span>
+            <input class="cat-input" type="number" min="0" max="100" step="1" name="noche" [(ngModel)]="form.recargo_nocturno_pct" required></label>
+          <label class="cat-campo cat-corto"><span class="adm-dato-label">Lluvia (%)</span>
+            <input class="cat-input" type="number" min="0" max="100" step="1" name="lluvia" [(ngModel)]="form.recargo_lluvia_pct" required></label>
+        </div>
+
+        <div class="tar-ejemplo tar-vista" aria-live="polite">
+          <span><small>{{ ejemploKm }} km · {{ ejemploMin }} min de día</small><b>${{ precio(form, false) | number:'1.0-0' }}</b></span>
+          <span><small>De noche</small><b>${{ precio(form, true) | number:'1.0-0' }}</b></span>
+          <span><small>Con lluvia</small><b>${{ precio(form, false, true) | number:'1.0-0' }}</b></span>
+          @if (c.activa && diferencia !== 0) {
+            <span class="tar-dif" [class.sube]="diferencia > 0"><small>Frente a hoy</small><b>{{ diferencia > 0 ? '+' : '−' }}${{ (diferencia < 0 ? -diferencia : diferencia) | number:'1.0-0' }}</b></span>
+          }
+        </div>
+        <p class="adm-ayuda">Guardar crea una tarifa nueva y desactiva la actual. Los servicios ya pedidos conservan su precio.</p>
+        @if (errorForm) { <p class="adm-error" role="alert">{{ errorForm }}</p> }
+        <div class="adm-pie-botones">
+          <button type="button" class="adm-btn adm-btn-borde" (click)="editando = null" [disabled]="guardando">Cancelar</button>
+          <button type="submit" class="adm-btn adm-btn-primario" [disabled]="guardando">{{ guardando ? 'Guardando…' : 'Activar tarifa nueva' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

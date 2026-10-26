@@ -5,7 +5,8 @@
 
   <meta charset="utf-8">
 
-  <title>MoviFY</title>
+  <title>MoviFY · Taxi, moto, domicilios y encomiendas en Buenaventura</title>
+  <meta name="description" content="Pide taxi o moto, domicilios y encomiendas en Buenaventura desde tu celular. Conductores verificados por MoviFY y pago en efectivo.">
 
   <base href="/">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -17,24 +18,10 @@
     content="width=device-width, initial-scale=1"
   >
 
-  <!-- SOLUCION COOP -->
-  <meta
-    http-equiv="Cross-Origin-Opener-Policy"
-    content="same-origin-allow-popups"
-  >
-
-  <!-- GOOGLE LOGIN -->
-  <script
-    src="https://accounts.google.com/gsi/client"
-    async
-    defer
-  ></script>
-
-
-  <!-- CHART.JS (versión fija + integridad) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"
-          integrity="sha384-FcQlsUOd0TJjROrBxhJdUhXTUgNJQxTMcxZe6nHbaEfFL1zjQ+bq/uRoBQxb0KMo"
-          crossorigin="anonymous"></script>
+  <!--
+    Chart.js y el login de Google ya no se cargan aquí: los pide cada pantalla que los usa
+    (src/app/core/cargar-script.ts). Cross-Origin-Opener-Policy no sirve como <meta>: va como cabecera del servidor.
+  -->
 
 </head>
 

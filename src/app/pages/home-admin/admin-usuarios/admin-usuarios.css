@@ -1,0 +1,11 @@
+/* Clientes y usuarios. Lo general viene de home-admin.css */
+.usr { display: flex; flex-direction: column; gap: 16px; }
+.usr-rol { margin-right: 4px; }
+.usr-columnas { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.usr-clic { cursor: pointer; border-radius: 10px; }
+.usr-clic:hover { background: var(--gris-fondo); }
+.usr-baja { color: var(--rojo-texto) !important; }
+.usr-roles { gap: 14px; }
+.usr-rol-check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.usr-rol-check input { width: 18px; height: 18px; accent-color: var(--turquesa); }
+.usr-bloquear { margin-top: 14px; padding: 14px; border-radius: 14px; border: 1px solid #F5C2BC; background: #FFF8F7; }

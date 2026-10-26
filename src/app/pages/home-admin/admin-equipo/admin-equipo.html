@@ -1,0 +1,52 @@
+<div class="eq">
+  <section class="adm-card">
+    <div class="adm-card-head">
+      <div>
+        <h2>Agregar al equipo</h2>
+        <p class="adm-card-sub">La persona primero se registra en MoviFY (app o web). Aquí solo se le da el rol: nadie más conoce su clave.</p>
+      </div>
+    </div>
+    <form class="cat-fila eq-form" (ngSubmit)="agregar()">
+      <label class="cat-campo"><span class="adm-dato-label">Celular o correo</span>
+        <input class="cat-input" name="id" [(ngModel)]="identificador" placeholder="300 123 4567 o nombre@correo.com" autocomplete="off"></label>
+      <label class="cat-campo cat-corto"><span class="adm-dato-label">Rol</span>
+        <select class="cat-input" name="rol" [(ngModel)]="rol">
+          <option value="soporte">Soporte</option>
+          <option value="admin">Administrador</option>
+        </select></label>
+      <button type="submit" class="adm-btn adm-btn-primario eq-boton" [disabled]="agregando"><adm-ico n="mas" /> {{ agregando ? 'Agregando…' : 'Agregar' }}</button>
+    </form>
+    @if (errorAgregar) { <p class="adm-error" role="alert">{{ errorAgregar }}</p> }
+  </section>
+
+  <h2 class="eq-titulo">Personas del equipo</h2>
+  @for (v of [version]; track v) {
+    <app-admin-usuarios rolInicial="equipo" (aviso)="aviso.emit($event)" (abrirServicio)="abrirServicio.emit($event)" />
+  }
+
+  <section class="adm-card adm-card-tabla">
+    <div class="eq-cabeza">
+      <h2>Qué puede hacer cada rol</h2>
+      <p class="adm-card-sub">Puedes ajustar los permisos de soporte. Los del administrador son fijos. Aplica al volver a iniciar sesión.</p>
+    </div>
+    @if (errorPermisos) { <p class="adm-error" role="alert">{{ errorPermisos }}</p> }
+    <div class="adm-tabla-scroll">
+      <table class="adm-tabla">
+        <thead><tr><th>Permiso</th><th class="eq-col">Admin</th><th class="eq-col">Soporte</th></tr></thead>
+        <tbody>
+          @for (m of modulos; track m.nombre) {
+            <tr class="eq-modulo"><td colspan="3">{{ m.nombre }}</td></tr>
+            @for (p of m.permisos; track p.codigo) {
+              <tr>
+                <td>{{ p.descripcion }} @if (p.es_sensible) { <span class="eq-sensible">sensible</span> }<span class="adm-lista-sub"><code>{{ p.codigo }}</code></span></td>
+                <td class="eq-col"><input type="checkbox" [checked]="tiene('admin', p.codigo)" disabled [attr.aria-label]="'Admin: ' + p.descripcion"></td>
+                <td class="eq-col"><input type="checkbox" [checked]="tiene('soporte', p.codigo)" [disabled]="guardando === p.codigo || !editables.includes('soporte')"
+                       (change)="alternar('soporte', p)" [attr.aria-label]="'Soporte: ' + p.descripcion"></td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

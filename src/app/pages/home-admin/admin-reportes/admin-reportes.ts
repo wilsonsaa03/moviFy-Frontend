@@ -61,6 +61,10 @@ const TIPOS: Record<string, string> = {
 export class AdminReportesComponent implements OnInit {
   /** Avisa al panel cuántos reportes siguen abiertos (para el número del menú). */
   @Output() pendientes = new EventEmitter<number>();
+  /** Resultado de una acción: lo muestra el panel arriba (en lugar de una ventana alert). */
+  @Output() aviso = new EventEmitter<{ tipo: 'ok' | 'error'; texto: string }>();
+  /** Abrir el detalle del viaje del reporte. */
+  @Output() abrirServicio = new EventEmitter<number>();
 
   reportes: ReporteAdmin[] = [];
   filtro: 'abiertos' | 'todos' = 'abiertos';
@@ -149,7 +153,7 @@ export class AdminReportesComponent implements OnInit {
     if (!ok) return;
     this.guardando = true;
     try {
-      await this.api.patch(`/auth/usuarios/${r.reportado_id}/estado`, { estado: 'bloqueado' });
+      await this.api.patch(`/auth/usuarios/${r.reportado_id}/estado`, { estado: 'bloqueado', motivo: `PQRS #${r.id}: ${r.asunto}`.slice(0, 200) });
       r.reportado_estado = 'bloqueado';
     } catch (err) {
       this.errorModal = ApiService.mensaje(err, 'No se pudo bloquear al usuario.');
@@ -164,7 +168,7 @@ export class AdminReportesComponent implements OnInit {
     this.errorModal = '';
     try {
       await this.api.patch(`/admin/pqrs/${r.id}`, cuerpo);
-      if (aviso) alert(aviso);
+      if (aviso) this.aviso.emit({ tipo: 'ok', texto: aviso });
       if (cerrarAlFinal) this.cerrar();
       await this.cargar();
       if (!cerrarAlFinal) this.seleccionado = this.reportes.find(x => x.id === r.id) || null;

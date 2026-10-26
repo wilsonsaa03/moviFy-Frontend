@@ -1,0 +1,29 @@
+/* Reportes y estadísticas. Lo general viene de home-admin.css */
+.est { display: flex; flex-direction: column; gap: 20px; }
+.est-exportar { margin-left: auto; }
+.est-cargando { opacity: .6; }
+.srv-fecha { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--texto-2); }
+.srv-fecha input { height: 40px; padding: 0 10px; border: 1px solid var(--borde); border-radius: 10px; font-family: inherit; color: var(--texto); background: #FFFFFF; }
+.conf-cabeza { padding: 16px 20px 6px; }
+.conf-cabeza h2 { margin: 0; font-size: 16px; font-weight: 800; }
+
+.est-filas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.est-filas li { display: grid; grid-template-columns: 150px 1fr 48px; align-items: center; gap: 10px; font-size: 14px; }
+.est-filas b { text-align: right; }
+.dsh-pista { height: 12px; border-radius: 999px; background: var(--gris-fondo); display: flex; overflow: hidden; }
+.dsh-pista .ok { background: #2BB673; }
+.dsh-pista .mal { background: #E5484D; }
+
+.est-quien { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.est-quien span { padding: 8px 12px; border-radius: 12px; background: var(--gris-fondo); font-size: 13px; font-weight: 700; color: var(--texto-2); }
+.est-quien b { font-family: 'Baloo 2', sans-serif; font-size: 18px; color: var(--azul); margin-right: 4px; }
+
+.dsh-horas { height: 170px; display: grid; grid-template-columns: repeat(24, 1fr); gap: 3px; align-items: end; }
+.dsh-hora { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.dsh-hora i { width: 100%; border-radius: 4px 4px 0 0; background: var(--turquesa); }
+.dsh-hora i.vacia { background: var(--borde); }
+.dsh-hora small { font-size: 11px; color: var(--texto-3); font-weight: 700; }
+
+.est-dias { height: 170px; display: flex; align-items: flex-end; gap: 2px; }
+.est-dia { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.est-dia i { width: 100%; border-radius: 3px 3px 0 0; background: var(--azul); }

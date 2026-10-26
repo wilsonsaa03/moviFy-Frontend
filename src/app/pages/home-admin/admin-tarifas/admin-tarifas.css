@@ -1,0 +1,29 @@
+/* Tarifas. Lo general viene de home-admin.css y del formulario de admin-catalogos.css */
+.tar { display: flex; flex-direction: column; gap: 16px; }
+.tar-ayuda { margin: 0; max-width: 820px; }
+.tar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.tar-card { display: flex; flex-direction: column; gap: 14px; }
+.tar-card .adm-card-head { margin-bottom: 0; }
+
+.tar-ejemplo { display: flex; flex-wrap: wrap; gap: 10px; }
+.tar-ejemplo span { flex: 1 1 120px; padding: 10px 12px; border-radius: 12px; background: var(--gris-fondo); display: flex; flex-direction: column; }
+.tar-ejemplo small { font-size: 12px; font-weight: 700; color: var(--texto-3); }
+.tar-ejemplo b { font-family: 'Baloo 2', sans-serif; font-size: 24px; color: var(--azul); }
+.tar-vista span:first-child { background: var(--turquesa-fondo); }
+.tar-dif b { color: var(--verde-texto); }
+.tar-dif.sube b { color: var(--naranja-texto); }
+
+.tar-valores { margin: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tar-valores div { display: flex; flex-direction: column; }
+.tar-valores dt { font-size: 12px; font-weight: 700; color: var(--texto-3); }
+.tar-valores dd { margin: 0; font-weight: 800; }
+.tar-historial { font-size: 13px; }
+
+@media (max-width: 420px) {
+  .tar-valores { grid-template-columns: repeat(2, 1fr); }
+}
+
+.tar-lluvia { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.tar-lluvia-txt { flex: 1 1 300px; display: flex; flex-direction: column; }
+.tar-lluvia-txt small { font-size: 13px; color: var(--texto-2); }
+.tar-lluvia.activa { border-color: #9FC2E8; background: #EEF5FC; }

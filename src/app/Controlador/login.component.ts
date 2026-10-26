@@ -8,6 +8,7 @@ import { Usuario } from '../Modelo/usuario.model';
 import { SesionService } from '../core/sesion.service';
 import { ApiService } from '../core/api.service';
 import { AuthLayoutComponent } from '../shared/auth-layout/auth-layout';
+import { cargarGoogleLogin } from '../core/cargar-script';
 
 declare const google: any;
 
@@ -46,10 +47,11 @@ export class LoginComponent implements OnInit {
   // GOOGLE
   // =========================
 
+  /** El script de Google se descarga solo aquí (antes iba en index.html y cargaba en todas las páginas). */
   private initGoogle(): void {
-    let intentos = 0;
-    const esperar = () => {
-      if (typeof google !== 'undefined' && google?.accounts?.id) {
+    cargarGoogleLogin()
+      .then(() => {
+        if (typeof google === 'undefined' || !google?.accounts?.id) return;
         google.accounts.id.initialize({
           client_id: '613651963678-99u5b1boql9q6fj65l0kairjh8ptdk4h.apps.googleusercontent.com',
           callback: (response: any) => this.zone.run(() => this.handleGoogleResponse(response))
@@ -57,11 +59,8 @@ export class LoginComponent implements OnInit {
         google.accounts.id.renderButton(document.getElementById('google-btn'), {
           theme: 'outline', size: 'large', width: '100', text: 'signin_with'
         });
-      } else if (intentos++ < 40) {
-        setTimeout(esperar, 300);
-      }
-    };
-    esperar();
+      })
+      .catch(() => undefined); // sin internet hacia Google: queda el login con correo
   }
 
   /** Solo se envía el id_token: el backend lo verifica con Google y saca de ahí el correo. */
