@@ -1,4 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -14,7 +21,14 @@ interface Operacion {
 interface Prohibido {
   base: Record<string, string[]>;
   permitidos_base: string[];
-  agregadas: { id: number; palabra: string; categoria: string; tipo: 'prohibida' | 'permitida'; creado_en: string; creado_por: string | null }[];
+  agregadas: {
+    id: number;
+    palabra: string;
+    categoria: string;
+    tipo: 'prohibida' | 'permitida';
+    creado_en: string;
+    creado_por: string | null;
+  }[];
 }
 
 /**
@@ -27,7 +41,12 @@ interface Prohibido {
   standalone: true,
   imports: [CommonModule, FormsModule, AdminIcoComponent],
   templateUrl: './admin-operacion.html',
-  styleUrls: ['../home-admin.css', '../admin-catalogos/admin-catalogos.css', './admin-operacion.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: [
+    '../home-admin.css',
+    '../admin-catalogos/admin-catalogos.css',
+    './admin-operacion.css',
+  ],
 })
 export class AdminOperacionComponent implements OnInit {
   @Input() soloLectura = false;
@@ -55,7 +74,9 @@ export class AdminOperacionComponent implements OnInit {
   }
 
   permitido(servicio: string, vehiculo: string): boolean {
-    return !!this.op?.permitidos.some(p => p.tipo_servicio === servicio && p.tipo_vehiculo === vehiculo);
+    return !!this.op?.permitidos.some(
+      (p) => p.tipo_servicio === servicio && p.tipo_vehiculo === vehiculo,
+    );
   }
 
   async agregar(): Promise<void> {
@@ -68,7 +89,9 @@ export class AdminOperacionComponent implements OnInit {
     this.errorPalabra = '';
     try {
       const r = await this.api.post<{ message: string }>('/admin/catalogos/contenido-prohibido', {
-        palabra: this.palabra.trim(), categoria: this.categoria, tipo: this.tipo,
+        palabra: this.palabra.trim(),
+        categoria: this.categoria,
+        tipo: this.tipo,
       });
       this.aviso.emit({ tipo: 'ok', texto: r.message });
       this.palabra = '';

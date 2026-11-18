@@ -1,392 +1,477 @@
 <!-- Pantalla de carga -->
-<div class="loading-overlay" *ngIf="cargando">
-  <div class="spinner"></div>
-  <p>Sincronizando con MoviFY...</p>
-</div>
-
-<div class="conductor-layout" [class.sidebar-colapsado]="sidebarColapsado" *ngIf="!cargando">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar" [class.sidebar-visible]="menuNavAbierto">
-
-    <!-- Logo area -->
-    <div class="sidebar-logo">
-      <img src="/assets/brand/movify-icono.png" class="sidebar-logo-img" alt="MoviFY Logo">
-      <span class="sidebar-brand">MoviFY</span>
-    </div>
-
-    <div class="sidebar-menu">
-      <a routerLink="/conductor" class="nav-link activo">
-        <span class="link-icon">🏠</span>
-        <span class="link-text">Inicio</span>
-      </a>
-      <a routerLink="/mis-viajes-conductor" class="nav-link">
-        <span class="link-icon">🛵</span>
-        <span class="link-text">Mis viajes</span>
-      </a>
-      <a routerLink="/ganancias-conductor" class="nav-link">
-        <span class="link-icon">💰</span>
-        <span class="link-text">Ganancias</span>
-      </a>
-      <a routerLink="/perfil-conductor" class="nav-link">
-        <span class="link-icon">👤</span>
-        <span class="link-text">Ver mi perfil</span>
-      </a>
-      <a routerLink="/soporte" class="nav-link">
-        <span class="link-icon">🎧</span>
-        <span class="link-text">Soporte</span>
-      </a>
-    </div>
-
-    <!-- Banner promocional -->
-    <div class="sidebar-banner link-text">
-      <div class="sidebar-banner-text">
-        <p class="banner-title">¡Más viajes,<br>más ganancias!</p>
-        <p class="banner-sub">Conéctate y recibe<br>más solicitudes.</p>
-      </div>
-      <img src="/assets/moto-icon.png" class="banner-img" alt="">
-    </div>
-
-    <div class="sidebar-footer">
-      <button class="btn-cerrar-lateral" (click)="cerrarSesion()">
-        <span class="btn-icon">🚪</span>
-        <span class="link-text">Cerrar sesión</span>
-      </button>
-    </div>
-  </aside>
-
-  <!-- CONTENIDO PRINCIPAL -->
-  <div class="main-container-wrapper">
-
-    <!-- NAVBAR -->
-    <nav class="navbar">
-
-      <div class="navbar-left">
-        <button class="menu-toggle" (click)="toggleSidebar()">☰</button>
-        <div class="navbar-greeting">
-          <span class="navbar-hello">¡Hola, {{ nombre }}! 👋</span>
-          <span class="navbar-rol">Conductor</span>
-        </div>
-      </div>
-
-      <div class="navbar-right">
-
-        <!-- Botón En línea / Desconectado -->
-        <button class="btn-estado" [class.en-linea]="enLinea" (click)="toggleMapaActivo()">
-          <span class="estado-dot" [class.dot-verde]="enLinea" [class.dot-rojo]="!enLinea"></span>
-          {{ enLinea ? 'En línea' : 'Desconectado' }}
-          <span class="estado-chevron">▾</span>
-        </button>
-
-        <!-- Botón Mapa activo (solo cuando está en línea) -->
-        <button class="btn-mapa-nav" *ngIf="enLinea" (click)="toggleMapa()">
-          🗺️ Mapa activo
-        </button>
-
-        <!-- Campana de Notificaciones Real -->
-        <div class="notification-bell-wrap" style="position: relative; margin-right: 15px; cursor: pointer;">
-          <span class="bell-icon" style="font-size: 20px;">🔔</span>
-          <span class="bell-badge" *ngIf="notificaciones > 0" 
-                style="position: absolute; top: -5px; right: -5px; background: #f97316; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50%; font-weight: bold;">
-            {{ notificaciones }}
-          </span>
-        </div>
-
-        <!-- Perfil -->
-        <div class="nav-perfil" (click)="toggleMenu()">
-          <div class="nav-avatar-circle">
-            {{ nombre.charAt(0).toUpperCase() }}
-          </div>
-          <div class="nav-info">
-            <span class="nav-nombre">{{ nombre }}</span>
-            <span class="nav-sub">Ver perfil ▾</span>
-          </div>
-
-          <!-- Dropdown -->
-          <div class="menu-perfil" *ngIf="menuAbierto" (click)="$event.stopPropagation()">
-            <div class="menu-header">
-              <div class="menu-avatar">{{ nombre.charAt(0).toUpperCase() }}</div>
-              <div class="menu-user">
-                <h3>{{ nombre }}</h3>
-                <p>Conductor MoviFY</p>
-              </div>
-            </div>
-            <button class="menu-item" (click)="verPerfil()"><span>👤</span> Ver perfil</button>
-            <button class="menu-item" (click)="editarPerfil()"><span>✏️</span> Editar perfil</button>
-            <button class="menu-item"><span>⭐</span> Favoritos</button>
-            <button class="menu-item" (click)="configuracion()"><span>⚙️</span> Configuración</button>
-            <button class="menu-item" (click)="cerrarSesion()"><span>🚪</span> Cerrar sesión</button>
-          </div>
-        </div>
-
-      </div>
-    </nav>
-
-    <!-- CUERPO -->
-    <main class="content-body">
-
-      <!-- PANEL VIAJE ACTIVO -->
-      <div class="viaje-activo-panel" *ngIf="viajeActivo">
-        <div class="viaje-header">
-          <span class="viaje-badge">{{ esEncomienda ? '📦 Encomienda en curso' : '🚦 Viaje en curso' }}</span>
-          <span class="viaje-estado" [ngClass]="getBadgeClass(viajeActivo.estado)">
-            {{ getFriendlyEstado(viajeActivo.estado) }}
-          </span>
-        </div>
-        <div class="viaje-datos">
-          <div class="viaje-fila">
-            <span>👤 {{ esEncomienda ? 'Envía' : 'Pasajero' }}</span>
-            <strong>{{ viajeActivo.pasajero_nombre || viajeActivo.usuario_nombre || 'Usuario MoviFY' }}</strong>
-          </div>
-          @if (!esEncomienda && viajeActivo.parada) {
-            <div class="viaje-fila">
-              <span>🔶 Parada</span>
-              <strong>{{ viajeActivo.parada }}</strong>
-            </div>
-          }
-          @if (!esEncomienda && requisitosDe(viajeActivo); as r) {
-            <div class="viaje-fila">
-              <span>✅ Pidió</span>
-              <strong>{{ r }}</strong>
-            </div>
-          }
-          @if (esEncomienda && viajeActivo.destino) {
-            <div class="viaje-fila">
-              <span>🏁 Entregar en</span>
-              <strong>{{ viajeActivo.destino }}</strong>
-            </div>
-          }
-          <div class="viaje-fila">
-            <span>📏 Distancia</span>
-            <strong>{{ viajeActivo.distancia_km | number:'1.1-2' }} km</strong>
-          </div>
-          <div class="viaje-fila">
-            <span>💰 Tarifa</span>
-            <strong style="color:#16a34a">${{ viajeActivo.tarifa | number }}</strong>
-          </div>
-        </div>
-        <div class="viaje-botones">
-          <button class="btn-llegue"
-            *ngIf="viajeActivo.estado === 'ACEPTADO' || viajeActivo.estado === 'EN_CAMINO_AL_USUARIO'"
-            (click)="llegueAlUsuario()">
-            📍 Llegué al usuario
-          </button>
-          <button class="btn-llegue" style="background:#f59e0b;"
-            *ngIf="viajeActivo.estado === 'LLEGO_AL_ORIGEN' && (viajeActivo.tipo === 'DOMICILIO' || esEncomienda)"
-            (click)="paqueteRecogido()">
-            📦 Paquete recogido
-          </button>
-          <button class="btn-finalizar"
-            *ngIf="viajeActivo.estado === 'EN_VIAJE' || viajeActivo.estado === 'PAQUETE_RECOGIDO'"
-            (click)="finalizarViaje()">
-            {{ esEncomienda ? '🏁 Entregar paquete' : '🏁 Finalizar viaje' }}
-          </button>
-        </div>
-        <!-- Domicilio con compra: el domiciliario dice cuánto pagó (lo que dice la factura) -->
-        @if (esCompraDomicilio && (viajeActivo.estado === 'PAQUETE_RECOGIDO' || viajeActivo.estado === 'EN_VIAJE')) {
-          <div class="pin-entrega">
-            <label for="valor-factura">¿Cuánto pagaste en la tienda? <small>(lo que dice la factura; el cliente te lo devuelve)</small></label>
-            <input id="valor-factura" class="valor-factura" type="number" inputmode="numeric" min="0" step="100"
-                   [placeholder]="viajeActivo.valor_productos_aprox || 0" [(ngModel)]="valorFactura" (keyup.enter)="finalizarViaje()"
-                   [attr.aria-invalid]="!!errorEntrega" [attr.aria-describedby]="errorEntrega ? 'factura-error' : null">
-            @if (errorEntrega) { <small id="factura-error" class="pin-error" role="alert">{{ errorEntrega }}</small> }
-          </div>
-        }
-        <!-- Encomienda: el conductor escribe el PIN que le da quien recibe -->
-        @if (esEncomienda && viajeActivo.estado === 'PAQUETE_RECOGIDO') {
-          <div class="pin-entrega">
-            <label for="pin-entrega">Código de entrega <small>(se lo da quien recibe)</small></label>
-            <input id="pin-entrega" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="4"
-                   placeholder="• • • •" [(ngModel)]="codigoEntrega" (keyup.enter)="finalizarViaje()"
-                   [attr.aria-invalid]="!!errorEntrega" [attr.aria-describedby]="errorEntrega ? 'pin-error' : null">
-            @if (errorEntrega) { <small id="pin-error" class="pin-error" role="alert">{{ errorEntrega }}</small> }
-          </div>
-        }
-      </div>
-
-      <!-- SOLICITUDES LISTA -->
-      <div class="card solicitudes-card" *ngIf="solicitudes.length > 0">
-        <h2>📩 Solicitudes de Viaje Pendientes ({{ notificaciones }})</h2>
-        <div class="solicitud-item-lista" *ngFor="let s of solicitudes">
-          <div class="solicitud-info">
-            <span class="user-name">👤 {{ s.usuario_nombre }}</span>
-            <span class="tarifa-sol">💰 ${{ s.tarifa | number }}</span>
-            <span class="distancia-sol">📍 {{ s.distancia_km | number:'1.1-2' }} km</span>
-          </div>
-          <div class="solicitud-acciones">
-            <button class="btn-aceptar" (click)="responderASolicitud(s.servicio_id, 'ACEPTADO')">Aceptar</button>
-            <button class="btn-rechazar" (click)="responderASolicitud(s.servicio_id, 'RECHAZADO')">Rechazar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- SECCIÓN MAPA -->
-      <div class="mapa-section">
-        <div class="mapa-section-header">
-          <div class="mapa-section-title">
-            <span class="mapa-pin-icon">📍</span>
-            <div>
-              <h2>Mapa en tiempo real</h2>
-              <p>Sigue tu ubicación y las solicitudes en vivo</p>
-            </div>
-          </div>
-          <div class="mapa-section-actions">
-            <div class="mapa-conectado-badge" *ngIf="enLinea">
-              <span class="mapa-conectado-icon">📶</span>
-              <div>
-                <span class="mapa-conectado-label">Conectado</span>
-                <span class="mapa-conectado-sub">Actualizado hace 5s</span>
-              </div>
-            </div>
-            <button class="btn-filtros">
-              ☰ Filtros
-            </button>
-            <button class="btn-simular" *ngIf="mostrarMapa" (click)="simularUbicacionManual()" style="background:#7c4dff;">
-              🧪 Simular
-            </button>
-          </div>
-        </div>
-
-        <!-- Mapa -->
-        <div class="mapa-wrapper" *ngIf="mostrarMapa">
-          <div id="map" class="mapa" style="height:450px; width:100%; z-index:1;"></div>
-          <!-- Leyenda -->
-          <div class="mapa-leyenda">
-            <span><span class="leyenda-dot verde"></span> Tu ubicación</span>
-            <span><span class="leyenda-dot naranja"></span> Solicitudes</span>
-            <span><span class="leyenda-dot azul"></span> Otros conductores</span>
-          </div>
-          <!-- Botón centrar -->
-          <button class="btn-centrar" (click)="iniciarRastreoRealTime()">⊕ Centrar</button>
-        </div>
-
-        <!-- Estado desconectado -->
-        <div class="mapa-offline" *ngIf="!mostrarMapa">
-          <p>🔴 Activa el mapa para ver tu ubicación en tiempo real</p>
-          <button class="btn-mapa-activar" (click)="toggleMapa()">🗺️ Mostrar mapa</button>
-        </div>
-      </div>
-
-      <!-- STATS 4 TARJETAS HORIZONTALES -->
-      <div class="stats-row">
-        <div class="stat-card" routerLink="/ganancias-conductor" style="cursor: pointer;">
-          <div class="stat-icon-wrap stat-green">
-            <span>📈</span>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">Hoy has ganado</span>
-            <span class="stat-value">${{ gananciasHoy | number }}</span>
-          </div>
-          <span class="stat-arrow">›</span>
-        </div>
-
-        <div class="stat-divider"></div>
-
-        <div class="stat-card">
-          <div class="stat-icon-wrap stat-orange">
-            <span>💼</span>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">Viajes completados</span>
-            <span class="stat-value">{{ viajesHoy }}</span>
-          </div>
-          <span class="stat-arrow">›</span>
-        </div>
-
-        <div class="stat-divider"></div>
-
-        <div class="stat-card">
-          <div class="stat-icon-wrap stat-blue">
-            <span>⭐</span>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">En curso</span>
-            <span class="stat-value">{{ viajeActivo ? 1 : 0 }}</span>
-          </div>
-          <span class="stat-arrow">›</span>
-        </div>
-
-        <div class="stat-divider"></div>
-
-        <div class="stat-card">
-          <div class="stat-icon-wrap stat-purple">
-            <span>⭐</span>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">Calificación</span>
-            <span class="stat-value">{{ calificacion }} ★</span>
-          </div>
-          <span class="stat-arrow">›</span>
-        </div>
-      </div>
-
-    </main>
+@if (cargando) {
+  <div class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Sincronizando con MoviFY...</p>
   </div>
-</div>
+}
+
+@if (!cargando) {
+  <div class="conductor-layout" [class.sidebar-colapsado]="sidebarColapsado">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" [class.sidebar-visible]="menuNavAbierto">
+      <!-- Logo area -->
+      <div class="sidebar-logo">
+        <img src="/assets/brand/movify-icono.png" class="sidebar-logo-img" alt="MoviFY Logo" />
+        <span class="sidebar-brand">MoviFY</span>
+      </div>
+      <div class="sidebar-menu">
+        <a routerLink="/conductor" class="nav-link activo">
+          <span class="link-icon">🏠</span>
+          <span class="link-text">Inicio</span>
+        </a>
+        <a routerLink="/mis-viajes-conductor" class="nav-link">
+          <span class="link-icon">🛵</span>
+          <span class="link-text">Mis viajes</span>
+        </a>
+        <a routerLink="/ganancias-conductor" class="nav-link">
+          <span class="link-icon">💰</span>
+          <span class="link-text">Ganancias</span>
+        </a>
+        <a routerLink="/perfil-conductor" class="nav-link">
+          <span class="link-icon">👤</span>
+          <span class="link-text">Ver mi perfil</span>
+        </a>
+        <a routerLink="/soporte" class="nav-link">
+          <span class="link-icon">🎧</span>
+          <span class="link-text">Soporte</span>
+        </a>
+      </div>
+      <!-- Banner promocional -->
+      <div class="sidebar-banner link-text">
+        <div class="sidebar-banner-text">
+          <p class="banner-title">¡Más viajes,<br />más ganancias!</p>
+          <p class="banner-sub">Conéctate y recibe<br />más solicitudes.</p>
+        </div>
+        <img src="/assets/moto-icon.png" class="banner-img" alt="" />
+      </div>
+      <div class="sidebar-footer">
+        <button class="btn-cerrar-lateral" (click)="cerrarSesion()">
+          <span class="btn-icon">🚪</span>
+          <span class="link-text">Cerrar sesión</span>
+        </button>
+      </div>
+    </aside>
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="main-container-wrapper">
+      <!-- NAVBAR -->
+      <nav class="navbar">
+        <div class="navbar-left">
+          <button class="menu-toggle" (click)="toggleSidebar()">☰</button>
+          <div class="navbar-greeting">
+            <span class="navbar-hello">¡Hola, {{ nombre }}! 👋</span>
+            <span class="navbar-rol">Conductor</span>
+          </div>
+        </div>
+        <div class="navbar-right">
+          <!-- Botón En línea / Desconectado -->
+          <button class="btn-estado" [class.en-linea]="enLinea" (click)="toggleMapaActivo()">
+            <span class="estado-dot" [class.dot-verde]="enLinea" [class.dot-rojo]="!enLinea"></span>
+            {{ enLinea ? 'En línea' : 'Desconectado' }}
+            <span class="estado-chevron">▾</span>
+          </button>
+          <!-- Botón Mapa activo (solo cuando está en línea) -->
+          @if (enLinea) {
+            <button class="btn-mapa-nav" (click)="toggleMapa()">🗺️ Mapa activo</button>
+          }
+          <!-- Campana de Notificaciones Real -->
+          <div
+            class="notification-bell-wrap"
+            style="position: relative; margin-right: 15px; cursor: pointer"
+          >
+            <span class="bell-icon" style="font-size: 20px">🔔</span>
+            @if (notificaciones > 0) {
+              <span
+                class="bell-badge"
+                style="
+                  position: absolute;
+                  top: -5px;
+                  right: -5px;
+                  background: #f97316;
+                  color: white;
+                  font-size: 10px;
+                  padding: 2px 6px;
+                  border-radius: 50%;
+                  font-weight: bold;
+                "
+              >
+                {{ notificaciones }}
+              </span>
+            }
+          </div>
+          <!-- Perfil -->
+          <div class="nav-perfil" (click)="toggleMenu()">
+            <div class="nav-avatar-circle">
+              {{ nombre.charAt(0).toUpperCase() }}
+            </div>
+            <div class="nav-info">
+              <span class="nav-nombre">{{ nombre }}</span>
+              <span class="nav-sub">Ver perfil ▾</span>
+            </div>
+            <!-- Dropdown -->
+            @if (menuAbierto) {
+              <div class="menu-perfil" (click)="$event.stopPropagation()">
+                <div class="menu-header">
+                  <div class="menu-avatar">{{ nombre.charAt(0).toUpperCase() }}</div>
+                  <div class="menu-user">
+                    <h3>{{ nombre }}</h3>
+                    <p>Conductor MoviFY</p>
+                  </div>
+                </div>
+                <button class="menu-item" (click)="verPerfil()"><span>👤</span> Ver perfil</button>
+                <button class="menu-item" (click)="editarPerfil()">
+                  <span>✏️</span> Editar perfil
+                </button>
+                <button class="menu-item"><span>⭐</span> Favoritos</button>
+                <button class="menu-item" (click)="configuracion()">
+                  <span>⚙️</span> Configuración
+                </button>
+                <button class="menu-item" (click)="cerrarSesion()">
+                  <span>🚪</span> Cerrar sesión
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </nav>
+      <!-- CUERPO -->
+      <main class="content-body">
+        <!-- PANEL VIAJE ACTIVO -->
+        @if (viajeActivo) {
+          <div class="viaje-activo-panel">
+            <div class="viaje-header">
+              <span class="viaje-badge">{{
+                esEncomienda ? '📦 Encomienda en curso' : '🚦 Viaje en curso'
+              }}</span>
+              <span class="viaje-estado" [ngClass]="getBadgeClass(viajeActivo.estado)">
+                {{ getFriendlyEstado(viajeActivo.estado) }}
+              </span>
+            </div>
+            <div class="viaje-datos">
+              <div class="viaje-fila">
+                <span>👤 {{ esEncomienda ? 'Envía' : 'Pasajero' }}</span>
+                <strong>{{
+                  viajeActivo.pasajero_nombre || viajeActivo.usuario_nombre || 'Usuario MoviFY'
+                }}</strong>
+              </div>
+              @if (!esEncomienda && viajeActivo.parada) {
+                <div class="viaje-fila">
+                  <span>🔶 Parada</span>
+                  <strong>{{ viajeActivo.parada }}</strong>
+                </div>
+              }
+              @if (!esEncomienda && requisitosDe(viajeActivo); as r) {
+                <div class="viaje-fila">
+                  <span>✅ Pidió</span>
+                  <strong>{{ r }}</strong>
+                </div>
+              }
+              @if (esEncomienda && viajeActivo.destino) {
+                <div class="viaje-fila">
+                  <span>🏁 Entregar en</span>
+                  <strong>{{ viajeActivo.destino }}</strong>
+                </div>
+              }
+              <div class="viaje-fila">
+                <span>📏 Distancia</span>
+                <strong>{{ viajeActivo.distancia_km | number: '1.1-2' }} km</strong>
+              </div>
+              <div class="viaje-fila">
+                <span>💰 Tarifa</span>
+                <strong style="color: #16a34a">${{ viajeActivo.tarifa | number }}</strong>
+              </div>
+            </div>
+            <div class="viaje-botones">
+              @if (
+                viajeActivo.estado === 'ACEPTADO' || viajeActivo.estado === 'EN_CAMINO_AL_USUARIO'
+              ) {
+                <button class="btn-llegue" (click)="llegueAlUsuario()">📍 Llegué al usuario</button>
+              }
+              @if (
+                viajeActivo.estado === 'LLEGO_AL_ORIGEN' &&
+                (viajeActivo.tipo === 'DOMICILIO' || esEncomienda)
+              ) {
+                <button class="btn-llegue" style="background: #f59e0b" (click)="paqueteRecogido()">
+                  📦 Paquete recogido
+                </button>
+              }
+              @if (viajeActivo.estado === 'EN_VIAJE' || viajeActivo.estado === 'PAQUETE_RECOGIDO') {
+                <button class="btn-finalizar" (click)="finalizarViaje()">
+                  {{ esEncomienda ? '🏁 Entregar paquete' : '🏁 Finalizar viaje' }}
+                </button>
+              }
+            </div>
+            <!-- Domicilio con compra: el domiciliario dice cuánto pagó (lo que dice la factura) -->
+            @if (
+              esCompraDomicilio &&
+              (viajeActivo.estado === 'PAQUETE_RECOGIDO' || viajeActivo.estado === 'EN_VIAJE')
+            ) {
+              <div class="pin-entrega">
+                <label for="valor-factura"
+                  >¿Cuánto pagaste en la tienda?
+                  <small>(lo que dice la factura; el cliente te lo devuelve)</small></label
+                >
+                <input
+                  id="valor-factura"
+                  class="valor-factura"
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="100"
+                  [placeholder]="viajeActivo.valor_productos_aprox || 0"
+                  [(ngModel)]="valorFactura"
+                  (keyup.enter)="finalizarViaje()"
+                  [attr.aria-invalid]="!!errorEntrega"
+                  [attr.aria-describedby]="errorEntrega ? 'factura-error' : null"
+                />
+                @if (errorEntrega) {
+                  <small id="factura-error" class="pin-error" role="alert">{{
+                    errorEntrega
+                  }}</small>
+                }
+              </div>
+            }
+            <!-- Encomienda: el conductor escribe el PIN que le da quien recibe -->
+            @if (esEncomienda && viajeActivo.estado === 'PAQUETE_RECOGIDO') {
+              <div class="pin-entrega">
+                <label for="pin-entrega"
+                  >Código de entrega <small>(se lo da quien recibe)</small></label
+                >
+                <input
+                  id="pin-entrega"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  maxlength="4"
+                  placeholder="• • • •"
+                  [(ngModel)]="codigoEntrega"
+                  (keyup.enter)="finalizarViaje()"
+                  [attr.aria-invalid]="!!errorEntrega"
+                  [attr.aria-describedby]="errorEntrega ? 'pin-error' : null"
+                />
+                @if (errorEntrega) {
+                  <small id="pin-error" class="pin-error" role="alert">{{ errorEntrega }}</small>
+                }
+              </div>
+            }
+          </div>
+        }
+        <!-- SOLICITUDES LISTA -->
+        @if (solicitudes.length > 0) {
+          <div class="card solicitudes-card">
+            <h2>📩 Solicitudes de Viaje Pendientes ({{ notificaciones }})</h2>
+            @for (s of solicitudes; track s) {
+              <div class="solicitud-item-lista">
+                <div class="solicitud-info">
+                  <span class="user-name">👤 {{ s.usuario_nombre }}</span>
+                  <span class="tarifa-sol">💰 ${{ s.tarifa | number }}</span>
+                  <span class="distancia-sol">📍 {{ s.distancia_km | number: '1.1-2' }} km</span>
+                </div>
+                <div class="solicitud-acciones">
+                  <button
+                    class="btn-aceptar"
+                    (click)="responderASolicitud(s.servicio_id, 'ACEPTADO')"
+                  >
+                    Aceptar
+                  </button>
+                  <button
+                    class="btn-rechazar"
+                    (click)="responderASolicitud(s.servicio_id, 'RECHAZADO')"
+                  >
+                    Rechazar
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+        <!-- SECCIÓN MAPA -->
+        <div class="mapa-section">
+          <div class="mapa-section-header">
+            <div class="mapa-section-title">
+              <span class="mapa-pin-icon">📍</span>
+              <div>
+                <h2>Mapa en tiempo real</h2>
+                <p>Sigue tu ubicación y las solicitudes en vivo</p>
+              </div>
+            </div>
+            <div class="mapa-section-actions">
+              @if (enLinea) {
+                <div class="mapa-conectado-badge">
+                  <span class="mapa-conectado-icon">📶</span>
+                  <div>
+                    <span class="mapa-conectado-label">Conectado</span>
+                    <span class="mapa-conectado-sub">Actualizado hace 5s</span>
+                  </div>
+                </div>
+              }
+              <button class="btn-filtros">☰ Filtros</button>
+              @if (mostrarMapa) {
+                <button
+                  class="btn-simular"
+                  (click)="simularUbicacionManual()"
+                  style="background: #7c4dff"
+                >
+                  🧪 Simular
+                </button>
+              }
+            </div>
+          </div>
+          <!-- Mapa -->
+          @if (mostrarMapa) {
+            <div class="mapa-wrapper">
+              <div id="map" class="mapa" style="height: 450px; width: 100%; z-index: 1"></div>
+              <!-- Leyenda -->
+              <div class="mapa-leyenda">
+                <span><span class="leyenda-dot verde"></span> Tu ubicación</span>
+                <span><span class="leyenda-dot naranja"></span> Solicitudes</span>
+                <span><span class="leyenda-dot azul"></span> Otros conductores</span>
+              </div>
+              <!-- Botón centrar -->
+              <button class="btn-centrar" (click)="iniciarRastreoRealTime()">⊕ Centrar</button>
+            </div>
+          }
+          <!-- Estado desconectado -->
+          @if (!mostrarMapa) {
+            <div class="mapa-offline">
+              <p>🔴 Activa el mapa para ver tu ubicación en tiempo real</p>
+              <button class="btn-mapa-activar" (click)="toggleMapa()">🗺️ Mostrar mapa</button>
+            </div>
+          }
+        </div>
+        <!-- STATS 4 TARJETAS HORIZONTALES -->
+        <div class="stats-row">
+          <div class="stat-card" routerLink="/ganancias-conductor" style="cursor: pointer">
+            <div class="stat-icon-wrap stat-green">
+              <span>📈</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Hoy has ganado</span>
+              <span class="stat-value">${{ gananciasHoy | number }}</span>
+            </div>
+            <span class="stat-arrow">›</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-orange">
+              <span>💼</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Viajes completados</span>
+              <span class="stat-value">{{ viajesHoy }}</span>
+            </div>
+            <span class="stat-arrow">›</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-blue">
+              <span>⭐</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">En curso</span>
+              <span class="stat-value">{{ viajeActivo ? 1 : 0 }}</span>
+            </div>
+            <span class="stat-arrow">›</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-purple">
+              <span>⭐</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Calificación</span>
+              <span class="stat-value">{{ calificacion }} ★</span>
+            </div>
+            <span class="stat-arrow">›</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+}
 
 <!-- OVERLAY SOLICITUD ENTRANTE -->
-<div class="solicitud-overlay" *ngIf="solicitudes.length > 0 && enLinea">
-  <div class="solicitud-fullscreen" *ngFor="let s of solicitudes; let i = index" [style.display]="i === 0 ? 'flex' : 'none'">
-    <div class="sol-header">
-      <div class="sol-ping"></div>
-      <span class="sol-badge">Nueva solicitud</span>
-    </div>
-    <div class="sol-icon">🏍️</div>
-    <h1 class="sol-titulo">¡Viaje disponible!</h1>
-    <div class="sol-datos">
-      <div class="sol-fila">
-        <span class="sol-label">👤 Pasajero</span>
-        <strong class="sol-valor">{{ s.pasajero_nombre || s.usuario_nombre }}</strong>
-      </div>
-      @if (s.pasajero_nombre) {
-        <div class="sol-fila">
-          <span class="sol-label">📲 Lo pidió</span>
-          <strong class="sol-valor">{{ s.usuario_nombre }}</strong>
+@if (solicitudes.length > 0 && enLinea) {
+  <div class="solicitud-overlay">
+    @for (s of solicitudes; track s; let i = $index) {
+      <div class="solicitud-fullscreen" [style.display]="i === 0 ? 'flex' : 'none'">
+        <div class="sol-header">
+          <div class="sol-ping"></div>
+          <span class="sol-badge">Nueva solicitud</span>
         </div>
-      }
-      <div class="sol-fila">
-        <span class="sol-label">📏 Distancia</span>
-        <strong class="sol-valor">{{ s.distancia_km | number:'1.1-2' }} km</strong>
-      </div>
-      @if (s.parada) {
-        <div class="sol-fila">
-          <span class="sol-label">🔶 Parada</span>
-          <strong class="sol-valor">{{ s.parada }}</strong>
+        <div class="sol-icon">🏍️</div>
+        <h1 class="sol-titulo">¡Viaje disponible!</h1>
+        <div class="sol-datos">
+          <div class="sol-fila">
+            <span class="sol-label">👤 Pasajero</span>
+            <strong class="sol-valor">{{ s.pasajero_nombre || s.usuario_nombre }}</strong>
+          </div>
+          @if (s.pasajero_nombre) {
+            <div class="sol-fila">
+              <span class="sol-label">📲 Lo pidió</span>
+              <strong class="sol-valor">{{ s.usuario_nombre }}</strong>
+            </div>
+          }
+          <div class="sol-fila">
+            <span class="sol-label">📏 Distancia</span>
+            <strong class="sol-valor">{{ s.distancia_km | number: '1.1-2' }} km</strong>
+          </div>
+          @if (s.parada) {
+            <div class="sol-fila">
+              <span class="sol-label">🔶 Parada</span>
+              <strong class="sol-valor">{{ s.parada }}</strong>
+            </div>
+          }
+          @if (requisitosDe(s); as r) {
+            <div class="sol-fila">
+              <span class="sol-label">✅ Pidió</span>
+              <strong class="sol-valor">{{ r }}</strong>
+            </div>
+          }
+          <div class="sol-fila sol-fila-highlight">
+            <span class="sol-label">💰 Tarifa{{ s.tarifa_subida ? ' (¡subió!)' : '' }}</span>
+            <strong class="sol-valor sol-tarifa">${{ s.tarifa | number }}</strong>
+          </div>
         </div>
-      }
-      @if (requisitosDe(s); as r) {
-        <div class="sol-fila">
-          <span class="sol-label">✅ Pidió</span>
-          <strong class="sol-valor">{{ r }}</strong>
+        <div class="sol-botones">
+          <button
+            class="sol-btn sol-rechazar"
+            (click)="responderASolicitud(s.servicio_id, 'RECHAZADO')"
+          >
+            ✕ Rechazar
+          </button>
+          <button
+            class="sol-btn sol-aceptar"
+            (click)="responderASolicitud(s.servicio_id, 'ACEPTADO')"
+          >
+            ✓ Aceptar viaje
+          </button>
         </div>
-      }
-      <div class="sol-fila sol-fila-highlight">
-        <span class="sol-label">💰 Tarifa{{ s.tarifa_subida ? ' (¡subió!)' : '' }}</span>
-        <strong class="sol-valor sol-tarifa">${{ s.tarifa | number }}</strong>
+        @if (solicitudes.length > 1) {
+          <p class="sol-contador">+{{ solicitudes.length - 1 }} solicitud(es) más en espera</p>
+        }
       </div>
-    </div>
-    <div class="sol-botones">
-      <button class="sol-btn sol-rechazar" (click)="responderASolicitud(s.servicio_id, 'RECHAZADO')">✕ Rechazar</button>
-      <button class="sol-btn sol-aceptar" (click)="responderASolicitud(s.servicio_id, 'ACEPTADO')">✓ Aceptar viaje</button>
-    </div>
-    <p class="sol-contador" *ngIf="solicitudes.length > 1">+{{ solicitudes.length - 1 }} solicitud(es) más en espera</p>
+    }
   </div>
-</div>
+}
 
 <!-- MODAL: ESTADO DE CUENTA NO APROBADA -->
-<div class="modal-estado-overlay" *ngIf="mostrarModalEstado">
-  <div class="modal-estado-box">
-    <div class="modal-estado-icono" [class.icono-rechazo]="mostrarBotonReenviarDocs">
-      {{ mostrarBotonReenviarDocs ? '❌' : '⏳' }}
-    </div>
-    <h2 class="modal-estado-titulo">{{ tituloModalEstado }}</h2>
-    <p class="modal-estado-mensaje">{{ mensajeModalEstado }}</p>
-
-    <div class="modal-estado-botones">
-      <button class="btn-modal-cerrar" (click)="cerrarModalEstado()">Entendido</button>
-      <button class="btn-modal-reenviar" *ngIf="mostrarBotonReenviarDocs" (click)="irAReenviarDocumentos()">
-        📤 Reenviar documentos
-      </button>
+@if (mostrarModalEstado) {
+  <div class="modal-estado-overlay">
+    <div class="modal-estado-box">
+      <div class="modal-estado-icono" [class.icono-rechazo]="mostrarBotonReenviarDocs">
+        {{ mostrarBotonReenviarDocs ? '❌' : '⏳' }}
+      </div>
+      <h2 class="modal-estado-titulo">{{ tituloModalEstado }}</h2>
+      <p class="modal-estado-mensaje">{{ mensajeModalEstado }}</p>
+      <div class="modal-estado-botones">
+        <button class="btn-modal-cerrar" (click)="cerrarModalEstado()">Entendido</button>
+        @if (mostrarBotonReenviarDocs) {
+          <button class="btn-modal-reenviar" (click)="irAReenviarDocumentos()">
+            📤 Reenviar documentos
+          </button>
+        }
+      </div>
     </div>
   </div>
-</div>
+}

@@ -31,7 +31,11 @@
 <div class="adm">
 
   <!-- ═══════════════ BARRA LATERAL ═══════════════ -->
-  <aside class="adm-side">
+  <!-- En el celular el menú es un cajón que se abre con el botón ☰ -->
+  @if (menuAbierto) {
+    <div class="adm-side-fondo" (click)="menuAbierto = false" aria-hidden="true"></div>
+  }
+  <aside class="adm-side" [class.abierto]="menuAbierto" id="adm-menu">
     <div class="adm-marca">
       <img src="assets/brand/movify-isotipo.svg" alt="" width="30" height="37">
       <div>
@@ -80,12 +84,27 @@
   <div class="adm-main">
 
     <header class="adm-top">
-      <div>
+      <button type="button" class="adm-menu-btn" (click)="menuAbierto = !menuAbierto"
+              [attr.aria-expanded]="menuAbierto" aria-controls="adm-menu" aria-label="Abrir el menú">
+        <adm-ico n="menu" />
+        @if (pendientesSeguridad > 0) { <span class="adm-menu-punto" aria-hidden="true"></span> }
+      </button>
+      <div class="adm-top-txt">
         <h1 class="adm-titulo">{{ seccion.titulo }}</h1>
         <p class="adm-subtitulo">{{ seccion.subtitulo }}</p>
       </div>
       <div class="adm-top-der">
         <span class="adm-fecha">{{ hoyTexto }}</span>
+        @if (permisoAvisos === 'default') {
+          <button type="button" class="adm-btn adm-btn-borde adm-avisos-btn" (click)="activarAvisos()"
+                  title="Te avisa con sonido y una notificación del navegador cuando entra un SOS, aunque estés en otra pestaña">
+            <adm-ico n="sos" /> Activar avisos de SOS
+          </button>
+        } @else if (permisoAvisos === 'denied') {
+          <span class="adm-avisos-off" title="El navegador bloqueó las notificaciones de esta página. Actívalas en el candado de la barra de direcciones.">
+            <adm-ico n="sos" /> Avisos bloqueados
+          </span>
+        }
         <button type="button" class="adm-campana" (click)="irA('conductores', 'pendiente')"
                 [attr.aria-label]="conductoresPendientes ? conductoresPendientes + ' conductores por validar' : 'Sin conductores por validar'">
           <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'campana' }" />
@@ -96,6 +115,23 @@
 
     <main class="adm-contenido">
 
+      <!-- SOS abiertas: se ve en TODAS las secciones hasta que alguien las atienda -->
+      @if (sosAbiertas > 0) {
+        <div class="adm-sos" role="alert">
+          <adm-ico n="sos" />
+          <div class="adm-sos-txt">
+            <b>{{ sosAbiertas === 1 ? 'Hay 1 alerta SOS abierta' : 'Hay ' + sosAbiertas + ' alertas SOS abiertas' }}</b>
+            <span>Alguien pidió ayuda en un viaje. Atiéndela ya.</span>
+          </div>
+          @if (permisoAvisos === 'default') {
+            <button type="button" class="adm-btn adm-btn-suave adm-sos-btn" (click)="activarAvisos()">Avisarme aunque esté en otra pestaña</button>
+          }
+          @if (seccionActiva !== 'seguridad') {
+            <button type="button" class="adm-btn adm-btn-peligro adm-sos-btn" (click)="irA('seguridad')">Ver ahora</button>
+          }
+        </div>
+      }
+
       <!-- Resultado de la última acción (en lugar de ventanas alert) -->
       @if (aviso) {
         <div class="adm-toast" [class.error]="aviso.tipo === 'error'" role="status" aria-live="polite">
@@ -105,6 +141,11 @@
             <ng-container [ngTemplateOutlet]="ico" [ngTemplateOutletContext]="{ $implicit: 'x' }" />
           </button>
         </div>
+      }
+
+      <!-- ══════════ COMUNICADOS ══════════ -->
+      @if (seccionActiva === 'comunicados' && !esSoporte) {
+        <app-admin-comunicados (aviso)="mostrarAviso($event)" />
       }
 
       <!-- ══════════ RESUMEN ══════════ -->
@@ -153,6 +194,8 @@
       @if (seccionActiva === 'seguridad') {
         <app-admin-seguridad (abrirServicio)="abrirServicio($event)" (aviso)="mostrarAviso($event)"
                              (pendientes)="pendientesSeguridad = $event" />
+        <!-- Selfies de los conductores antes de conectarse (V22) -->
+        <app-admin-selfies (aviso)="mostrarAviso($event)" />
       }
 
       <!-- ══════════ SOPORTE (PQRS) ══════════ -->
@@ -174,6 +217,11 @@
       <!-- ══════════ AUDITORÍA ══════════ -->
       @if (seccionActiva === 'auditoria' && !esSoporte) {
         <app-admin-auditoria />
+      }
+
+      <!-- ══════════ DOMICILIOS (catálogo) ══════════ -->
+      @if (seccionActiva === 'domicilios') {
+        <app-admin-domicilios [soloLectura]="esSoporte" (aviso)="mostrarAviso($event)" />
       }
 
       <!-- ══════════ DATOS BÁSICOS ══════════ -->

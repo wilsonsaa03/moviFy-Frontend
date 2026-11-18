@@ -1,4 +1,13 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, OnDestroy, Output, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  EventEmitter,
+  OnDestroy,
+  Output,
+  ViewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
 import { ApiService } from '../../../core/api.service';
@@ -67,8 +76,10 @@ const SIN_SENAL_SEG = 120;
 /** Buscando más de esto = hay que mirarlo (sin conductores cerca, tarifa baja…). */
 const DEMORA_MIN = 2;
 
-const SVG_MOTO = '<circle cx="5.5" cy="16.5" r="3"/><circle cx="18.5" cy="16.5" r="3"/><path d="M5.5 16.5l4-6h5l4 6M14.5 10.5l-1.5-4h3"/>';
-const SVG_TAXI = '<path d="M5 17h14v-4l-2-5H7l-2 5v4zM9 5h6v3M5 13h14"/><circle cx="8" cy="17" r="1.6"/><circle cx="16" cy="17" r="1.6"/>';
+const SVG_MOTO =
+  '<circle cx="5.5" cy="16.5" r="3"/><circle cx="18.5" cy="16.5" r="3"/><path d="M5.5 16.5l4-6h5l4 6M14.5 10.5l-1.5-4h3"/>';
+const SVG_TAXI =
+  '<path d="M5 17h14v-4l-2-5H7l-2 5v4zM9 5h6v3M5 13h14"/><circle cx="8" cy="17" r="1.6"/><circle cx="16" cy="17" r="1.6"/>';
 
 /**
  * "En vivo": lo que está pasando ahora en Buenaventura. Mapa con los conductores conectados (libre, con
@@ -81,6 +92,7 @@ const SVG_TAXI = '<path d="M5 17h14v-4l-2-5H7l-2 5v4zM9 5h6v3M5 13h14"/><circle 
   standalone: true,
   imports: [CommonModule, AdminIcoComponent],
   templateUrl: './admin-en-vivo.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../home-admin.css', './admin-en-vivo.css'],
 })
 export class AdminEnVivoComponent implements AfterViewInit, OnDestroy {
@@ -91,7 +103,12 @@ export class AdminEnVivoComponent implements AfterViewInit, OnDestroy {
   conductores: ConductorVivo[] = [];
   servicios: ServicioVivo[] = [];
   programados: Programado[] = [];
-  contadores: Contadores = { sos_abiertas: 0, alertas_pendientes: 0, programados_24h: 0, expirados_hora: 0 };
+  contadores: Contadores = {
+    sos_abiertas: 0,
+    alertas_pendientes: 0,
+    programados_24h: 0,
+    expirados_hora: 0,
+  };
   filtro: 'todos' | 'buscando' | 'en_curso' = 'todos';
   error = '';
   actualizado: Date | null = null;
@@ -116,32 +133,36 @@ export class AdminEnVivoComponent implements AfterViewInit, OnDestroy {
   }
 
   get libres(): number {
-    return this.conductores.filter(c => !c.servicio_id && c.segundos_sin_reportar <= SIN_SENAL_SEG).length;
+    return this.conductores.filter(
+      (c) => !c.servicio_id && c.segundos_sin_reportar <= SIN_SENAL_SEG,
+    ).length;
   }
 
   get ocupados(): number {
-    return this.conductores.filter(c => !!c.servicio_id).length;
+    return this.conductores.filter((c) => !!c.servicio_id).length;
   }
 
   get buscando(): ServicioVivo[] {
-    return this.servicios.filter(s => s.estado_codigo === 'buscando');
+    return this.servicios.filter((s) => s.estado_codigo === 'buscando');
   }
 
   /** Buscando hace rato: lo que soporte debería mirar primero (después de SOS y alertas). */
   get demorados(): number {
-    return this.buscando.filter(s => s.minutos >= DEMORA_MIN).length;
+    return this.buscando.filter((s) => s.minutos >= DEMORA_MIN).length;
   }
 
   get visibles(): ServicioVivo[] {
     if (this.filtro === 'buscando') return this.buscando;
-    if (this.filtro === 'en_curso') return this.servicios.filter(s => s.estado_codigo !== 'buscando');
+    if (this.filtro === 'en_curso')
+      return this.servicios.filter((s) => s.estado_codigo !== 'buscando');
     return this.servicios;
   }
 
   get proximos(): Programado[] {
     const limite = Date.now() + 24 * 3600_000;
-    return this.programados.filter(p => p.estado === 'pendiente' && new Date(p.programado_para).getTime() <= limite)
-      .concat(this.programados.filter(p => p.estado === 'fallido').slice(0, 5));
+    return this.programados
+      .filter((p) => p.estado === 'pendiente' && new Date(p.programado_para).getTime() <= limite)
+      .concat(this.programados.filter((p) => p.estado === 'fallido').slice(0, 5));
   }
 
   demorado(s: ServicioVivo): boolean {
@@ -154,14 +175,20 @@ export class AdminEnVivoComponent implements AfterViewInit, OnDestroy {
 
   private async cargar(): Promise<void> {
     try {
-      const r = await this.api.get<{ conductores: ConductorVivo[]; servicios: ServicioVivo[]; contadores: Contadores }>('/admin/en-vivo');
+      const r = await this.api.get<{
+        conductores: ConductorVivo[];
+        servicios: ServicioVivo[];
+        contadores: Contadores;
+      }>('/admin/en-vivo');
       this.conductores = r.conductores;
       this.servicios = r.servicios;
       this.contadores = r.contadores;
       this.actualizado = new Date();
       this.error = '';
       this.pintar();
-      this.programados = await this.api.get<Programado[]>('/admin/programados').catch(() => this.programados);
+      this.programados = await this.api
+        .get<Programado[]>('/admin/programados')
+        .catch(() => this.programados);
     } catch (err) {
       this.error = ApiService.mensaje(err, 'No se pudo actualizar el mapa. Seguimos intentando.');
     }
@@ -185,7 +212,9 @@ export class AdminEnVivoComponent implements AfterViewInit, OnDestroy {
           iconAnchor: [16, 16],
         }),
       })
-        .bindTooltip(`${escapar(c.nombre)} · ${escapar(c.placa ?? '')}<br>${sinSenal ? 'Sin señal hace ' + Math.round(c.segundos_sin_reportar / 60) + ' min' : c.servicio_id ? 'Con servicio #' + c.servicio_id : 'Libre'}`)
+        .bindTooltip(
+          `${escapar(c.nombre)} · ${escapar(c.placa ?? '')}<br>${sinSenal ? 'Sin señal hace ' + Math.round(c.segundos_sin_reportar / 60) + ' min' : c.servicio_id ? 'Con servicio #' + Number(c.servicio_id) : 'Libre'}`,
+        )
         .addTo(this.capa);
     }
     for (const s of this.buscando) {
@@ -193,9 +222,16 @@ export class AdminEnVivoComponent implements AfterViewInit, OnDestroy {
       puntos.push(p);
       L.marker(p, {
         keyboard: false,
-        icon: L.divIcon({ className: '', html: `<span class="ev-pedido ${this.demorado(s) ? 'demorado' : ''}"></span>`, iconSize: [22, 22], iconAnchor: [11, 11] }),
+        icon: L.divIcon({
+          className: '',
+          html: `<span class="ev-pedido ${this.demorado(s) ? 'demorado' : ''}"></span>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11],
+        }),
       })
-        .bindTooltip(`Pedido #${s.id} · ${s.tipo_vehiculo} · busca hace ${s.minutos} min<br>${escapar(s.origen)}`)
+        .bindTooltip(
+          `Pedido #${Number(s.id)} · ${escapar(String(s.tipo_vehiculo ?? ''))} · busca hace ${Number(s.minutos)} min<br>${escapar(s.origen ?? '')}`,
+        )
         .on('click', () => this.abrirServicio.emit(s.id))
         .addTo(this.capa);
     }
@@ -207,5 +243,8 @@ export class AdminEnVivoComponent implements AfterViewInit, OnDestroy {
 }
 
 function escapar(t: string): string {
-  return t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+  return t.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
+  );
 }

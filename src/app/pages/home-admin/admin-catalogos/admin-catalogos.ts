@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -29,10 +29,16 @@ export interface TipoDocumento {
 type Pestana = 'motivos' | 'documentos';
 
 const ACTORES: Record<string, string> = {
-  cliente: 'Cliente', conductor: 'Conductor', admin: 'Plataforma', sistema: 'Sistema'
+  cliente: 'Cliente',
+  conductor: 'Conductor',
+  admin: 'Plataforma',
+  sistema: 'Sistema',
 };
 const PASOS: Record<string, string> = {
-  identidad: 'Identidad', licencia: 'Licencia', vehiculo: 'Vehículo', documentos: 'Documentos'
+  identidad: 'Identidad',
+  licencia: 'Licencia',
+  vehiculo: 'Vehículo',
+  documentos: 'Documentos',
 };
 
 /**
@@ -46,7 +52,8 @@ const PASOS: Record<string, string> = {
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-catalogos.html',
   // Reutiliza los estilos del panel para que la sección se vea igual a las demás
-  styleUrls: ['../home-admin.css', './admin-catalogos.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['../home-admin.css', './admin-catalogos.css'],
 })
 export class AdminCatalogosComponent implements OnInit {
   /** Soporte ve los catálogos pero no los cambia (el backend lo exige igual). */
@@ -81,10 +88,13 @@ export class AdminCatalogosComponent implements OnInit {
     try {
       [this.motivos, this.tipos] = await Promise.all([
         this.api.get<MotivoCancelacion[]>('/admin/catalogos/motivos-cancelacion'),
-        this.api.get<TipoDocumento[]>('/admin/catalogos/tipos-documento')
+        this.api.get<TipoDocumento[]>('/admin/catalogos/tipos-documento'),
       ]);
     } catch (err) {
-      this.error = ApiService.mensaje(err, 'No se pudieron cargar los datos básicos. Si acabas de actualizar, cierra sesión y vuelve a entrar.');
+      this.error = ApiService.mensaje(
+        err,
+        'No se pudieron cargar los datos básicos. Si acabas de actualizar, cierra sesión y vuelve a entrar.',
+      );
     } finally {
       this.cargando = false;
     }
@@ -123,16 +133,29 @@ export class AdminCatalogosComponent implements OnInit {
       if (this.pestana === 'motivos') {
         const m = this.motivoForm;
         const cuerpo = { actor: m.actor, descripcion: m.descripcion, activo: m.activo };
-        if (this.editando) await this.api.put(`/admin/catalogos/motivos-cancelacion/${m.id}`, cuerpo);
+        if (this.editando)
+          await this.api.put(`/admin/catalogos/motivos-cancelacion/${m.id}`, cuerpo);
         else await this.api.post('/admin/catalogos/motivos-cancelacion', cuerpo);
       } else {
         const t = this.tipoForm;
         const cuerpo = {
-          codigo: t.codigo, nombre: t.nombre, aplicaA: t.aplica_a, requiereVencimiento: t.requiere_vencimiento,
-          obligatorioMoto: t.obligatorio_moto, obligatorioTaxi: t.obligatorio_taxi, paso: t.paso, orden: t.orden,
-          soloImagen: t.solo_imagen, exigirDesdeAnios: t.exigir_desde_anios || null, ayuda: t.ayuda
+          codigo: t.codigo,
+          nombre: t.nombre,
+          aplicaA: t.aplica_a,
+          requiereVencimiento: t.requiere_vencimiento,
+          obligatorioMoto: t.obligatorio_moto,
+          obligatorioTaxi: t.obligatorio_taxi,
+          paso: t.paso,
+          orden: t.orden,
+          soloImagen: t.solo_imagen,
+          exigirDesdeAnios: t.exigir_desde_anios || null,
+          ayuda: t.ayuda,
         };
-        if (this.editando) await this.api.put(`/admin/catalogos/tipos-documento/${encodeURIComponent(t.codigo)}`, cuerpo);
+        if (this.editando)
+          await this.api.put(
+            `/admin/catalogos/tipos-documento/${encodeURIComponent(t.codigo)}`,
+            cuerpo,
+          );
         else await this.api.post('/admin/catalogos/tipos-documento', cuerpo);
       }
       this.cerrarForm();
@@ -191,8 +214,17 @@ export class AdminCatalogosComponent implements OnInit {
 
   private tipoVacio(): TipoDocumento {
     return {
-      codigo: '', nombre: '', aplica_a: 'conductor', requiere_vencimiento: false, obligatorio_moto: false,
-      obligatorio_taxi: false, paso: 'documentos', orden: 50, solo_imagen: false, exigir_desde_anios: null, ayuda: ''
+      codigo: '',
+      nombre: '',
+      aplica_a: 'conductor',
+      requiere_vencimiento: false,
+      obligatorio_moto: false,
+      obligatorio_taxi: false,
+      paso: 'documentos',
+      orden: 50,
+      solo_imagen: false,
+      exigir_desde_anios: null,
+      ayuda: '',
     };
   }
 }

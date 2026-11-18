@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { UsuarioService } from '../../Base_de_datos/usuario.service';
@@ -7,9 +7,10 @@ import { UsuarioService } from '../../Base_de_datos/usuario.service';
 @Component({
   selector: 'app-registro-usuario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [FormsModule, RouterModule],
   templateUrl: './registro-usuario.html',
-  styleUrl: './registro-usuario.css'
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrl: './registro-usuario.css',
 })
 export class RegistroUsuario {
   datos = { nombre: '', correo: '', password: '', telefono: '', rol: 'cliente' };
@@ -20,7 +21,10 @@ export class RegistroUsuario {
   mostrarPassword = false;
   mostrarConfirmar = false;
 
-  constructor(private usuarioService: UsuarioService, private router: Router) {}
+  constructor(
+    private usuarioService: UsuarioService,
+    private router: Router,
+  ) {}
 
   registrar() {
     if (this.datos.password !== this.confirmar) {
@@ -42,7 +46,7 @@ export class RegistroUsuario {
         this.cargando = false;
         const campos = err.error?.campos ? Object.values(err.error.campos) : [];
         this.error = (campos[0] as string) || err.error?.error || 'Error al registrar';
-      }
+      },
     });
   }
 }

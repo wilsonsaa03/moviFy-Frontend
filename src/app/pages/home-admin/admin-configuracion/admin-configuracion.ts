@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -54,13 +54,38 @@ const META: Record<string, { grupo: string; unidad?: string }> = {
 };
 
 const GRUPOS: { id: string; nombre: string; ayuda: string }[] = [
-  { id: 'busqueda', nombre: 'Búsqueda de conductores', ayuda: 'A quién se le ofrece un pedido y por cuánto tiempo se busca.' },
-  { id: 'viaje', nombre: 'Viajes y tarifas', ayuda: 'Espera en la recogida, cuánto puede subir la tarifa el pasajero y horario nocturno.' },
-  { id: 'programados', nombre: 'Viajes programados', ayuda: 'Desde cuándo y hasta cuándo se puede programar, y cuándo arranca la búsqueda.' },
-  { id: 'seguridad', nombre: 'Seguridad del pasajero', ayuda: 'Central para pedir por llamada, enlace para compartir el viaje y contactos de emergencia.' },
-  { id: 'cuentas', nombre: 'Cuentas y acceso', ayuda: 'Códigos SMS, intentos fallidos y duración de la sesión.' },
+  {
+    id: 'busqueda',
+    nombre: 'Búsqueda de conductores',
+    ayuda: 'A quién se le ofrece un pedido y por cuánto tiempo se busca.',
+  },
+  {
+    id: 'viaje',
+    nombre: 'Viajes y tarifas',
+    ayuda: 'Espera en la recogida, cuánto puede subir la tarifa el pasajero y horario nocturno.',
+  },
+  {
+    id: 'programados',
+    nombre: 'Viajes programados',
+    ayuda: 'Desde cuándo y hasta cuándo se puede programar, y cuándo arranca la búsqueda.',
+  },
+  {
+    id: 'seguridad',
+    nombre: 'Seguridad del pasajero',
+    ayuda:
+      'Central para pedir por llamada, enlace para compartir el viaje y contactos de emergencia.',
+  },
+  {
+    id: 'cuentas',
+    nombre: 'Cuentas y acceso',
+    ayuda: 'Códigos SMS, intentos fallidos y duración de la sesión.',
+  },
   { id: 'cobertura', nombre: 'Zona de cobertura', ayuda: 'Desde dónde se pueden pedir servicios.' },
-  { id: 'datos', nombre: 'Datos y privacidad', ayuda: 'Cuánto tiempo se guarda el rastro GPS de los viajes (Ley 1581).' },
+  {
+    id: 'datos',
+    nombre: 'Datos y privacidad',
+    ayuda: 'Cuánto tiempo se guarda el rastro GPS de los viajes (Ley 1581).',
+  },
   { id: 'otros', nombre: 'Otros', ayuda: '' },
 ];
 
@@ -74,7 +99,12 @@ const GRUPOS: { id: string; nombre: string; ayuda: string }[] = [
   standalone: true,
   imports: [CommonModule, FormsModule, AdminIcoComponent],
   templateUrl: './admin-configuracion.html',
-  styleUrls: ['../home-admin.css', '../admin-catalogos/admin-catalogos.css', './admin-configuracion.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: [
+    '../home-admin.css',
+    '../admin-catalogos/admin-catalogos.css',
+    './admin-configuracion.css',
+  ],
 })
 export class AdminConfiguracionComponent implements OnInit {
   @Output() aviso = new EventEmitter<{ tipo: 'ok' | 'error'; texto: string }>();
@@ -97,9 +127,13 @@ export class AdminConfiguracionComponent implements OnInit {
 
   get grupos(): Grupo[] {
     const q = this.busqueda.trim().toLowerCase();
-    const visibles = this.parametros.filter(p => !q || p.clave.includes(q) || (p.descripcion ?? '').toLowerCase().includes(q));
-    return GRUPOS.map(g => ({ ...g, parametros: visibles.filter(p => (META[p.clave]?.grupo ?? 'otros') === g.id) }))
-      .filter(g => g.parametros.length);
+    const visibles = this.parametros.filter(
+      (p) => !q || p.clave.includes(q) || (p.descripcion ?? '').toLowerCase().includes(q),
+    );
+    return GRUPOS.map((g) => ({
+      ...g,
+      parametros: visibles.filter((p) => (META[p.clave]?.grupo ?? 'otros') === g.id),
+    })).filter((g) => g.parametros.length);
   }
 
   unidad(clave: string): string {
@@ -127,11 +161,17 @@ export class AdminConfiguracionComponent implements OnInit {
     this.guardando = true;
     this.errorFila = '';
     try {
-      const r = await this.api.put<{ valor: string }>(`/admin/configuracion/${encodeURIComponent(p.clave)}`, { valor: this.valor.trim() });
+      const r = await this.api.put<{ valor: string }>(
+        `/admin/configuracion/${encodeURIComponent(p.clave)}`,
+        { valor: this.valor.trim() },
+      );
       p.valor = r.valor ?? this.valor.trim();
       p.actualizado_en = new Date().toISOString();
       this.editando = null;
-      this.aviso.emit({ tipo: 'ok', texto: `"${this.nombre(p.clave)}" quedó en ${p.valor || '(vacío)'} ${this.unidad(p.clave)}.` });
+      this.aviso.emit({
+        tipo: 'ok',
+        texto: `"${this.nombre(p.clave)}" quedó en ${p.valor || '(vacío)'} ${this.unidad(p.clave)}.`,
+      });
     } catch (err) {
       this.errorFila = ApiService.mensaje(err, 'No se pudo guardar.');
     } finally {

@@ -1,21 +1,28 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectorRef,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../core/api.service';
+import { cerrarSesionWeb } from '../../core/sesion.service';
 
 @Component({
   selector: 'app-home-usuario',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './home-usuario.html',
-  styleUrls: ['./home-usuario.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./home-usuario.css'],
 })
 export class HomeUsuarioComponent implements OnInit, OnDestroy {
-
   nombre = '';
   foto = '';
-  menuAbierto = false;      // Controla el sidebar en móviles
-  dropdownAbierto = false;  // dropdown navbar
+  menuAbierto = false; // Controla el sidebar en móviles
+  dropdownAbierto = false; // dropdown navbar
   cargandoHistorial = true;
 
   private clickListener: any;
@@ -25,12 +32,12 @@ export class HomeUsuarioComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private api: ApiService,
-    private cdr: ChangeDetectorRef // ✅ Inyectamos el detector de cambios
+    private cdr: ChangeDetectorRef, // ✅ Inyectamos el detector de cambios
   ) {}
 
   ngOnInit(): void {
     this.nombre = localStorage.getItem('nombre') || 'Usuario';
-    this.foto   = localStorage.getItem('foto')   || '';
+    this.foto = localStorage.getItem('foto') || '';
     const usuarioId = localStorage.getItem('id');
 
     if (usuarioId) {
@@ -53,8 +60,9 @@ export class HomeUsuarioComponent implements OnInit, OnDestroy {
   cargarHistorialDesdeDB(id: string) {
     this.cargandoHistorial = true;
     // Usamos environment.apiUrl para que funcione en local y producción automáticamente
-    this.api.get<any[]>(`/servicios/usuario/${id}`)
-      .then(data => {
+    this.api
+      .get<any[]>(`/servicios/usuario/${id}`)
+      .then((data) => {
         // El backend ya los entrega del más reciente al más antiguo
         this.historial = (data || []).slice(0, 4).map((item: any) => {
           const { icono, tipoClass, prefijo } = this.obtenerInfoTipo(item.tipo);
@@ -69,17 +77,23 @@ export class HomeUsuarioComponent implements OnInit, OnDestroy {
             // si el servicio fue cancelado, se muestra en rojo independientemente del tipo.
             tipoClass: statusClass === 'cancelado' ? 'cancelado' : tipoClass,
             destino: prefijo ? `${prefijo} ${lugar}` : lugar,
-            fecha: new Date(item.fecha_solicitud).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
-            hora: new Date(item.fecha_solicitud).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            fecha: new Date(item.fecha_solicitud).toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: 'short',
+            }),
+            hora: new Date(item.fecha_solicitud).toLocaleTimeString('es-ES', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
             estado: this.formatearEstado(item.estado),
             statusClass,
-            precio: item.tarifa || 0
+            precio: item.tarifa || 0,
           };
         });
         this.cargandoHistorial = false;
         this.cdr.detectChanges(); // ✅ AVISAR A ANGULAR QUE LOS DATOS LLEGARON
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Error al obtener datos reales:', err);
         this.cargandoHistorial = false;
         this.cdr.detectChanges();
@@ -123,11 +137,10 @@ export class HomeUsuarioComponent implements OnInit, OnDestroy {
   }
 
   verPerfil(): void {
-    console.log('Navegando al perfil del usuario:', localStorage.getItem('id'));
     this.dropdownAbierto = false;
     this.menuAbierto = false;
     this.cdr.detectChanges(); // Asegura que el menú se cierre visualmente
-    this.router.navigate(['/mi-perfil']).catch(err => console.error('Error al navegar:', err));
+    this.router.navigate(['/mi-perfil']).catch((err) => console.error('Error al navegar:', err));
   }
 
   editarPerfil(): void {
@@ -143,13 +156,13 @@ export class HomeUsuarioComponent implements OnInit, OnDestroy {
   }
 
   solicitarServicio(tipo: string): void {
-    if (tipo === 'transporte')  this.router.navigate(['/solicitar-transporte']);
-    else if (tipo === 'domicilio')  this.router.navigate(['/solicitar-domicilio']);
+    if (tipo === 'transporte') this.router.navigate(['/solicitar-transporte']);
+    else if (tipo === 'domicilio') this.router.navigate(['/solicitar-domicilio']);
     else if (tipo === 'encomienda') this.router.navigate(['/solicitar-encomienda']);
   }
 
   cerrarSesion(): void {
-    localStorage.clear();
+    cerrarSesionWeb();
     this.router.navigate(['/login']);
   }
 }

@@ -1,5 +1,5 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 
@@ -54,8 +54,9 @@ const TIPOS: Record<string, string> = {
 @Component({
   selector: 'app-admin-reportes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './admin-reportes.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./admin-reportes.css'],
 })
 export class AdminReportesComponent implements OnInit {
@@ -88,7 +89,7 @@ export class AdminReportesComponent implements OnInit {
     this.error = '';
     try {
       this.reportes = await this.api.get<ReporteAdmin[]>('/admin/pqrs', { filtro: this.filtro });
-      this.pendientes.emit(this.reportes.filter(r => this.estaAbierto(r)).length);
+      this.pendientes.emit(this.reportes.filter((r) => this.estaAbierto(r)).length);
     } catch (err) {
       this.error = ApiService.mensaje(err, 'No se pudieron cargar los reportes.');
     } finally {
@@ -103,15 +104,17 @@ export class AdminReportesComponent implements OnInit {
   }
 
   get visibles(): ReporteAdmin[] {
-    return this.soloUrgentes ? this.reportes.filter(r => r.prioridad === 'urgente') : this.reportes;
+    return this.soloUrgentes
+      ? this.reportes.filter((r) => r.prioridad === 'urgente')
+      : this.reportes;
   }
 
   get totalUrgentes(): number {
-    return this.reportes.filter(r => r.prioridad === 'urgente' && this.estaAbierto(r)).length;
+    return this.reportes.filter((r) => r.prioridad === 'urgente' && this.estaAbierto(r)).length;
   }
 
   get totalVencidos(): number {
-    return this.reportes.filter(r => r.vencida).length;
+    return this.reportes.filter((r) => r.vencida).length;
   }
 
   // ─── Detalle ───────────────────────────────────
@@ -139,7 +142,11 @@ export class AdminReportesComponent implements OnInit {
       this.errorModal = 'Escribe una respuesta de al menos 10 caracteres para el usuario.';
       return;
     }
-    await this.actualizar(r, { estado: 'resuelto', respuesta: texto }, 'Respuesta enviada al usuario.');
+    await this.actualizar(
+      r,
+      { estado: 'resuelto', respuesta: texto },
+      'Respuesta enviada al usuario.',
+    );
   }
 
   async cambiarPrioridad(r: ReporteAdmin, prioridad: string): Promise<void> {
@@ -149,11 +156,16 @@ export class AdminReportesComponent implements OnInit {
   /** Decisión manual del administrador, separada de responder: bloquear por un solo reporte es delicado. */
   async bloquearReportado(r: ReporteAdmin): Promise<void> {
     if (!r.reportado_id) return;
-    const ok = confirm(`¿Bloquear a ${r.reportado_nombre}? No podrá usar MoviFY hasta que lo actives de nuevo en Usuarios.`);
+    const ok = confirm(
+      `¿Bloquear a ${r.reportado_nombre}? No podrá usar MoviFY hasta que lo actives de nuevo en Usuarios.`,
+    );
     if (!ok) return;
     this.guardando = true;
     try {
-      await this.api.patch(`/auth/usuarios/${r.reportado_id}/estado`, { estado: 'bloqueado', motivo: `PQRS #${r.id}: ${r.asunto}`.slice(0, 200) });
+      await this.api.patch(`/auth/usuarios/${r.reportado_id}/estado`, {
+        estado: 'bloqueado',
+        motivo: `PQRS #${r.id}: ${r.asunto}`.slice(0, 200),
+      });
       r.reportado_estado = 'bloqueado';
     } catch (err) {
       this.errorModal = ApiService.mensaje(err, 'No se pudo bloquear al usuario.');
@@ -162,7 +174,12 @@ export class AdminReportesComponent implements OnInit {
     }
   }
 
-  private async actualizar(r: ReporteAdmin, cuerpo: Record<string, string>, aviso: string, cerrarAlFinal = true): Promise<void> {
+  private async actualizar(
+    r: ReporteAdmin,
+    cuerpo: Record<string, string>,
+    aviso: string,
+    cerrarAlFinal = true,
+  ): Promise<void> {
     if (this.guardando) return;
     this.guardando = true;
     this.errorModal = '';
@@ -171,7 +188,7 @@ export class AdminReportesComponent implements OnInit {
       if (aviso) this.aviso.emit({ tipo: 'ok', texto: aviso });
       if (cerrarAlFinal) this.cerrar();
       await this.cargar();
-      if (!cerrarAlFinal) this.seleccionado = this.reportes.find(x => x.id === r.id) || null;
+      if (!cerrarAlFinal) this.seleccionado = this.reportes.find((x) => x.id === r.id) || null;
     } catch (err) {
       this.errorModal = ApiService.mensaje(err, 'No se pudo actualizar el reporte.');
     } finally {
@@ -200,6 +217,11 @@ export class AdminReportesComponent implements OnInit {
 
   fecha(f: string | null): string {
     if (!f) return '—';
-    return new Date(f).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit' });
+    return new Date(f).toLocaleString('es-CO', {
+      day: '2-digit',
+      month: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   }
 }

@@ -31,10 +31,17 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
         @case ('pin') { <path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/> }
         @case ('documento') { <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/> }
         @case ('candado') { <rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/> }
+        @case ('comunicados') { <path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/> }
+        @case ('campana') { <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/> }
+        @case ('alerta') { <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/> }
+        @case ('menu') { <path d="M4 6h16M4 12h16M4 18h16"/> }
         @case ('escudo') { <path d="M12 3l8 3v6c0 5-3.5 8.5-8 9.5-4.5-1-8-4.5-8-9.5V6z"/><path d="m9 12 2 2 4-4"/> }
         @case ('calificaciones') { <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/> }
         @case ('equipo') { <circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.6-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M17 11l2 2 4-4"/> }
         @case ('cancelar') { <circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/> }
+        @case ('domicilios') { <path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/> }
+        @case ('cupon') { <path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M10 9l4 6M10 9h.01M14 15h.01"/> }
+        @case ('borrar') { <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/> }
       }
     </svg>
   `,

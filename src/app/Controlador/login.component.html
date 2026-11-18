@@ -10,6 +10,42 @@
     <span class="fm-wordmark">Movi<span>FY</span></span>
   </div>
 
+  <!-- PASO 2 (solo admin y soporte): el código que llegó por SMS o correo -->
+  @if (desafio) {
+    <h1 class="fm-h1">Revisa tu {{ canal === 'sms' ? 'celular' : 'correo' }}</h1>
+    <p class="fm-sub">
+      Por seguridad del panel, te enviamos un código de 6 números
+      {{ canal === 'sms' ? 'por SMS al' : 'al correo' }} <strong>{{ destino }}</strong>. Vence en 10 minutos.
+    </p>
+
+    <form (ngSubmit)="verificarCodigo()" novalidate>
+      <label class="fm-label" for="lg-codigo">Código de verificación</label>
+      <div class="fm-campo" [class.con-error]="errorCodigo">
+        <svg class="fm-campo-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+        <input #campoCodigo id="lg-codigo" name="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
+               class="lg-codigo" [(ngModel)]="codigo" (ngModelChange)="codigo = soloNumeros($event)" placeholder="000000"
+               [attr.aria-invalid]="errorCodigo ? true : null" aria-describedby="lg-error-codigo" required>
+      </div>
+      @if (errorCodigo) {
+        <p id="lg-error-codigo" class="fm-error-campo" role="alert">{{ errorCodigo }}</p>
+      }
+
+      <button type="submit" class="fm-btn" [disabled]="cargando">
+        @if (cargando) {
+          <span class="fm-spinner" aria-hidden="true"></span>
+          Verificando…
+        } @else {
+          Verificar y entrar
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        }
+      </button>
+    </form>
+
+    <p class="fm-pie">¿No te llegó? <a href="#" (click)="volverAlInicio($event)">Vuelve a iniciar sesión</a> y te mandamos otro.</p>
+  }
+
+  <!-- PASO 1. Se oculta (no se quita) en el paso 2: el botón de Google lo dibuja Google y se perdería -->
+  <div [hidden]="!!desafio">
   <h1 class="fm-h1">Inicia sesión</h1>
   <p class="fm-sub">Usa tu correo y contraseña, o entra con Google.</p>
 
@@ -80,6 +116,7 @@
   <div class="fm-aviso">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>
     <span>¿Eres conductor? Ingresa desde la <strong>app móvil de MoviFY</strong>.</span>
+  </div>
   </div>
 
 </app-auth-layout>

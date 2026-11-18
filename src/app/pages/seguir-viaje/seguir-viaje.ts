@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as L from 'leaflet';
@@ -7,7 +15,8 @@ import { crearMapaCiudad, rutaOsrm } from '../../core/mapa-ciudad';
 
 /** GET /api/publico/viajes/{token}: sin celulares ni apellidos; la ubicación solo con el viaje activo. */
 interface ViajeCompartido {
-  estado_codigo: 'buscando' | 'asignado' | 'en_origen' | 'en_curso' | 'finalizado' | 'cancelado' | 'expirado';
+  estado_codigo:
+    'buscando' | 'asignado' | 'en_origen' | 'en_curso' | 'finalizado' | 'cancelado' | 'expirado';
   estado_nombre: string;
   tipo_vehiculo: 'moto' | 'taxi';
   viajero: string;
@@ -38,8 +47,10 @@ const CADA_MS = 5000;
 /** Se vuelve a pedir la ruta solo si el vehículo se movió más de esto (metros). */
 const RECALCULAR_M = 120;
 
-const SVG_MOTO = '<circle cx="5.5" cy="16.5" r="3"/><circle cx="18.5" cy="16.5" r="3"/><path d="M5.5 16.5l4-6h5l4 6M14.5 10.5l-1.5-4h3"/>';
-const SVG_TAXI = '<path d="M5 17h14v-4l-2-5H7l-2 5v4zM9 5h6v3M5 13h14"/><circle cx="8" cy="17" r="1.6"/><circle cx="16" cy="17" r="1.6"/>';
+const SVG_MOTO =
+  '<circle cx="5.5" cy="16.5" r="3"/><circle cx="18.5" cy="16.5" r="3"/><path d="M5.5 16.5l4-6h5l4 6M14.5 10.5l-1.5-4h3"/>';
+const SVG_TAXI =
+  '<path d="M5 17h14v-4l-2-5H7l-2 5v4zM9 5h6v3M5 13h14"/><circle cx="8" cy="17" r="1.6"/><circle cx="16" cy="17" r="1.6"/>';
 
 /**
  * Seguir un viaje en vivo (/seguir/:token). La abre la familia desde el enlace que comparte el pasajero
@@ -52,7 +63,8 @@ const SVG_TAXI = '<path d="M5 17h14v-4l-2-5H7l-2 5v4zM9 5h6v3M5 13h14"/><circle 
   standalone: true,
   imports: [RouterModule],
   templateUrl: './seguir-viaje.html',
-  styleUrl: './seguir-viaje.css'
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrl: './seguir-viaje.css',
 })
 export class SeguirViajeComponent implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);
@@ -71,7 +83,9 @@ export class SeguirViajeComponent implements AfterViewInit, OnDestroy {
   private ultimaRuta: { lat: number; lng: number; estado: string } | null = null;
   private encuadrado = false;
 
-  readonly activo = computed(() => ['asignado', 'en_origen', 'en_curso'].includes(this.v()?.estado_codigo ?? ''));
+  readonly activo = computed(() =>
+    ['asignado', 'en_origen', 'en_curso'].includes(this.v()?.estado_codigo ?? ''),
+  );
   readonly enViaje = computed(() => this.v()?.estado_codigo === 'en_curso');
   /** "Ana va en moto hacia Muelle turístico" */
   readonly titulo = computed(() => {
@@ -96,11 +110,19 @@ export class SeguirViajeComponent implements AfterViewInit, OnDestroy {
   readonly llegada = computed(() => {
     const m = this.minutos();
     if (m === null || !this.enViaje()) return null;
-    return new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit' }).format(new Date(Date.now() + m * 60000));
+    return new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit' }).format(
+      new Date(Date.now() + m * 60000),
+    );
   });
   readonly horaActualizado = computed(() => {
     const d = this.actualizado();
-    return d ? new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit', second: '2-digit' }).format(d) : '';
+    return d
+      ? new Intl.DateTimeFormat('es-CO', {
+          hour: 'numeric',
+          minute: '2-digit',
+          second: '2-digit',
+        }).format(d)
+      : '';
   });
 
   ngAfterViewInit(): void {
@@ -118,11 +140,14 @@ export class SeguirViajeComponent implements AfterViewInit, OnDestroy {
 
   private async cargar(): Promise<void> {
     try {
-      const v = await this.api.get<ViajeCompartido>(`/publico/viajes/${encodeURIComponent(this.token)}`);
+      const v = await this.api.get<ViajeCompartido>(
+        `/publico/viajes/${encodeURIComponent(this.token)}`,
+      );
       this.v.set(v);
       this.error.set('');
       this.actualizado.set(new Date());
-      if (!['buscando', 'asignado', 'en_origen', 'en_curso'].includes(v.estado_codigo)) clearInterval(this.sondeo);
+      if (!['buscando', 'asignado', 'en_origen', 'en_curso'].includes(v.estado_codigo))
+        clearInterval(this.sondeo);
       await this.pintar(v);
     } catch (e) {
       const status = e instanceof HttpErrorResponse ? e.status : 0;
@@ -139,13 +164,22 @@ export class SeguirViajeComponent implements AfterViewInit, OnDestroy {
     if (!this.mapa || !this.capa) return;
     const origen = L.latLng(v.origen_lat, v.origen_lng);
     const destino = L.latLng(v.destino_lat, v.destino_lng);
-    const parada = v.parada_lat != null && v.parada_lng != null ? L.latLng(v.parada_lat, v.parada_lng) : null;
-    const coche = v.conductor_lat != null && v.conductor_lng != null ? L.latLng(v.conductor_lat, v.conductor_lng) : null;
+    const parada =
+      v.parada_lat != null && v.parada_lng != null ? L.latLng(v.parada_lat, v.parada_lng) : null;
+    const coche =
+      v.conductor_lat != null && v.conductor_lng != null
+        ? L.latLng(v.conductor_lat, v.conductor_lng)
+        : null;
 
     // Vehículo: se mueve sin redibujar todo
     if (coche) {
       if (this.vehiculo) this.vehiculo.setLatLng(coche);
-      else this.vehiculo = L.marker(coche, { icon: iconoVehiculo(v.tipo_vehiculo), zIndexOffset: 1000, keyboard: false }).addTo(this.mapa);
+      else
+        this.vehiculo = L.marker(coche, {
+          icon: iconoVehiculo(v.tipo_vehiculo),
+          zIndexOffset: 1000,
+          keyboard: false,
+        }).addTo(this.mapa);
     } else {
       this.vehiculo?.remove();
       this.vehiculo = undefined;
@@ -155,20 +189,44 @@ export class SeguirViajeComponent implements AfterViewInit, OnDestroy {
     const meta = this.enViaje() || !coche ? destino : origen;
     const desde = coche ?? origen;
     const u = this.ultimaRuta;
-    const moverse = !u || u.estado !== v.estado_codigo || desde.distanceTo(L.latLng(u.lat, u.lng)) > RECALCULAR_M;
+    const moverse =
+      !u || u.estado !== v.estado_codigo || desde.distanceTo(L.latLng(u.lat, u.lng)) > RECALCULAR_M;
     if (moverse) {
       this.ultimaRuta = { lat: desde.lat, lng: desde.lng, estado: v.estado_codigo };
       const r = await rutaOsrm(desde, meta);
       this.capa.clearLayers();
       const linea = r?.puntos ?? [desde, meta];
-      L.polyline(linea, { color: '#03274d', weight: 9, opacity: 0.95, lineCap: 'round', interactive: false }).addTo(this.capa);
-      L.polyline(linea, { color: '#fe7b13', weight: 5, lineCap: 'round', interactive: false }).addTo(this.capa);
-      L.marker(origen, { icon: punto('origen'), keyboard: false, interactive: false }).addTo(this.capa);
-      if (parada) L.marker(parada, { icon: punto('parada'), keyboard: false, interactive: false }).addTo(this.capa);
-      L.marker(destino, { icon: punto('destino'), keyboard: false, interactive: false }).addTo(this.capa);
+      L.polyline(linea, {
+        color: '#03274d',
+        weight: 9,
+        opacity: 0.95,
+        lineCap: 'round',
+        interactive: false,
+      }).addTo(this.capa);
+      L.polyline(linea, {
+        color: '#fe7b13',
+        weight: 5,
+        lineCap: 'round',
+        interactive: false,
+      }).addTo(this.capa);
+      L.marker(origen, { icon: punto('origen'), keyboard: false, interactive: false }).addTo(
+        this.capa,
+      );
+      if (parada)
+        L.marker(parada, { icon: punto('parada'), keyboard: false, interactive: false }).addTo(
+          this.capa,
+        );
+      L.marker(destino, { icon: punto('destino'), keyboard: false, interactive: false }).addTo(
+        this.capa,
+      );
       this.minutos.set(r ? Math.max(1, Math.round(r.min)) : null);
       if (!this.encuadrado || u?.estado !== v.estado_codigo) {
-        const caja = L.latLngBounds([origen, destino, ...(parada ? [parada] : []), ...(coche ? [coche] : [])]);
+        const caja = L.latLngBounds([
+          origen,
+          destino,
+          ...(parada ? [parada] : []),
+          ...(coche ? [coche] : []),
+        ]);
         this.mapa.fitBounds(caja, { padding: [40, 40], maxZoom: 16 });
         this.encuadrado = true;
       }
@@ -181,10 +239,15 @@ function iconoVehiculo(tipo: 'moto' | 'taxi'): L.DivIcon {
     className: '',
     html: `<span class="sv-vehiculo"><svg viewBox="0 0 24 24" aria-hidden="true">${tipo === 'taxi' ? SVG_TAXI : SVG_MOTO}</svg></span>`,
     iconSize: [44, 44],
-    iconAnchor: [22, 22]
+    iconAnchor: [22, 22],
   });
 }
 
 function punto(tipo: 'origen' | 'destino' | 'parada'): L.DivIcon {
-  return L.divIcon({ className: '', html: `<span class="sv-punto ${tipo}"></span>`, iconSize: [18, 18], iconAnchor: [9, 9] });
+  return L.divIcon({
+    className: '',
+    html: `<span class="sv-punto ${tipo}"></span>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+  });
 }

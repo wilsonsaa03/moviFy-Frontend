@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -42,6 +50,7 @@ const ESPERA_MS = 350;
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-servicios.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../home-admin.css', './admin-servicios.css'],
 })
 export class AdminServiciosComponent implements OnInit, OnChanges {
@@ -109,26 +118,35 @@ export class AdminServiciosComponent implements OnInit, OnChanges {
   }
 
   icono(s: Solicitud): string {
-    return s.tipo_servicio === 'transporte' ? 'vivo' : s.tipo_servicio === 'domicilio' ? 'soporte' : 'documento';
+    return s.tipo_servicio === 'transporte'
+      ? 'vivo'
+      : s.tipo_servicio === 'domicilio'
+        ? 'soporte'
+        : 'documento';
   }
 
   atascado(s: Solicitud): boolean {
-    return s.estado_codigo === 'buscando' ? s.minutos >= 2 : ['asignado', 'en_origen'].includes(s.estado_codigo) && s.minutos >= 30;
+    return s.estado_codigo === 'buscando'
+      ? s.minutos >= 2
+      : ['asignado', 'en_origen'].includes(s.estado_codigo) && s.minutos >= 30;
   }
 
   private async cargar(): Promise<void> {
     this.cargando = true;
     this.error = '';
     try {
-      const r = await this.api.get<{ items: Solicitud[]; total: number }>('/admin/servicios/buscar', {
-        ...SERVICIOS[this.servicio],
-        estado: this.estado || null,
-        desde: this.desde || null,
-        hasta: this.hasta || null,
-        q: this.q.trim() || null,
-        pagina: this.pagina,
-        tamano: this.tamano,
-      });
+      const r = await this.api.get<{ items: Solicitud[]; total: number }>(
+        '/admin/servicios/buscar',
+        {
+          ...SERVICIOS[this.servicio],
+          estado: this.estado || null,
+          desde: this.desde || null,
+          hasta: this.hasta || null,
+          q: this.q.trim() || null,
+          pagina: this.pagina,
+          tamano: this.tamano,
+        },
+      );
       this.items = r.items;
       this.total = Number(r.total);
     } catch (err) {

@@ -1,40 +1,47 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectorRef,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../core/api.service';
+import { cerrarSesionWeb } from '../../core/sesion.service';
 
 @Component({
   selector: 'app-perfil-usuario',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './perfil-usuario.html',
-  styleUrls: ['./perfil-usuario.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./perfil-usuario.css'],
 })
 export class PerfilUsuarioComponent implements OnInit, OnDestroy {
-
   // ── Datos de sesión ──────────────────────────────────────────────────
-  nombre   = '';
-  foto     = '';
+  nombre = '';
+  foto = '';
 
   // ── Control de menús ─────────────────────────────────────────────────
-  menuAbierto    = false;   // sidebar mobile
-  dropdownAbierto = false;  // dropdown del navbar
+  menuAbierto = false; // sidebar mobile
+  dropdownAbierto = false; // dropdown del navbar
 
   // ── Datos del perfil ─────────────────────────────────────────────────
-  email           = '';
-  telefono        = '';
+  email = '';
+  telefono = '';
   fechaNacimiento = '';
-  direccion       = '';
-  idioma          = 'Español';
+  direccion = '';
+  idioma = 'Español';
 
-  calificacion      = 0;
+  calificacion = 0;
   totalCalificaciones = 0;
-  puntos            = 0;
+  puntos = 0;
 
   viajesCompletados = 0;
   pedidosRealizados = 0;
-  lugaresFavoritos  = 0;
-  metodosPago       = 0;
+  lugaresFavoritos = 0;
+  metodosPago = 0;
 
   cargando = true;
 
@@ -43,13 +50,13 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private api: ApiService
+    private api: ApiService,
   ) {}
 
   ngOnInit(): void {
-    this.nombre   = localStorage.getItem('nombre')   || 'Usuario';
-    this.foto     = localStorage.getItem('foto')     || '';
-    this.email    = localStorage.getItem('correo')   || '';
+    this.nombre = localStorage.getItem('nombre') || 'Usuario';
+    this.foto = localStorage.getItem('foto') || '';
+    this.email = localStorage.getItem('correo') || '';
     this.telefono = localStorage.getItem('telefono') || '';
 
     this.cargarPerfil();
@@ -70,8 +77,9 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
   /** GET /api/usuarios/perfil: el backend identifica al usuario por el token. */
   cargarPerfil() {
     this.cargando = true;
-    this.api.get('/usuarios/perfil')
-      .then(u => this.poblarPerfil(u))
+    this.api
+      .get('/usuarios/perfil')
+      .then((u) => this.poblarPerfil(u))
       .catch(() => {
         this.cargando = false;
         this.cdr.detectChanges();
@@ -79,20 +87,20 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
   }
 
   private poblarPerfil(u: any) {
-    this.nombre          = u.nombre          || localStorage.getItem('nombre') || 'Usuario';
-    this.email           = u.correo          || localStorage.getItem('correo') || '';
-    this.telefono        = u.telefono        || '';
-    this.foto            = u.foto            || '';
+    this.nombre = u.nombre || localStorage.getItem('nombre') || 'Usuario';
+    this.email = u.correo || localStorage.getItem('correo') || '';
+    this.telefono = u.telefono || '';
+    this.foto = u.foto || '';
     this.fechaNacimiento = u.fecha_nacimiento || 'No registrada';
-    this.direccion       = u.direccion        || 'No registrada';
-    this.idioma          = u.idioma           || 'Español';
-    this.calificacion         = Number(u.calificacion)    || 0;
-    this.totalCalificaciones  = u.total_calificaciones    || 0;
-    this.puntos               = u.puntos                  || 0;
-    this.viajesCompletados    = Number(u.viajes_finalizados ?? u.viajes_completados) || 0;
-    this.pedidosRealizados    = u.pedidos_realizados       || 0;
-    this.lugaresFavoritos     = u.lugares_favoritos        || 0;
-    this.metodosPago          = u.metodos_pago             || 0;
+    this.direccion = u.direccion || 'No registrada';
+    this.idioma = u.idioma || 'Español';
+    this.calificacion = Number(u.calificacion) || 0;
+    this.totalCalificaciones = u.total_calificaciones || 0;
+    this.puntos = u.puntos || 0;
+    this.viajesCompletados = Number(u.viajes_finalizados ?? u.viajes_completados) || 0;
+    this.pedidosRealizados = u.pedidos_realizados || 0;
+    this.lugaresFavoritos = u.lugares_favoritos || 0;
+    this.metodosPago = u.metodos_pago || 0;
     this.cargando = false;
     this.cdr.detectChanges();
   }
@@ -129,8 +137,8 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
 
   editarCampo(campo: string): void {
     const editables: Record<string, { etiqueta: string; actual: string }> = {
-      nombre:   { etiqueta: 'tu nombre', actual: this.nombre },
-      telefono: { etiqueta: 'tu teléfono', actual: this.telefono }
+      nombre: { etiqueta: 'tu nombre', actual: this.nombre },
+      telefono: { etiqueta: 'tu teléfono', actual: this.telefono },
     };
     const cfg = editables[campo];
     if (!cfg) {
@@ -140,7 +148,8 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
     const valor = prompt(`Escribe ${cfg.etiqueta}:`, cfg.actual || '');
     if (valor === null || valor.trim() === '' || valor.trim() === cfg.actual) return;
 
-    this.api.put('/usuarios/perfil', { [campo]: valor.trim() })
+    this.api
+      .put('/usuarios/perfil', { [campo]: valor.trim() })
       .then((u: any) => {
         this.nombre = u.nombre || this.nombre;
         this.telefono = u.telefono || '';
@@ -148,12 +157,12 @@ export class PerfilUsuarioComponent implements OnInit, OnDestroy {
         localStorage.setItem('telefono', this.telefono);
         this.cdr.detectChanges();
       })
-      .catch(err => alert(ApiService.mensaje(err, 'No se pudo guardar el cambio.')));
+      .catch((err) => alert(ApiService.mensaje(err, 'No se pudo guardar el cambio.')));
   }
 
   // ── Cerrar sesión ─────────────────────────────────────────────────────
   cerrarSesion(): void {
-    localStorage.clear();
+    cerrarSesionWeb();
     this.router.navigate(['/login']);
   }
 }

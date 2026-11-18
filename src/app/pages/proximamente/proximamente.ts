@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SesionService } from '../../core/sesion.service';
 
@@ -13,24 +13,64 @@ import { SesionService } from '../../core/sesion.service';
   template: `
     <main class="pagina">
       <section class="tarjeta">
-        <img src="/assets/brand/movify-isotipo.svg" alt="MoviFY" class="logo">
+        <img src="/assets/brand/movify-isotipo.svg" alt="MoviFY" class="logo" />
         <h1>{{ titulo }}</h1>
-        <p>Esta sección estará disponible pronto. Mientras tanto puedes seguir usando MoviFY con normalidad.</p>
+        <p>
+          Esta sección estará disponible pronto. Mientras tanto puedes seguir usando MoviFY con
+          normalidad.
+        </p>
         <button type="button" (click)="volver()">Volver al inicio</button>
       </section>
     </main>
   `,
-  styles: [`
-    .pagina { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #F6F9FC;
-              font-family: 'Nunito', 'Inter', system-ui, sans-serif; }
-    .tarjeta { max-width: 420px; width: 100%; background: #fff; border-radius: 24px; padding: 32px 28px;
-               text-align: center; box-shadow: 0 10px 30px rgba(3, 39, 77, .08); }
-    .logo { height: 72px; margin-bottom: 12px; }
-    h1 { color: #03274D; font-size: 1.4rem; margin: 0 0 8px; }
-    p { color: #4A5B70; line-height: 1.5; margin: 0 0 24px; }
-    button { width: 100%; height: 52px; border: 0; border-radius: 28px; background: #FE7B13; color: #fff;
-             font-weight: 800; font-size: 1rem; cursor: pointer; box-shadow: 0 6px 0 #C2560A; }
-  `]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: [
+    `
+      .pagina {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #f6f9fc;
+        font-family: 'Nunito', 'Inter', system-ui, sans-serif;
+      }
+      .tarjeta {
+        max-width: 420px;
+        width: 100%;
+        background: #fff;
+        border-radius: 24px;
+        padding: 32px 28px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(3, 39, 77, 0.08);
+      }
+      .logo {
+        height: 72px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        color: #03274d;
+        font-size: 1.4rem;
+        margin: 0 0 8px;
+      }
+      p {
+        color: #4a5b70;
+        line-height: 1.5;
+        margin: 0 0 24px;
+      }
+      button {
+        width: 100%;
+        height: 52px;
+        border: 0;
+        border-radius: 28px;
+        background: #fe7b13;
+        color: #fff;
+        font-weight: 800;
+        font-size: 1rem;
+        cursor: pointer;
+        box-shadow: 0 6px 0 #c2560a;
+      }
+    `,
+  ],
 })
 export class ProximamenteComponent {
   private route = inject(ActivatedRoute);

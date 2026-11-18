@@ -1,4 +1,11 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -60,7 +67,13 @@ const MOTIVOS_ADMIN = [
   { id: 21, texto: 'Alerta de seguridad' },
 ];
 const ACTIVOS = ['buscando', 'asignado', 'en_origen', 'en_curso'];
-const QUIEN: Record<string, string> = { cliente: 'Cliente', conductor: 'Conductor', admin: 'Administración', soporte: 'Soporte', sistema: 'Sistema' };
+const QUIEN: Record<string, string> = {
+  cliente: 'Cliente',
+  conductor: 'Conductor',
+  admin: 'Administración',
+  soporte: 'Soporte',
+  sistema: 'Sistema',
+};
 
 /**
  * Detalle de un servicio para administración y soporte: quién lo pidió (y para quién), quién lo lleva con su
@@ -73,6 +86,7 @@ const QUIEN: Record<string, string> = { cliente: 'Cliente', conductor: 'Conducto
   standalone: true,
   imports: [CommonModule, FormsModule, AdminIcoComponent],
   templateUrl: './admin-servicio-detalle.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../home-admin.css', './admin-servicio-detalle.css'],
 })
 export class AdminServicioDetalleComponent implements OnChanges {
@@ -113,17 +127,21 @@ export class AdminServicioDetalleComponent implements OnChanges {
       Number(s.pasajeros) > 1 ? `${s.pasajeros} pasajeros` : '',
       s.lleva_equipaje ? 'Equipaje' : '',
       s.lleva_mascota ? 'Mascota' : '',
-    ].filter(Boolean).join(' · ');
+    ]
+      .filter(Boolean)
+      .join(' · ');
   }
 
   /** Lo que ofreció de más el pasajero sobre lo cotizado (inDrive). */
   get ofrecioDeMas(): number {
     const s = this.s;
-    return s && s.valor_sugerido != null ? Math.max(0, Number(s.tarifa) - Number(s.valor_sugerido)) : 0;
+    return s && s.valor_sugerido != null
+      ? Math.max(0, Number(s.tarifa) - Number(s.valor_sugerido))
+      : 0;
   }
 
   quien(c: Cambio): string {
-    return c.actor_rol ? QUIEN[c.actor_rol] ?? c.actor_rol : 'Sistema';
+    return c.actor_rol ? (QUIEN[c.actor_rol] ?? c.actor_rol) : 'Sistema';
   }
 
   /** En el chat, a la izquierda el cliente y a la derecha el conductor. */
@@ -150,7 +168,10 @@ export class AdminServicioDetalleComponent implements OnChanges {
     this.enviando = true;
     this.error = '';
     try {
-      const r = await this.api.post<{ message: string }>(`/admin/servicios/${this.s.id}/reasignar`, { motivo: this.motivoReasignar.trim() });
+      const r = await this.api.post<{ message: string }>(
+        `/admin/servicios/${this.s.id}/reasignar`,
+        { motivo: this.motivoReasignar.trim() },
+      );
       this.reasignando = false;
       this.motivoReasignar = '';
       this.cambio.emit(r.message);
@@ -171,7 +192,10 @@ export class AdminServicioDetalleComponent implements OnChanges {
     this.enviando = true;
     this.error = '';
     try {
-      await this.api.post(`/admin/servicios/${this.s.id}/cancelar`, { motivo_id: this.motivoId, motivo: this.detalle.trim() });
+      await this.api.post(`/admin/servicios/${this.s.id}/cancelar`, {
+        motivo_id: this.motivoId,
+        motivo: this.detalle.trim(),
+      });
       this.cancelando = false;
       this.cambio.emit(`Servicio #${this.s.id} cancelado. Al cliente le llegó el aviso.`);
       await this.cargar(this.s.id);

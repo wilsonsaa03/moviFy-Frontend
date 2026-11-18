@@ -1,4 +1,14 @@
-import { AfterViewInit, Component, ElementRef, Input, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  NgZone,
+  OnDestroy,
+  ViewChild,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { MagiaService } from '../efectos/magia.service';
 import { RevelarDirective } from '../efectos/revelar.directive';
@@ -14,7 +24,7 @@ export const ETIQUETAS_SERVICIOS: EtiquetaAuth[] = [
   { texto: 'Moto', color: '#02AAB4' },
   { texto: 'Taxi', color: '#FFC93C' },
   { texto: 'Domicilios', color: '#FE7B13' },
-  { texto: 'Encomiendas', color: '#5FD3D9' }
+  { texto: 'Encomiendas', color: '#5FD3D9' },
 ];
 
 /**
@@ -34,7 +44,8 @@ export const ETIQUETAS_SERVICIOS: EtiquetaAuth[] = [
   standalone: true,
   imports: [RouterModule, RevelarDirective],
   templateUrl: './auth-layout.html',
-  styleUrls: ['./auth-layout.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./auth-layout.css'],
 })
 export class AuthLayoutComponent implements AfterViewInit, OnDestroy {
   @Input() volverRuta = '/';
@@ -55,7 +66,7 @@ export class AuthLayoutComponent implements AfterViewInit, OnDestroy {
     const profundidad = 11 - i;
     return {
       transform: `translateZ(${-profundidad * 1.8}px)`,
-      filtro: `brightness(${profundidad === 0 ? 1 : 0.55})`
+      filtro: `brightness(${profundidad === 0 ? 1 : 0.55})`,
     };
   });
 
@@ -100,7 +111,7 @@ export class AuthLayoutComponent implements AfterViewInit, OnDestroy {
       pagina.addEventListener('mouseleave', salir);
       this.limpiezas.push(
         () => pagina.removeEventListener('mousemove', mover),
-        () => pagina.removeEventListener('mouseleave', salir)
+        () => pagina.removeEventListener('mouseleave', salir),
       );
     });
   }

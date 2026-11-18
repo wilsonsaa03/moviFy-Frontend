@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -35,6 +43,7 @@ const ESPERA_MS = 350;
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-conductores.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../home-admin.css', './admin-conductores.css'],
 })
 export class AdminConductoresComponent implements OnInit, OnChanges {
@@ -112,7 +121,11 @@ export class AdminConductoresComponent implements OnInit, OnChanges {
     this.cargando = true;
     this.error = '';
     try {
-      const r = await this.api.get<{ items: ConductorFila[]; total: number; conteos: Record<string, number> }>('/admin/conductores/buscar', {
+      const r = await this.api.get<{
+        items: ConductorFila[];
+        total: number;
+        conteos: Record<string, number>;
+      }>('/admin/conductores/buscar', {
         estado: this.estado || null,
         tipo_vehiculo: this.tipo || null,
         conectado: this.conectado === '' ? null : this.conectado === 'si',

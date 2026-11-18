@@ -1,5 +1,5 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
 import { AdminIcoComponent } from '../admin-ico';
@@ -15,9 +15,17 @@ interface Permiso {
 
 /** Cómo se llama cada módulo en pantalla. */
 const MODULOS: Record<string, string> = {
-  admin_conductores: 'Conductores', admin_usuarios: 'Usuarios', admin_servicios: 'Solicitudes', admin_sos: 'Seguridad (SOS)',
-  admin_pqrs: 'Soporte (PQRS)', tarifas: 'Tarifas', reportes: 'Reportes', configuracion: 'Configuración',
-  seguridad: 'Equipo y permisos', auditoria: 'Auditoría', catalogos: 'Datos básicos',
+  admin_conductores: 'Conductores',
+  admin_usuarios: 'Usuarios',
+  admin_servicios: 'Solicitudes',
+  admin_sos: 'Seguridad (SOS)',
+  admin_pqrs: 'Soporte (PQRS)',
+  tarifas: 'Tarifas',
+  reportes: 'Reportes',
+  configuracion: 'Configuración',
+  seguridad: 'Equipo y permisos',
+  auditoria: 'Auditoría',
+  catalogos: 'Datos básicos',
 };
 
 /**
@@ -29,8 +37,9 @@ const MODULOS: Record<string, string> = {
 @Component({
   selector: 'app-admin-equipo',
   standalone: true,
-  imports: [CommonModule, FormsModule, AdminIcoComponent, AdminUsuariosComponent],
+  imports: [FormsModule, AdminIcoComponent, AdminUsuariosComponent],
   templateUrl: './admin-equipo.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../home-admin.css', '../admin-catalogos/admin-catalogos.css', './admin-equipo.css'],
 })
 export class AdminEquipoComponent implements OnInit {
@@ -75,7 +84,10 @@ export class AdminEquipoComponent implements OnInit {
     this.agregando = true;
     this.errorAgregar = '';
     try {
-      const r = await this.api.post<{ message: string }>('/admin/equipo', { identificador: this.identificador.trim(), rol: this.rol });
+      const r = await this.api.post<{ message: string }>('/admin/equipo', {
+        identificador: this.identificador.trim(),
+        rol: this.rol,
+      });
       this.aviso.emit({ tipo: 'ok', texto: r.message });
       this.identificador = '';
       this.version++;
@@ -89,15 +101,27 @@ export class AdminEquipoComponent implements OnInit {
   async alternar(rol: string, p: Permiso): Promise<void> {
     if (!this.editables.includes(rol) || this.guardando) return;
     const activo = !this.tiene(rol, p.codigo);
-    if (activo && p.es_sensible && !confirm(`"${p.descripcion}" es un permiso sensible. ¿Dárselo a ${rol}?`)) return;
+    if (
+      activo &&
+      p.es_sensible &&
+      !confirm(`"${p.descripcion}" es un permiso sensible. ¿Dárselo a ${rol}?`)
+    )
+      return;
     this.guardando = p.codigo;
     try {
-      const r = await this.api.put<{ message: string }>('/admin/permisos', { rol, permiso: p.codigo, activo });
+      const r = await this.api.put<{ message: string }>('/admin/permisos', {
+        rol,
+        permiso: p.codigo,
+        activo,
+      });
       if (activo) this.asignados.add(`${rol}|${p.codigo}`);
       else this.asignados.delete(`${rol}|${p.codigo}`);
       this.aviso.emit({ tipo: 'ok', texto: r.message });
     } catch (err) {
-      this.aviso.emit({ tipo: 'error', texto: ApiService.mensaje(err, 'No se pudo cambiar el permiso.') });
+      this.aviso.emit({
+        tipo: 'error',
+        texto: ApiService.mensaje(err, 'No se pudo cambiar el permiso.'),
+      });
     } finally {
       this.guardando = null;
     }
@@ -105,9 +129,13 @@ export class AdminEquipoComponent implements OnInit {
 
   private async cargarPermisos(): Promise<void> {
     try {
-      const r = await this.api.get<{ permisos: Permiso[]; asignados: { rol: string; permiso: string }[]; editables: string[] }>('/admin/permisos');
+      const r = await this.api.get<{
+        permisos: Permiso[];
+        asignados: { rol: string; permiso: string }[];
+        editables: string[];
+      }>('/admin/permisos');
       this.permisos = r.permisos;
-      this.asignados = new Set(r.asignados.map(a => `${a.rol}|${a.permiso}`));
+      this.asignados = new Set(r.asignados.map((a) => `${a.rol}|${a.permiso}`));
       this.editables = r.editables;
     } catch (err) {
       this.errorPermisos = ApiService.mensaje(err, 'No se pudieron cargar los permisos.');

@@ -1,0 +1,324 @@
+<div class="dom">
+  <div class="adm-pills" role="tablist" aria-label="Catálogo de domicilios">
+    <button type="button" role="tab" class="adm-pill" [class.activo]="vista === 'comercios'" [attr.aria-selected]="vista === 'comercios'" (click)="cambiarVista('comercios')">
+      <adm-ico n="domicilios" /> Comercios <span class="adm-pill-num">{{ comercios.length }}</span>
+    </button>
+    <button type="button" role="tab" class="adm-pill" [class.activo]="vista === 'cupones'" [attr.aria-selected]="vista === 'cupones'" (click)="cambiarVista('cupones')">
+      <adm-ico n="cupon" /> Cupones
+    </button>
+  </div>
+
+  @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+
+  <!-- ══════════ COMERCIOS ══════════ -->
+  @if (vista === 'comercios' && !comercioSel) {
+    <section class="adm-card adm-card-tabla">
+      <div class="dom-top">
+        <div>
+          <h2 class="dom-h2">Comercios aliados</h2>
+          <p class="adm-ayuda">Lo que el cliente ve en Domicilios de la app. Los cerrados aparecen en gris con su hora de apertura.</p>
+        </div>
+        @if (!soloLectura) {
+          <button type="button" class="adm-btn adm-btn-primario" (click)="nuevoComercio()"><adm-ico n="mas" /> Nuevo comercio</button>
+        }
+      </div>
+      <div class="adm-tabla-scroll">
+        <table class="adm-tabla">
+          <thead><tr><th>Comercio</th><th>Categoría</th><th>Horario</th><th class="der">Mínimo</th><th class="der">Productos</th><th class="der">Pedidos</th><th></th></tr></thead>
+          <tbody>
+            @for (c of comercios; track c.id) {
+              <tr [class.dom-inactivo]="!c.activo">
+                <td>
+                  <div class="dom-nombre">
+                    @if (urlFoto(c.foto_url); as f) { <img [src]="f" alt="" /> } @else { <span class="dom-letra">{{ c.nombre.charAt(0) }}</span> }
+                    <span><b>{{ c.nombre }}</b><span class="adm-lista-sub">{{ c.direccion }}{{ c.barrio ? ' · ' + c.barrio : '' }}</span></span>
+                  </div>
+                </td>
+                <td class="adm-nowrap">{{ nombreCategoria(c.categoria) }}</td>
+                <td class="adm-nowrap">
+                  {{ c.abre }} – {{ c.cierra }}
+                  @if (!c.activo) { <span class="dom-tag gris">Inactivo</span> }
+                  @else if (c.abierto) { <span class="dom-tag verde">Abierto</span> }
+                  @else { <span class="dom-tag rojo">Cerrado</span> }
+                </td>
+                <td class="der adm-nowrap">{{ pesos(c.pedido_minimo) }}</td>
+                <td class="der">{{ c.productos }}</td>
+                <td class="der">{{ c.pedidos }}</td>
+                <td class="der">
+                  <span class="adm-acciones">
+                    <button type="button" class="adm-btn adm-btn-suave" (click)="verProductos(c)">Productos</button>
+                    @if (!soloLectura) {
+                      <button type="button" class="adm-btn-ico" [attr.aria-label]="'Editar ' + c.nombre" (click)="editarComercio(c)"><adm-ico n="editar" /></button>
+                      <button type="button" class="adm-btn-ico" [attr.aria-label]="'Borrar ' + c.nombre" (click)="borrarComercio(c)"><adm-ico n="borrar" /></button>
+                    }
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="adm-vacio">{{ cargando ? 'Cargando…' : 'Todavía no hay comercios. Crea el primero.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  <!-- ══════════ PRODUCTOS DE UN COMERCIO ══════════ -->
+  @if (vista === 'comercios' && comercioSel; as c) {
+    <section class="adm-card adm-card-tabla">
+      <div class="dom-top">
+        <div>
+          <button type="button" class="adm-link dom-volver" (click)="comercioSel = null; cargarComercios()">← Comercios</button>
+          <h2 class="dom-h2">{{ c.nombre }} · productos</h2>
+          <p class="adm-ayuda">Los grupos de opciones son lo que el cliente elige en la ficha: tamaño (obligatorio), adiciones, "sin cebolla"…</p>
+        </div>
+        @if (!soloLectura) {
+          <button type="button" class="adm-btn adm-btn-primario" (click)="nuevoProducto()"><adm-ico n="mas" /> Nuevo producto</button>
+        }
+      </div>
+      <div class="adm-tabla-scroll">
+        <table class="adm-tabla">
+          <thead><tr><th>Producto</th><th>Sección</th><th class="der">Precio</th><th>Opciones</th><th>Disponible</th><th></th></tr></thead>
+          <tbody>
+            @for (p of productos; track p.id) {
+              <tr [class.dom-inactivo]="!p.disponible">
+                <td>
+                  <div class="dom-nombre">
+                    @if (urlFoto(p.foto_url); as f) { <img [src]="f" alt="" /> }
+                    <span>
+                      <b>{{ p.nombre }}</b> @if (p.solo_mayores) { <span class="dom-tag rojo">+18</span> }
+                      @if (p.descripcion) { <span class="adm-lista-sub">{{ p.descripcion }}</span> }
+                    </span>
+                  </div>
+                </td>
+                <td class="adm-nowrap">{{ p.seccion }}</td>
+                <td class="der adm-nowrap"><b>{{ pesos(p.precio) }}</b></td>
+                <td>
+                  @for (g of p.grupos; track $index) {
+                    <span class="adm-lista-sub">{{ g.nombre }} ({{ g.minimo >= 1 ? 'obligatorio' : 'opcional' }}): {{ g.opciones.length }}</span>
+                  } @empty { <span class="adm-tenue">Sin opciones</span> }
+                </td>
+                <td>
+                  <button type="button" class="dom-switch" role="switch" [attr.aria-checked]="p.disponible" [disabled]="soloLectura"
+                          [attr.aria-label]="(p.disponible ? 'Marcar agotado ' : 'Marcar disponible ') + p.nombre" (click)="alternarDisponible(p)">
+                    <span class="bola"></span>{{ p.disponible ? 'Sí' : 'Agotado' }}
+                  </button>
+                </td>
+                <td class="der">
+                  @if (!soloLectura) {
+                    <span class="adm-acciones">
+                      <button type="button" class="adm-btn-ico" [attr.aria-label]="'Editar ' + p.nombre" (click)="editarProducto(p)"><adm-ico n="editar" /></button>
+                      <button type="button" class="adm-btn-ico" [attr.aria-label]="'Borrar ' + p.nombre" (click)="borrarProducto(p)"><adm-ico n="borrar" /></button>
+                    </span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="adm-vacio">Este comercio todavía no tiene productos.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  <!-- ══════════ CUPONES ══════════ -->
+  @if (vista === 'cupones') {
+    <section class="adm-card adm-card-tabla">
+      <div class="dom-top">
+        <div>
+          <h2 class="dom-h2">Cupones (simulados)</h2>
+          <p class="adm-ayuda">El cliente los escribe en el carrito. El descuento lo asume MoviFY: no hay cobro real.</p>
+        </div>
+        @if (!soloLectura) {
+          <button type="button" class="adm-btn adm-btn-primario" (click)="nuevoCupon()"><adm-ico n="mas" /> Nuevo cupón</button>
+        }
+      </div>
+      <div class="adm-tabla-scroll">
+        <table class="adm-tabla">
+          <thead><tr><th>Código</th><th>Descuento</th><th>Condiciones</th><th>Vence</th><th class="der">Usados</th><th></th></tr></thead>
+          <tbody>
+            @for (c of cupones; track c.id) {
+              <tr [class.dom-inactivo]="!c.activo || c.vencido">
+                <td><b class="dom-codigo">{{ c.codigo }}</b><span class="adm-lista-sub">{{ c.descripcion }}</span></td>
+                <td class="adm-nowrap">{{ textoCupon(c) }}</td>
+                <td>
+                  <span class="adm-lista-sub">Desde {{ pesos(c.minimo_compra) }}{{ c.comercio_nombre ? ' · solo ' + c.comercio_nombre : '' }}</span>
+                  <span class="adm-lista-sub">{{ c.usos_por_cliente }} uso(s) por cliente{{ c.solo_primer_pedido ? ' · primer pedido' : '' }}</span>
+                </td>
+                <td class="adm-nowrap">
+                  @if (c.vence_en) { {{ c.vence_en | date: 'd MMM y' }} } @else { — }
+                  @if (c.vencido) { <span class="dom-tag rojo">Vencido</span> } @else if (!c.activo) { <span class="dom-tag gris">Inactivo</span> }
+                </td>
+                <td class="der">{{ c.usados }}{{ c.usos_totales ? ' / ' + c.usos_totales : '' }}</td>
+                <td class="der">
+                  @if (!soloLectura) {
+                    <span class="adm-acciones">
+                      <button type="button" class="adm-btn-ico" [attr.aria-label]="'Editar ' + c.codigo" (click)="editarCupon(c)"><adm-ico n="editar" /></button>
+                      <button type="button" class="adm-btn-ico" [attr.aria-label]="'Borrar ' + c.codigo" (click)="borrarCupon(c)"><adm-ico n="borrar" /></button>
+                    </span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="adm-vacio">{{ cargando ? 'Cargando…' : 'Todavía no hay cupones.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>
+
+<!-- ═══════════════ MODAL: COMERCIO ═══════════════ -->
+@if (formComercio; as f) {
+  <div class="adm-modal-fondo" (click)="formComercio = null">
+    <div class="adm-modal adm-modal-grande" role="dialog" aria-modal="true" aria-labelledby="dom-t-comercio" (click)="$event.stopPropagation()">
+      <div class="adm-modal-head">
+        <h2 id="dom-t-comercio">{{ f.id ? 'Editar comercio' : 'Nuevo comercio' }}</h2>
+        <button type="button" class="adm-btn-ico" aria-label="Cerrar" (click)="formComercio = null"><adm-ico n="x" /></button>
+      </div>
+      <div class="adm-modal-cuerpo dom-form">
+        <label class="dom-campo dos">Nombre <input class="dom-input" maxlength="120" [(ngModel)]="f.nombre" /></label>
+        <label class="dom-campo">Categoría
+          <select class="dom-input" [(ngModel)]="f.categoria">
+            @for (c of categorias; track c.id) { <option [ngValue]="c.id">{{ c.nombre }}</option> }
+          </select>
+        </label>
+        <label class="dom-campo">Teléfono <input class="dom-input" inputmode="numeric" maxlength="13" placeholder="3001234567" [(ngModel)]="f.telefono" /></label>
+        <label class="dom-campo dos">Descripción <input class="dom-input" maxlength="300" [(ngModel)]="f.descripcion" /></label>
+        <label class="dom-campo dos">Dirección <input class="dom-input" maxlength="200" [(ngModel)]="f.direccion" /></label>
+        <label class="dom-campo">Barrio <input class="dom-input" maxlength="80" [(ngModel)]="f.barrio" /></label>
+        <span class="dom-campo dom-coord">
+          <label>Latitud <input class="dom-input" type="number" step="0.0001" [(ngModel)]="f.lat" /></label>
+          <label>Longitud <input class="dom-input" type="number" step="0.0001" [(ngModel)]="f.lng" /></label>
+        </span>
+        <label class="dom-campo">Abre <input class="dom-input" type="time" [(ngModel)]="f.abre" /></label>
+        <label class="dom-campo">Cierra <input class="dom-input" type="time" [(ngModel)]="f.cierra" /></label>
+        <label class="dom-campo">Pedido mínimo ($) <input class="dom-input" type="number" min="0" step="1000" [(ngModel)]="f.pedido_minimo" /></label>
+        <label class="dom-campo">Entrega hasta (km) <input class="dom-input" type="number" min="0.5" max="30" step="0.5" [(ngModel)]="f.radio_km" /></label>
+        <label class="dom-campo">Minutos de preparación <input class="dom-input" type="number" min="0" max="180" [(ngModel)]="f.minutos_preparacion" /></label>
+        <label class="dom-campo">Orden en la lista <input class="dom-input" type="number" min="0" [(ngModel)]="f.orden" /></label>
+        <div class="dom-campo dos dom-foto">
+          @if (urlFoto(f.foto_url); as u) { <img [src]="u" alt="Foto del comercio" /> }
+          <label class="adm-btn adm-btn-borde">{{ subiendoFoto ? 'Subiendo…' : (f.foto_url ? 'Cambiar foto' : 'Subir foto o logo') }}
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="subirFoto($event, 'comercio')" />
+          </label>
+        </div>
+        <label class="dom-check dos"><input type="checkbox" [(ngModel)]="f.activo" /> Activo (visible en la app)</label>
+        <p class="adm-ayuda dos">Si cierra después de medianoche, pon la hora del día siguiente (ej. abre 18:00, cierra 02:00).
+          La latitud y longitud son las del comercio en Buenaventura (se ven en Google Maps al tocar el sitio).</p>
+        @if (errorForm) { <p class="adm-error dos" role="alert">{{ errorForm }}</p> }
+      </div>
+      <div class="adm-modal-pie">
+        <button type="button" class="adm-btn adm-btn-borde" (click)="formComercio = null">Cancelar</button>
+        <button type="button" class="adm-btn adm-btn-primario" [disabled]="guardando || !f.nombre.trim() || !f.direccion.trim()" (click)="guardarComercio()">
+          {{ guardando ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════ MODAL: PRODUCTO ═══════════════ -->
+@if (formProducto; as f) {
+  <div class="adm-modal-fondo" (click)="formProducto = null">
+    <div class="adm-modal adm-modal-grande" role="dialog" aria-modal="true" aria-labelledby="dom-t-producto" (click)="$event.stopPropagation()">
+      <div class="adm-modal-head">
+        <h2 id="dom-t-producto">{{ f.id ? 'Editar producto' : 'Nuevo producto' }}</h2>
+        <button type="button" class="adm-btn-ico" aria-label="Cerrar" (click)="formProducto = null"><adm-ico n="x" /></button>
+      </div>
+      <div class="adm-modal-cuerpo dom-form">
+        <label class="dom-campo dos">Nombre <input class="dom-input" maxlength="120" [(ngModel)]="f.nombre" /></label>
+        <label class="dom-campo">Sección
+          <input class="dom-input" maxlength="60" list="dom-secciones" placeholder="Hamburguesas, Bebidas…" [(ngModel)]="f.seccion" />
+          <datalist id="dom-secciones">@for (s of secciones; track s) { <option [value]="s"></option> }</datalist>
+        </label>
+        <label class="dom-campo">Precio ($) <input class="dom-input" type="number" min="0" step="100" [(ngModel)]="f.precio" /></label>
+        <label class="dom-campo dos">Descripción <input class="dom-input" maxlength="300" [(ngModel)]="f.descripcion" /></label>
+        <div class="dom-campo dos dom-foto">
+          @if (urlFoto(f.foto_url); as u) { <img [src]="u" alt="Foto del producto" /> }
+          <label class="adm-btn adm-btn-borde">{{ subiendoFoto ? 'Subiendo…' : (f.foto_url ? 'Cambiar foto' : 'Subir foto') }}
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="subirFoto($event, 'producto')" />
+          </label>
+        </div>
+        <label class="dom-check"><input type="checkbox" [(ngModel)]="f.disponible" /> Disponible</label>
+        <label class="dom-check"><input type="checkbox" [(ngModel)]="f.solo_mayores" /> Solo mayores de 18 (licor, cigarrillos)</label>
+
+        <h3 class="adm-modal-sub dos">Grupos de opciones</h3>
+        @for (g of f.grupos; track $index; let gi = $index) {
+          <fieldset class="dom-grupo dos">
+            <div class="dom-grupo-top">
+              <label class="dom-campo">Nombre del grupo <input class="dom-input" maxlength="60" placeholder="Tamaño, Adiciones, Quitar…" [(ngModel)]="g.nombre" /></label>
+              <label class="dom-campo corto">Mínimo <input class="dom-input" type="number" min="0" max="20" [(ngModel)]="g.minimo" /></label>
+              <label class="dom-campo corto">Máximo <input class="dom-input" type="number" min="1" max="20" [(ngModel)]="g.maximo" /></label>
+              <button type="button" class="adm-btn-ico" [attr.aria-label]="'Quitar el grupo ' + (g.nombre || gi + 1)" (click)="quitarGrupo(gi)"><adm-ico n="borrar" /></button>
+            </div>
+            <p class="adm-ayuda">{{ ayudaGrupo(g) }}</p>
+            @for (o of g.opciones; track $index; let oi = $index) {
+              <div class="dom-opcion">
+                <input class="dom-input" maxlength="60" placeholder="Opción" [attr.aria-label]="'Nombre de la opción ' + (oi + 1)" [(ngModel)]="o.nombre" />
+                <input class="dom-input" type="number" min="0" step="100" [attr.aria-label]="'Precio extra de la opción ' + (oi + 1)" [(ngModel)]="o.precio_extra" />
+                <label class="dom-check"><input type="checkbox" [(ngModel)]="o.disponible" /> Hay</label>
+                <button type="button" class="adm-btn-ico" [attr.aria-label]="'Quitar la opción ' + (oi + 1)" [disabled]="g.opciones.length <= 1" (click)="quitarOpcion(g, oi)"><adm-ico n="x" /></button>
+              </div>
+            }
+            <button type="button" class="adm-link" (click)="agregarOpcion(g)">+ Agregar opción</button>
+          </fieldset>
+        }
+        <button type="button" class="adm-btn adm-btn-suave dos" (click)="agregarGrupo()"><adm-ico n="mas" /> Agregar grupo de opciones</button>
+        @if (errorForm) { <p class="adm-error dos" role="alert">{{ errorForm }}</p> }
+      </div>
+      <div class="adm-modal-pie">
+        <button type="button" class="adm-btn adm-btn-borde" (click)="formProducto = null">Cancelar</button>
+        <button type="button" class="adm-btn adm-btn-primario" [disabled]="guardando || !f.nombre.trim() || !f.seccion.trim()" (click)="guardarProducto()">
+          {{ guardando ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════ MODAL: CUPÓN ═══════════════ -->
+@if (formCupon; as f) {
+  <div class="adm-modal-fondo" (click)="formCupon = null">
+    <div class="adm-modal adm-modal-grande" role="dialog" aria-modal="true" aria-labelledby="dom-t-cupon" (click)="$event.stopPropagation()">
+      <div class="adm-modal-head">
+        <h2 id="dom-t-cupon">{{ f.id ? 'Editar cupón' : 'Nuevo cupón' }}</h2>
+        <button type="button" class="adm-btn-ico" aria-label="Cerrar" (click)="formCupon = null"><adm-ico n="x" /></button>
+      </div>
+      <div class="adm-modal-cuerpo dom-form">
+        <label class="dom-campo">Código <input class="dom-input dom-codigo" maxlength="30" placeholder="BIENVENIDA20" [(ngModel)]="f.codigo" /></label>
+        <label class="dom-campo">Tipo
+          <select class="dom-input" [(ngModel)]="f.tipo">
+            <option ngValue="porcentaje">Porcentaje de los productos</option>
+            <option ngValue="valor">Valor fijo en los productos</option>
+            <option ngValue="envio">Descuento en el domicilio</option>
+          </select>
+        </label>
+        <label class="dom-campo dos">Descripción (la ve el cliente) <input class="dom-input" maxlength="200" [(ngModel)]="f.descripcion" /></label>
+        <label class="dom-campo">{{ f.tipo === 'porcentaje' ? 'Porcentaje (%)' : 'Valor ($)' }} <input class="dom-input" type="number" min="1" [(ngModel)]="f.valor" /></label>
+        <label class="dom-campo">Tope del descuento ($, opcional) <input class="dom-input" type="number" min="0" [(ngModel)]="f.tope_descuento" /></label>
+        <label class="dom-campo">Compra mínima ($) <input class="dom-input" type="number" min="0" step="1000" [(ngModel)]="f.minimo_compra" /></label>
+        <label class="dom-campo">Solo en
+          <select class="dom-input" [(ngModel)]="f.comercio_id">
+            <option [ngValue]="null">Cualquier comercio</option>
+            @for (c of comercios; track c.id) { <option [ngValue]="c.id">{{ c.nombre }}</option> }
+          </select>
+        </label>
+        <label class="dom-campo">Usos por cliente <input class="dom-input" type="number" min="1" max="100" [(ngModel)]="f.usos_por_cliente" /></label>
+        <label class="dom-campo">Usos en total (opcional) <input class="dom-input" type="number" min="1" [(ngModel)]="f.usos_totales" /></label>
+        <label class="dom-campo">Vence (opcional) <input class="dom-input" type="date" [(ngModel)]="f.vence_en" /></label>
+        <label class="dom-check"><input type="checkbox" [(ngModel)]="f.solo_primer_pedido" /> Solo primer domicilio</label>
+        <label class="dom-check"><input type="checkbox" [(ngModel)]="f.activo" /> Activo</label>
+        @if (errorForm) { <p class="adm-error dos" role="alert">{{ errorForm }}</p> }
+      </div>
+      <div class="adm-modal-pie">
+        <button type="button" class="adm-btn adm-btn-borde" (click)="formCupon = null">Cancelar</button>
+        <button type="button" class="adm-btn adm-btn-primario" [disabled]="guardando || !f.codigo.trim() || !f.descripcion.trim()" (click)="guardarCupon()">
+          {{ guardando ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

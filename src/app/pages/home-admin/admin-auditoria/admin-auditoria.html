@@ -11,7 +11,7 @@
     <div class="adm-pills" role="tablist" aria-label="Auditoría">
       <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'acciones'" [attr.aria-selected]="pestana === 'acciones'" (click)="pestana = 'acciones'">Acciones del equipo <span class="adm-pill-num">{{ acciones.length }}</span></button>
       <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'cambios'" [attr.aria-selected]="pestana === 'cambios'" (click)="pestana = 'cambios'">Cambios en la base <span class="adm-pill-num">{{ cambios.length }}</span></button>
-      <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'accesos'" [attr.aria-selected]="pestana === 'accesos'" (click)="pestana = 'accesos'">Accesos sospechosos <span class="adm-pill-num">{{ accesos.length }}</span></button>
+      <button type="button" role="tab" class="adm-pill" [class.activo]="pestana === 'accesos'" [attr.aria-selected]="pestana === 'accesos'" (click)="pestana = 'accesos'">Accesos sospechosos <span class="adm-pill-num">{{ alertasAccesos }}</span></button>
     </div>
     @if (pestana !== 'accesos') {
       <label class="adm-buscar">
@@ -68,6 +68,15 @@
       }
 
       @if (pestana === 'accesos') {
+        @if (actividad; as a) {
+          <div class="aud-kpis">
+            <div><b>{{ a.resumen_24h.exitosos }}</b><span>inicios de sesión correctos (24 h)</span></div>
+            <div [class.aud-kpi-alerta]="a.resumen_24h.fallidos > 20"><b>{{ a.resumen_24h.fallidos }}</b><span>intentos fallidos (24 h)</span></div>
+            <div><b>{{ a.resumen_24h.ips_con_fallos }}</b><span>IPs con algún fallo</span></div>
+            <div [class.aud-kpi-alerta]="a.cuentas_bloqueadas_temporalmente.length > 0"><b>{{ a.cuentas_bloqueadas_temporalmente.length }}</b><span>cuentas bloqueadas ahora</span></div>
+          </div>
+        }
+        <h3 class="aud-subtitulo">IPs con muchos intentos fallidos (última hora)</h3>
         <table class="adm-tabla">
           <thead><tr><th>IP</th><th class="der">Intentos fallidos</th><th class="der">Cuentas distintas</th><th>Desde</th><th>Hasta</th></tr></thead>
           <tbody>
@@ -84,6 +93,43 @@
             }
           </tbody>
         </table>
+
+        @if (actividad; as a) {
+          <h3 class="aud-subtitulo">Alertas del sistema</h3>
+          <table class="adm-tabla">
+            <thead><tr><th>Cuándo</th><th>Qué pasó</th><th>IP</th><th>Dónde</th><th>Detalle</th></tr></thead>
+            <tbody>
+              @for (e of a.eventos_recientes; track $index) {
+                <tr>
+                  <td class="adm-nowrap">{{ e.fecha | date:'d MMM, h:mm a' }}</td>
+                  <td><span class="aud-evento ev-{{ e.tipo }}">{{ evento(e.tipo) }}</span></td>
+                  <td><code>{{ e.ip }}</code></td>
+                  <td><code>{{ e.ruta }}</code></td>
+                  <td class="aud-detalle">{{ detalleEvento(e.detalle) || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5"><div class="adm-vacio-ok"><adm-ico n="escudo" /> Sin alertas desde que arrancó el servidor.</div></td></tr>
+              }
+            </tbody>
+          </table>
+
+          <h3 class="aud-subtitulo">Cuentas bloqueadas temporalmente por intentos fallidos</h3>
+          <table class="adm-tabla">
+            <thead><tr><th>Persona</th><th>Celular</th><th>Correo</th><th>Bloqueada hasta</th></tr></thead>
+            <tbody>
+              @for (c of a.cuentas_bloqueadas_temporalmente; track c.id) {
+                <tr>
+                  <td><b>{{ c.nombres }}</b> <span class="adm-lista-sub">#{{ c.id }}</span></td>
+                  <td>{{ c.telefono || '—' }}</td>
+                  <td>{{ c.email || '—' }}</td>
+                  <td class="adm-nowrap">{{ c.hasta | date:'h:mm a' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4"><div class="adm-vacio-ok"><adm-ico n="escudo" /> Ninguna cuenta bloqueada en este momento.</div></td></tr>
+              }
+            </tbody>
+          </table>
+        }
         <p class="adm-ayuda aud-pie">Si una IP prueba muchas cuentas distintas, bloquéala en el firewall del servidor. Cada cuenta ya se bloquea sola por unos minutos tras varios intentos fallidos (ver "Cuentas y acceso" en Configuración).</p>
       }
     </div>

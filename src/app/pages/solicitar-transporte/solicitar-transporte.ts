@@ -2,7 +2,8 @@ import {
   Component,
   OnInit,
   AfterViewInit,
-  OnDestroy
+  OnDestroy,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
@@ -22,10 +23,10 @@ declare let window: any;
   standalone: true,
   imports: [CommonModule, FormsModule, PuntosRutaComponent],
   templateUrl: './solicitar-transporte.html',
-  styleUrls: ['./solicitar-transporte.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./solicitar-transporte.css'],
 })
 export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
-
   /* ===================== VARIABLES PÚBLICAS ===================== */
   origen: string = 'Buscando tu ubicación...';
   destino: string = '';
@@ -80,7 +81,10 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   private timeoutBusqueda: any = null;
   private intervaloCuentaBuscando: any = null;
 
-  constructor(private router: Router, private api: ApiService) {}
+  constructor(
+    private router: Router,
+    private api: ApiService,
+  ) {}
 
   /* ===================== LIFECYCLE ===================== */
   ngOnInit(): void {}
@@ -105,7 +109,10 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   /* ===================== MAPA ===================== */
   private initMap(): void {
     const container = document.getElementById('map');
-    if (!container) { setTimeout(() => this.initMap(), 300); return; }
+    if (!container) {
+      setTimeout(() => this.initMap(), 300);
+      return;
+    }
     if ((container as any)._leaflet_id) (container as any)._leaflet_id = null;
 
     // Abre en Buenaventura aunque el GPS no responda
@@ -121,7 +128,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
         fitSelectedRoutes: true,
         routeWhileDragging: false,
         show: false,
-        createMarker: () => null
+        createMarker: () => null,
       }).addTo(this.map);
 
       this.routingControl.on('routesfound', (e: any) => {
@@ -144,12 +151,22 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     this.puntos = new SelectorPuntos(
       this.map,
       {
-        origen: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35] }),
-        destino: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/2776/2776067.png', iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35] })
+        origen: L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+          iconSize: [42, 42],
+          iconAnchor: [21, 42],
+          popupAnchor: [0, -35],
+        }),
+        destino: L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/2776/2776067.png',
+          iconSize: [42, 42],
+          iconAnchor: [21, 42],
+          popupAnchor: [0, -35],
+        }),
       },
       { origen: '📍 Punto de recogida', destino: '🏁 Punto destino' },
       () => this.alCambiarPuntos(),
-      () => this.puedeEditarPuntos
+      () => this.puedeEditarPuntos,
     );
     this.puntos.iniciar();
   }
@@ -181,7 +198,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     if (p.origen && p.destino && this.routingControl) {
       this.routingControl.setWaypoints([
         window.L.latLng(p.origen.lat, p.origen.lng),
-        window.L.latLng(p.destino.lat, p.destino.lng)
+        window.L.latLng(p.destino.lat, p.destino.lng),
       ]);
     }
   }
@@ -190,7 +207,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   private calcularTarifaReal(): void {
     if (!this.distanciaViaje) return;
 
-    let calculo = 2500 + (this.distanciaViaje * 1200) + (this.duracionViaje * 150);
+    let calculo = 2500 + this.distanciaViaje * 1200 + this.duracionViaje * 150;
 
     const hora = new Date().getHours();
     if ((hora >= 7 && hora <= 9) || (hora >= 17 && hora <= 19)) calculo *= 1.4;
@@ -214,16 +231,19 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   private dibujarConductoresEnMapa(conductores: any[]): void {
     const motoIcon = L.icon({
       iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
-      iconSize: [35, 35], iconAnchor: [17, 35], popupAnchor: [0, -30]
+      iconSize: [35, 35],
+      iconAnchor: [17, 35],
+      popupAnchor: [0, -30],
     });
 
-    conductores.forEach(c => {
+    conductores.forEach((c) => {
       const id = c.conductor_id || c.id;
       if (this.conductoresMarkers.has(id)) {
         this.conductoresMarkers.get(id)!.setLatLng([c.latitud, c.longitud]);
       } else {
         const m = L.marker([c.latitud, c.longitud], { icon: motoIcon })
-          .addTo(this.map).bindPopup('<b>🏍️ Conductor disponible</b>');
+          .addTo(this.map)
+          .bindPopup('<b>🏍️ Conductor disponible</b>');
         this.conductoresMarkers.set(id, m);
       }
     });
@@ -231,7 +251,8 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
 
   /* ===================== SOLICITAR VIAJE ===================== */
   async solicitarViaje(): Promise<void> {
-    if (!this.origen || !this.destino || !this.ubicacionEncontrada || this.distanciaViaje === 0) return;
+    if (!this.origen || !this.destino || !this.ubicacionEncontrada || this.distanciaViaje === 0)
+      return;
 
     const destLat = this.destinoMarker?.getLatLng().lat;
     const destLng = this.destinoMarker?.getLatLng().lng;
@@ -254,7 +275,8 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     // Sin conductores simulados: si nadie acepta, se sigue buscando y el usuario puede cancelar
     this.timeoutBusqueda = setTimeout(() => {
       if (this.buscandoConductor && !this.transicionFinalizada) {
-        this.mensajeEstado = 'Seguimos buscando un conductor disponible. Puedes esperar o cancelar.';
+        this.mensajeEstado =
+          'Seguimos buscando un conductor disponible. Puedes esperar o cancelar.';
       }
     }, this.TIMEOUT_BUSQUEDA_SEG * 1000);
 
@@ -267,7 +289,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       origen: this.origen,
       destino: this.destino,
       tipo: 'TRANSPORTE',
-      descripcion: ''
+      descripcion: '',
     };
 
     try {
@@ -281,14 +303,25 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     } catch (e) {
       this._limpiarTimersBusqueda();
       this.buscandoConductor = false;
-      alert(ApiService.mensaje(e, 'No pudimos crear tu solicitud. Revisa tu conexión e intenta de nuevo.'));
+      alert(
+        ApiService.mensaje(
+          e,
+          'No pudimos crear tu solicitud. Revisa tu conexión e intenta de nuevo.',
+        ),
+      );
     }
   }
 
   /* ─── Limpia timers de búsqueda ─── */
   private _limpiarTimersBusqueda(): void {
-    if (this.timeoutBusqueda) { clearTimeout(this.timeoutBusqueda); this.timeoutBusqueda = null; }
-    if (this.intervaloCuentaBuscando) { clearInterval(this.intervaloCuentaBuscando); this.intervaloCuentaBuscando = null; }
+    if (this.timeoutBusqueda) {
+      clearTimeout(this.timeoutBusqueda);
+      this.timeoutBusqueda = null;
+    }
+    if (this.intervaloCuentaBuscando) {
+      clearInterval(this.intervaloCuentaBuscando);
+      this.intervaloCuentaBuscando = null;
+    }
     this.segundosBuscando = 0;
   }
 
@@ -309,7 +342,14 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
 
   /* ===================== PROCESAR ESTADOS (siempre con datos reales del backend) ===================== */
   private procesarEstadoServicio(s: any): void {
-    const enCurso = ['ACEPTADO', 'EN_CAMINO_AL_USUARIO', 'LLEGO_AL_ORIGEN', 'EN_CAMINO', 'EN_VIAJE', 'PAQUETE_RECOGIDO'];
+    const enCurso = [
+      'ACEPTADO',
+      'EN_CAMINO_AL_USUARIO',
+      'LLEGO_AL_ORIGEN',
+      'EN_CAMINO',
+      'EN_VIAJE',
+      'PAQUETE_RECOGIDO',
+    ];
 
     if (enCurso.includes(s.estado)) {
       this._limpiarTimersBusqueda();
@@ -326,7 +366,13 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       this.mensajeEstado = '🛵 ¡Conductor encontrado! En camino hacia ti.';
       if (this.faseRuta !== 'recogida' && s.conductor_lat != null) {
         this.faseRuta = 'recogida';
-        this.iniciarSimulacion(Number(s.conductor_lat), Number(s.conductor_lng), this.userLat, this.userLng, '#f59e0b');
+        this.iniciarSimulacion(
+          Number(s.conductor_lat),
+          Number(s.conductor_lng),
+          this.userLat,
+          this.userLng,
+          '#f59e0b',
+        );
       }
     }
 
@@ -370,9 +416,12 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     if (!this.conductorMarker) {
       const motoIcon = L.icon({
         iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
-        iconSize: [45, 45], iconAnchor: [22, 45]
+        iconSize: [45, 45],
+        iconAnchor: [22, 45],
       });
-      this.conductorMarker = L.marker([lat, lng], { icon: motoIcon }).addTo(this.map).bindPopup('<b>🛵 Tu conductor</b>');
+      this.conductorMarker = L.marker([lat, lng], { icon: motoIcon })
+        .addTo(this.map)
+        .bindPopup('<b>🛵 Tu conductor</b>');
     } else {
       this.conductorMarker.setLatLng([lat, lng]);
     }
@@ -385,9 +434,11 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
    * @param colorLinea  Color de la polilínea en el mapa
    */
   public iniciarSimulacion(
-    origenLat: number, origenLng: number,
-    destinoLat: number, destinoLng: number,
-    colorLinea: string
+    origenLat: number,
+    origenLng: number,
+    destinoLat: number,
+    destinoLng: number,
+    colorLinea: string,
   ): void {
     this.detenerSimulacion();
     this.simulacionActiva = true;
@@ -396,28 +447,40 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     const url = `https://router.project-osrm.org/route/v1/driving/${origenLng},${origenLat};${destinoLng},${destinoLat}?overview=full&geometries=geojson`;
 
     fetch(url)
-      .then(r => r.json())
-      .then(data => {
-        if (!data.routes?.length) { this.simulacionActiva = false; return; }
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.routes?.length) {
+          this.simulacionActiva = false;
+          return;
+        }
 
         const coords = data.routes[0].geometry.coordinates;
         this.puntosRuta = coords.map((c: number[]) => L.latLng(c[1], c[0]));
 
-        if (this.puntosRuta.length < 2) { this.simulacionActiva = false; return; }
+        if (this.puntosRuta.length < 2) {
+          this.simulacionActiva = false;
+          return;
+        }
 
         // Ocultar línea de LRM
         if (this.routingControl) {
-          try { this.routingControl.setWaypoints([]); } catch (e) {}
+          try {
+            this.routingControl.setWaypoints([]);
+          } catch (e) {}
         }
 
         // Línea que se va recortando (pendiente)
         this.lineaSimulacion = L.polyline(this.puntosRuta, {
-          color: colorLinea, weight: 6, opacity: 0.85
+          color: colorLinea,
+          weight: 6,
+          opacity: 0.85,
         }).addTo(this.map);
 
         // Estela del recorrido ya hecho
         this.lineaRecorrida = L.polyline([this.puntosRuta[0]], {
-          color: colorLinea, weight: 3, opacity: 0.35
+          color: colorLinea,
+          weight: 3,
+          opacity: 0.35,
         }).addTo(this.map);
 
         this.map.fitBounds((this.lineaSimulacion as L.Polyline).getBounds(), { padding: [60, 60] });
@@ -425,7 +488,7 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
         // La posición de la moto la actualiza moverConductor() con el GPS real
         this.simulacionActiva = false;
       })
-      .catch(e => {
+      .catch((e) => {
         console.error('Error obteniendo ruta OSRM:', e);
         this.simulacionActiva = false;
       });
@@ -437,11 +500,15 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       this.intervaloSimulacion = null;
     }
     if (this.lineaSimulacion) {
-      try { this.map.removeLayer(this.lineaSimulacion); } catch (e) {}
+      try {
+        this.map.removeLayer(this.lineaSimulacion);
+      } catch (e) {}
       this.lineaSimulacion = undefined;
     }
     if (this.lineaRecorrida) {
-      try { this.map.removeLayer(this.lineaRecorrida); } catch (e) {}
+      try {
+        this.map.removeLayer(this.lineaRecorrida);
+      } catch (e) {}
       this.lineaRecorrida = undefined;
     }
     this.simulacionActiva = false;
@@ -456,14 +523,16 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
       await this.api.post(`${this.apiBase}/calificar`, {
         servicio_id: servicioId,
         puntos: Math.min(5, Math.max(1, parseInt(puntos) || 5)),
-        comentario: 'Calificado desde la App'
+        comentario: 'Calificado desde la App',
       });
     } catch (e) {
       alert(ApiService.mensaje(e, 'No se pudo guardar la calificación.'));
     }
   }
 
-  seleccionarEstrella(n: number): void { this.calificacionSeleccionada = n; }
+  seleccionarEstrella(n: number): void {
+    this.calificacionSeleccionada = n;
+  }
 
   async confirmarCalificacion(): Promise<void> {
     await this.enviarCalificacion(this.idServicioFinal, String(this.calificacionSeleccionada));
@@ -499,8 +568,15 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
 
     this.puntos?.quitarDestino();
     this.destinoMarker = undefined;
-    if (this.conductorMarker) { this.map.removeLayer(this.conductorMarker); this.conductorMarker = undefined; }
-    if (this.routingControl) { try { this.routingControl.setWaypoints([]); } catch (e) {} }
+    if (this.conductorMarker) {
+      this.map.removeLayer(this.conductorMarker);
+      this.conductorMarker = undefined;
+    }
+    if (this.routingControl) {
+      try {
+        this.routingControl.setWaypoints([]);
+      } catch (e) {}
+    }
 
     this.router.navigate(['/home-usuario']);
   }
@@ -509,9 +585,13 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
   enviarMensajeConductor(): void {
     if (this.conductorInfo?.conductor_telefono) {
       const msg = encodeURIComponent(
-        `Hola ${this.conductorInfo.conductor_nombre}, soy ${this.conductorInfo.usuario_nombre ?? 'tu pasajero'}. Estoy esperando en ${this.origen}.`
+        `Hola ${this.conductorInfo.conductor_nombre}, soy ${this.conductorInfo.usuario_nombre ?? 'tu pasajero'}. Estoy esperando en ${this.origen}.`,
       );
-      window.open(`https://wa.me/${this.conductorInfo.conductor_telefono}?text=${msg}`, '_blank');
+      window.open(
+        `https://wa.me/${String(this.conductorInfo.conductor_telefono).replace(/\D/g, '')}?text=${msg}`,
+        '_blank',
+        'noopener',
+      );
     } else {
       alert('No se encontró el número de teléfono del conductor.');
     }
@@ -545,13 +625,19 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  volver(): void { this.router.navigate(['/home-usuario']); }
+  volver(): void {
+    this.router.navigate(['/home-usuario']);
+  }
 
   /* ===================== HELPERS UI ===================== */
   getProgresoPorcentaje(estado: string): number {
     const pasos: { [key: string]: number } = {
-      'PENDIENTE': 10, 'ACEPTADO': 30, 'EN_CAMINO_AL_USUARIO': 50,
-      'LLEGO_AL_ORIGEN': 70, 'EN_VIAJE': 90, 'FINALIZADO': 100
+      PENDIENTE: 10,
+      ACEPTADO: 30,
+      EN_CAMINO_AL_USUARIO: 50,
+      LLEGO_AL_ORIGEN: 70,
+      EN_VIAJE: 90,
+      FINALIZADO: 100,
     };
     return pasos[estado] || 0;
   }
@@ -560,11 +646,16 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
     if (!this.conductorInfo) return false;
     const p = this.getProgresoPorcentaje(this.conductorInfo.estado);
     switch (paso) {
-      case 'solicitado': return p >= 10;
-      case 'encamino':   return p >= 30;
-      case 'enviaje':    return p >= 90;
-      case 'finalizado': return p === 100;
-      default: return false;
+      case 'solicitado':
+        return p >= 10;
+      case 'encamino':
+        return p >= 30;
+      case 'enviaje':
+        return p >= 90;
+      case 'finalizado':
+        return p === 100;
+      default:
+        return false;
     }
   }
 
@@ -575,12 +666,22 @@ export class SolicitarTransporte implements OnInit, AfterViewInit, OnDestroy {
 
   getEstadoColorClass(estado: string): string {
     switch (estado) {
-      case 'PENDIENTE': return 'text-warning';
-      case 'ACEPTADO': case 'EN_CAMINO_AL_USUARIO': case 'LLEGO_AL_ORIGEN': return 'text-info';
-      case 'EN_CAMINO': case 'EN_VIAJE': return 'text-accent';
-      case 'FINALIZADO': return 'text-success';
-      case 'CANCELADO': case 'RECHAZADO': return 'text-danger';
-      default: return 'text-muted';
+      case 'PENDIENTE':
+        return 'text-warning';
+      case 'ACEPTADO':
+      case 'EN_CAMINO_AL_USUARIO':
+      case 'LLEGO_AL_ORIGEN':
+        return 'text-info';
+      case 'EN_CAMINO':
+      case 'EN_VIAJE':
+        return 'text-accent';
+      case 'FINALIZADO':
+        return 'text-success';
+      case 'CANCELADO':
+      case 'RECHAZADO':
+        return 'text-danger';
+      default:
+        return 'text-muted';
     }
   }
 }

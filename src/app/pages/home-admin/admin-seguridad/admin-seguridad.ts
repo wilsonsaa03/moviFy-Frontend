@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -66,6 +74,7 @@ const CADA_MS = 15000;
   standalone: true,
   imports: [CommonModule, FormsModule, AdminIcoComponent],
   templateUrl: './admin-seguridad.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../home-admin.css', './admin-seguridad.css'],
 })
 export class AdminSeguridadComponent implements OnInit, OnDestroy {
@@ -106,19 +115,23 @@ export class AdminSeguridadComponent implements OnInit, OnDestroy {
   }
 
   get sosAbiertas(): number {
-    return this.sos.filter(a => a.estado === 'abierta' || a.estado === 'en_atencion').length;
+    return this.sos.filter((a) => a.estado === 'abierta' || a.estado === 'en_atencion').length;
   }
 
   get alertasPendientes(): number {
-    return this.alertas.filter(a => a.respuesta !== 'estoy_bien' && !a.revisada_en).length;
+    return this.alertas.filter((a) => a.respuesta !== 'estoy_bien' && !a.revisada_en).length;
   }
 
   get sosVisibles(): AlertaSos[] {
-    return this.soloAbiertas ? this.sos.filter(a => a.estado === 'abierta' || a.estado === 'en_atencion') : this.sos;
+    return this.soloAbiertas
+      ? this.sos.filter((a) => a.estado === 'abierta' || a.estado === 'en_atencion')
+      : this.sos;
   }
 
   get alertasVisibles(): AlertaViaje[] {
-    return this.soloAbiertas ? this.alertas.filter(a => a.respuesta !== 'estoy_bien' && !a.revisada_en) : this.alertas;
+    return this.soloAbiertas
+      ? this.alertas.filter((a) => a.respuesta !== 'estoy_bien' && !a.revisada_en)
+      : this.alertas;
   }
 
   estadoSos(e: string): string {
@@ -131,7 +144,14 @@ export class AdminSeguridadComponent implements OnInit, OnDestroy {
     if (min < 1) return 'Hace un momento';
     if (min < 60) return `Hace ${min} min`;
     const h = Math.floor(min / 60);
-    return h < 24 ? `Hace ${h} h ${min % 60} min` : new Date(f).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+    return h < 24
+      ? `Hace ${h} h ${min % 60} min`
+      : new Date(f).toLocaleString('es-CO', {
+          day: 'numeric',
+          month: 'short',
+          hour: 'numeric',
+          minute: '2-digit',
+        });
   }
 
   mapa(lat: number | null, lng: number | null): string | null {
@@ -144,21 +164,32 @@ export class AdminSeguridadComponent implements OnInit, OnDestroy {
     this.error = '';
   }
 
-  async cambiarSos(a: AlertaSos, estado: 'en_atencion' | 'atendida' | 'falsa_alarma'): Promise<void> {
+  async cambiarSos(
+    a: AlertaSos,
+    estado: 'en_atencion' | 'atendida' | 'falsa_alarma',
+  ): Promise<void> {
     if (estado !== 'en_atencion' && this.notas.trim().length < 5) {
       this.error = 'Escribe qué se hizo (al menos 5 letras): queda en el registro de la alerta.';
       return;
     }
-    await this.guardar(`/admin/sos/${a.id}`, { estado, notas: this.notas.trim() || null },
-      estado === 'en_atencion' ? 'Tomaste la alerta SOS.' : 'Alerta SOS cerrada.');
+    await this.guardar(
+      `/admin/sos/${a.id}`,
+      { estado, notas: this.notas.trim() || null },
+      estado === 'en_atencion' ? 'Tomaste la alerta SOS.' : 'Alerta SOS cerrada.',
+    );
   }
 
   async revisar(a: AlertaViaje): Promise<void> {
     if (this.notas.trim().length < 5) {
-      this.error = 'Escribe qué se hizo (por ejemplo: "Llamamos al pasajero, iba bien por un trancón").';
+      this.error =
+        'Escribe qué se hizo (por ejemplo: "Llamamos al pasajero, iba bien por un trancón").';
       return;
     }
-    await this.guardar(`/admin/alertas-viaje/${a.id}`, { notas: this.notas.trim() }, 'Alerta revisada.');
+    await this.guardar(
+      `/admin/alertas-viaje/${a.id}`,
+      { notas: this.notas.trim() },
+      'Alerta revisada.',
+    );
   }
 
   private async guardar(ruta: string, cuerpo: object, ok: string): Promise<void> {
@@ -198,7 +229,10 @@ export class AdminSeguridadComponent implements OnInit, OnDestroy {
       this.alertas = alertas.value;
       this.errorAlertas = '';
     } else {
-      this.errorAlertas = ApiService.mensaje(alertas.reason, 'No se pudieron cargar los "¿Todo bien?".');
+      this.errorAlertas = ApiService.mensaje(
+        alertas.reason,
+        'No se pudieron cargar los "¿Todo bien?".',
+      );
     }
     this.cargoSos ||= sos.status === 'fulfilled';
     this.cargoAlertas ||= alertas.status === 'fulfilled';

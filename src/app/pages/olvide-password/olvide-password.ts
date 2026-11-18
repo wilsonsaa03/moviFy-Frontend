@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { UsuarioService } from '../../Base_de_datos/usuario.service';
@@ -8,21 +8,20 @@ import { AuthLayoutComponent } from '../../shared/auth-layout/auth-layout';
 @Component({
   selector: 'app-olvide-password',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AuthLayoutComponent],
+  imports: [FormsModule, RouterModule, AuthLayoutComponent],
   templateUrl: './olvide-password.html',
-  styleUrl: './olvide-password.css'
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrl: './olvide-password.css',
 })
 export class OlvidePasswordComponent {
-
-  correo   = '';
-  error    = '';
+  correo = '';
+  error = '';
   cargando = false;
-  paso     = 1;
+  paso = 1;
 
   constructor(private usuarioService: UsuarioService) {}
 
   enviarEnlace(): void {
-
     this.error = '';
 
     if (!this.correo) {
@@ -46,7 +45,7 @@ export class OlvidePasswordComponent {
       error: (err: any) => {
         this.cargando = false;
         this.error = err.error?.error || 'Error al enviar el correo';
-      }
+      },
     });
   }
 }

@@ -1,69 +1,65 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { UsuarioService } from '../../Base_de_datos/usuario.service';
+import { cerrarSesionWeb } from '../../core/sesion.service';
 
 @Component({
   selector: 'app-registro-conductor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [FormsModule, RouterModule],
   templateUrl: './registro-conductor.html',
-  styleUrl: './registro-conductor.css'
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrl: './registro-conductor.css',
 })
 export class RegistroConductor {
-
   datos = {
     nombre: '',
     correo: '',
     password: '',
     telefono: '',
-    rol: 'conductor'
+    rol: 'conductor',
   };
 
-  confirmar        = '';
-  placa            = '';
-  modelo           = '';
-  error            = '';
-  exito            = '';
-  cargando         = false;
-  mostrarPassword  = false;
+  confirmar = '';
+  placa = '';
+  modelo = '';
+  error = '';
+  exito = '';
+  cargando = false;
+  mostrarPassword = false;
   mostrarConfirmar = false;
 
   // ── ERRORES DE CAMPOS ─────────────────────────────
   errores = {
-    nombre:    '',
-    correo:    '',
-    password:  '',
+    nombre: '',
+    correo: '',
+    password: '',
     confirmar: '',
-    telefono:  '',
-    placa:     '',
-    modelo:    ''
+    telefono: '',
+    placa: '',
+    modelo: '',
   };
 
   // ── DOCUMENTOS ────────────────────────────────────
   archivoLicencia: File | null = null;
-  archivoSoat:     File | null = null;
-  archivoTarjeta:  File | null = null;
-  archivoCedula:   File | null = null;
+  archivoSoat: File | null = null;
+  archivoTarjeta: File | null = null;
+  archivoCedula: File | null = null;
 
   errorLicencia = '';
-  errorSoat     = '';
-  errorTarjeta  = '';
-  errorCedula   = '';
+  errorSoat = '';
+  errorTarjeta = '';
+  errorCedula = '';
 
-  readonly TIPOS_VALIDOS = [
-    'image/jpeg',
-    'image/jpg',
-    'image/png',
-    'application/pdf'
-  ];
+  readonly TIPOS_VALIDOS = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
 
   readonly TAMANO_MAX_MB = 5;
 
   constructor(
     private usuarioService: UsuarioService,
-    private router: Router
+    private router: Router,
   ) {}
 
   // =========================
@@ -71,7 +67,6 @@ export class RegistroConductor {
   // =========================
 
   private validarCampos(): boolean {
-
     this.errores = {
       nombre: '',
       correo: '',
@@ -79,121 +74,86 @@ export class RegistroConductor {
       confirmar: '',
       telefono: '',
       placa: '',
-      modelo: ''
+      modelo: '',
     };
 
     let valido = true;
 
     // NOMBRE
     if (!this.datos.nombre.trim()) {
-
-      this.errores.nombre =
-        'El nombre es obligatorio';
+      this.errores.nombre = 'El nombre es obligatorio';
 
       valido = false;
-
     } else if (this.datos.nombre.trim().length < 3) {
-
-      this.errores.nombre =
-        'El nombre debe tener mínimo 3 caracteres';
+      this.errores.nombre = 'El nombre debe tener mínimo 3 caracteres';
 
       valido = false;
     }
 
     // CORREO
-    const regexCorreo =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!this.datos.correo) {
-
-      this.errores.correo =
-        'El correo es obligatorio';
+      this.errores.correo = 'El correo es obligatorio';
 
       valido = false;
-
     } else if (!regexCorreo.test(this.datos.correo)) {
-
-      this.errores.correo =
-        'Ingresa un correo válido';
+      this.errores.correo = 'Ingresa un correo válido';
 
       valido = false;
     }
 
     // TELÉFONO
-    const regexTelefono =
-      /^[0-9]{10,}$/;
+    const regexTelefono = /^[0-9]{10,}$/;
 
     if (!this.datos.telefono) {
-
-      this.errores.telefono =
-        'El teléfono es obligatorio';
+      this.errores.telefono = 'El teléfono es obligatorio';
 
       valido = false;
-
     } else if (!regexTelefono.test(this.datos.telefono)) {
-
-      this.errores.telefono =
-        'El teléfono debe tener mínimo 10 dígitos y solo números';
+      this.errores.telefono = 'El teléfono debe tener mínimo 10 dígitos y solo números';
 
       valido = false;
     }
 
     // PASSWORD
     if (!this.datos.password) {
-
-      this.errores.password =
-        'La contraseña es obligatoria';
+      this.errores.password = 'La contraseña es obligatoria';
 
       valido = false;
-
     } else if (this.datos.password.length < 8) {
-
-      this.errores.password =
-        'La contraseña debe tener mínimo 8 caracteres';
+      this.errores.password = 'La contraseña debe tener mínimo 8 caracteres';
 
       valido = false;
     }
 
     // CONFIRMAR
     if (!this.confirmar) {
-
-      this.errores.confirmar =
-        'Confirma tu contraseña';
+      this.errores.confirmar = 'Confirma tu contraseña';
 
       valido = false;
-
     } else if (this.datos.password !== this.confirmar) {
-
-      this.errores.confirmar =
-        'Las contraseñas no coinciden';
+      this.errores.confirmar = 'Las contraseñas no coinciden';
 
       valido = false;
     }
 
     // PLACA
-    const regexPlaca =
-      /^[A-Za-z]{3}[0-9]{2}[A-Za-z]$/;
+    const regexPlaca = /^[A-Za-z]{3}[0-9]{2}[A-Za-z]$/;
 
     if (!this.placa) {
-
-      this.errores.placa =
-        'La placa es obligatoria';
+      this.errores.placa = 'La placa es obligatoria';
 
       valido = false;
-
     } else if (!regexPlaca.test(this.placa)) {
-
-      this.errores.placa =
-        'Formato inválido. Ej: ABC12D';
+      this.errores.placa = 'Formato inválido. Ej: ABC12D';
 
       valido = false;
     }
 
     // MODELO
     if (!this.modelo.trim()) {
-
-      this.errores.modelo =
-        'El modelo es obligatorio';
+      this.errores.modelo = 'El modelo es obligatorio';
 
       valido = false;
     }
@@ -206,37 +166,28 @@ export class RegistroConductor {
   // =========================
 
   private validarDocumentos(): boolean {
-
     let valido = true;
 
     if (!this.archivoLicencia) {
-
-      this.errorLicencia =
-        'La licencia de conducción es obligatoria';
+      this.errorLicencia = 'La licencia de conducción es obligatoria';
 
       valido = false;
     }
 
     if (!this.archivoSoat) {
-
-      this.errorSoat =
-        'El SOAT es obligatorio';
+      this.errorSoat = 'El SOAT es obligatorio';
 
       valido = false;
     }
 
     if (!this.archivoTarjeta) {
-
-      this.errorTarjeta =
-        'La tarjeta de propiedad es obligatoria';
+      this.errorTarjeta = 'La tarjeta de propiedad es obligatoria';
 
       valido = false;
     }
 
     if (!this.archivoCedula) {
-
-      this.errorCedula =
-        'La cédula es obligatoria';
+      this.errorCedula = 'La cédula es obligatoria';
 
       valido = false;
     }
@@ -248,30 +199,17 @@ export class RegistroConductor {
   // VALIDAR ARCHIVOS
   // =========================
 
-  validarArchivo(
-    archivo: File,
-    campo: 'licencia' | 'soat' | 'tarjeta' | 'cedula'
-  ): boolean {
-
-    const maxBytes =
-      this.TAMANO_MAX_MB * 1024 * 1024;
+  validarArchivo(archivo: File, campo: 'licencia' | 'soat' | 'tarjeta' | 'cedula'): boolean {
+    const maxBytes = this.TAMANO_MAX_MB * 1024 * 1024;
 
     if (!this.TIPOS_VALIDOS.includes(archivo.type)) {
-
-      this.asignarError(
-        campo,
-        'Solo se permiten archivos JPG, PNG o PDF'
-      );
+      this.asignarError(campo, 'Solo se permiten archivos JPG, PNG o PDF');
 
       return false;
     }
 
     if (archivo.size > maxBytes) {
-
-      this.asignarError(
-        campo,
-        `El archivo no puede superar ${this.TAMANO_MAX_MB}MB`
-      );
+      this.asignarError(campo, `El archivo no puede superar ${this.TAMANO_MAX_MB}MB`);
 
       return false;
     }
@@ -281,22 +219,14 @@ export class RegistroConductor {
     return true;
   }
 
-  private asignarError(
-    campo: string,
-    msg: string
-  ): void {
+  private asignarError(campo: string, msg: string): void {
+    if (campo === 'licencia') this.errorLicencia = msg;
 
-    if (campo === 'licencia')
-      this.errorLicencia = msg;
+    if (campo === 'soat') this.errorSoat = msg;
 
-    if (campo === 'soat')
-      this.errorSoat = msg;
+    if (campo === 'tarjeta') this.errorTarjeta = msg;
 
-    if (campo === 'tarjeta')
-      this.errorTarjeta = msg;
-
-    if (campo === 'cedula')
-      this.errorCedula = msg;
+    if (campo === 'cedula') this.errorCedula = msg;
   }
 
   // =========================
@@ -304,68 +234,52 @@ export class RegistroConductor {
   // =========================
 
   seleccionarLicencia(event: any): void {
-
     const archivo = event.target.files[0];
 
     if (!archivo) return;
 
     if (this.validarArchivo(archivo, 'licencia')) {
-
       this.archivoLicencia = archivo;
-
     } else {
-
       this.archivoLicencia = null;
       event.target.value = '';
     }
   }
 
   seleccionarSoat(event: any): void {
-
     const archivo = event.target.files[0];
 
     if (!archivo) return;
 
     if (this.validarArchivo(archivo, 'soat')) {
-
       this.archivoSoat = archivo;
-
     } else {
-
       this.archivoSoat = null;
       event.target.value = '';
     }
   }
 
   seleccionarTarjeta(event: any): void {
-
     const archivo = event.target.files[0];
 
     if (!archivo) return;
 
     if (this.validarArchivo(archivo, 'tarjeta')) {
-
       this.archivoTarjeta = archivo;
-
     } else {
-
       this.archivoTarjeta = null;
       event.target.value = '';
     }
   }
 
   seleccionarCedula(event: any): void {
-
     const archivo = event.target.files[0];
 
     if (!archivo) return;
 
     if (this.validarArchivo(archivo, 'cedula')) {
-
       this.archivoCedula = archivo;
-
     } else {
-
       this.archivoCedula = null;
       event.target.value = '';
     }
@@ -375,15 +289,10 @@ export class RegistroConductor {
   // NOMBRE CORTO
   // =========================
 
-  nombreArchivo(
-    archivo: File | null
-  ): string {
-
+  nombreArchivo(archivo: File | null): string {
     if (!archivo) return '';
 
-    return archivo.name.length > 28
-      ? archivo.name.substring(0, 25) + '...'
-      : archivo.name;
+    return archivo.name.length > 28 ? archivo.name.substring(0, 25) + '...' : archivo.name;
   }
 
   // =========================
@@ -391,106 +300,62 @@ export class RegistroConductor {
   // =========================
 
   registrar(): void {
-
     this.error = '';
 
-    const camposValidos =
-      this.validarCampos();
+    const camposValidos = this.validarCampos();
 
-    const documentosValidos =
-      this.validarDocumentos();
+    const documentosValidos = this.validarDocumentos();
 
-    if (!camposValidos || !documentosValidos)
-      return;
+    if (!camposValidos || !documentosValidos) return;
 
     const form = new FormData();
 
     // DATOS USUARIO
-    form.append(
-      'nombre',
-      this.datos.nombre
-    );
+    form.append('nombre', this.datos.nombre);
 
-    form.append(
-      'correo',
-      this.datos.correo
-    );
+    form.append('correo', this.datos.correo);
 
-    form.append(
-      'password',
-      this.datos.password
-    );
+    form.append('password', this.datos.password);
 
-    form.append(
-      'telefono',
-      this.datos.telefono
-    );
+    form.append('telefono', this.datos.telefono);
 
     // VEHÍCULO
-    form.append(
-      'placa',
-      this.placa.toUpperCase()
-    );
+    form.append('placa', this.placa.toUpperCase());
 
-    form.append(
-      'modelo',
-      this.modelo
-    );
+    form.append('modelo', this.modelo);
 
     // DOCUMENTOS
-    form.append(
-      'licencia',
-      this.archivoLicencia!
-    );
+    form.append('licencia', this.archivoLicencia!);
 
-    form.append(
-      'soat',
-      this.archivoSoat!
-    );
+    form.append('soat', this.archivoSoat!);
 
     // ESTE ERA EL ERROR
-    form.append(
-      'tarjetaPropiedad',
-      this.archivoTarjeta!
-    );
+    form.append('tarjetaPropiedad', this.archivoTarjeta!);
 
-    form.append(
-      'cedula',
-      this.archivoCedula!
-    );
+    form.append('cedula', this.archivoCedula!);
 
     this.cargando = true;
 
-    this.usuarioService
-      .registroConductor(form)
-      .subscribe({
+    this.usuarioService.registroConductor(form).subscribe({
+      next: (res: any) => {
+        this.cargando = false;
+        this.exito = '¡Registro exitoso! Tu cuenta está en revisión. Serás redirigido al login.';
 
-        next: (res: any) => {
-          this.cargando = false;
-          this.exito = '¡Registro exitoso! Tu cuenta está en revisión. Serás redirigido al login.';
+        // Limpiar cualquier sesión anterior
+        cerrarSesionWeb();
 
-          // Limpiar cualquier sesión anterior
-          localStorage.clear();
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 2000);
+      },
 
-          setTimeout(() => {
-            this.router.navigate(['/login']);
-          }, 2000);
-        },
+      error: (err: any) => {
+        this.cargando = false;
 
-        error: (err: any) => {
+        console.error(err);
 
-          this.cargando = false;
-
-          console.error(err);
-
-          this.error =
-            err.error?.error ||
-            'Error al registrar';
-
-        }
-
-      });
-
+        this.error = err.error?.error || 'Error al registrar';
+      },
+    });
   }
-
 }

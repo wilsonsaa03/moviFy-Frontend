@@ -1,4 +1,15 @@
-import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  NgZone,
+  OnDestroy,
+  QueryList,
+  ViewChild,
+  ViewChildren,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { MagiaService } from '../../shared/efectos/magia.service';
 import { RevelarDirective } from '../../shared/efectos/revelar.directive';
@@ -20,7 +31,8 @@ interface TipoCuenta {
   standalone: true,
   imports: [RouterModule, RevelarDirective],
   templateUrl: './registro.html',
-  styleUrl: './registro.css'
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrl: './registro.css',
 })
 export class Registro implements AfterViewInit, OnDestroy {
   private zone = inject(NgZone);
@@ -36,12 +48,16 @@ export class Registro implements AfterViewInit, OnDestroy {
       id: 'usuario',
       titulo: 'Usuario',
       descripcion: 'Solicita transporte, domicilios y encomiendas de forma fácil y segura.',
-      puntos: ['Moto o taxi a tu destino', 'Domicilios y encomiendas', 'Seguimiento de cada servicio'],
+      puntos: [
+        'Moto o taxi a tu destino',
+        'Domicilios y encomiendas',
+        'Seguimiento de cada servicio',
+      ],
       accion: 'Crear cuenta',
       ruta: '/registro/usuario',
       fondoIcono: '#02AAB4',
       trazoIcono: '#03274D',
-      sombraIcono: 'rgba(2, 124, 132, 0.8)'
+      sombraIcono: 'rgba(2, 124, 132, 0.8)',
     },
     {
       id: 'conductor',
@@ -52,7 +68,7 @@ export class Registro implements AfterViewInit, OnDestroy {
       ruta: '/registro/conductor',
       fondoIcono: '#FE7B13',
       trazoIcono: '#03274D',
-      sombraIcono: 'rgba(200, 90, 0, 0.8)'
+      sombraIcono: 'rgba(200, 90, 0, 0.8)',
     },
     {
       id: 'admin',
@@ -63,8 +79,8 @@ export class Registro implements AfterViewInit, OnDestroy {
       ruta: '/registro/admin',
       fondoIcono: '#5FD3D9',
       trazoIcono: '#03274D',
-      sombraIcono: 'rgba(2, 124, 132, 0.6)'
-    }
+      sombraIcono: 'rgba(2, 124, 132, 0.6)',
+    },
   ];
 
   ngAfterViewInit(): void {
@@ -93,7 +109,7 @@ export class Registro implements AfterViewInit, OnDestroy {
         tarjeta.addEventListener('mouseleave', salir);
         this.limpiezas.push(
           () => tarjeta.removeEventListener('mousemove', mover),
-          () => tarjeta.removeEventListener('mouseleave', salir)
+          () => tarjeta.removeEventListener('mouseleave', salir),
         );
       });
 

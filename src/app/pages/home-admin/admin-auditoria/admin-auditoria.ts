@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -37,6 +37,26 @@ interface AccesoSospechoso {
   hasta: string;
 }
 
+/** GET /api/admin/seguridad/actividad (vigilancia del backend). */
+interface Actividad {
+  resumen_24h: { exitosos: number; fallidos: number; ips_con_fallos: number };
+  ips_sospechosas: { ip: string; fallidos: number; cuentas_distintas: number; ultimo: string }[];
+  cuentas_bloqueadas_temporalmente: {
+    id: number;
+    nombres: string;
+    telefono: string | null;
+    email: string | null;
+    hasta: string;
+  }[];
+  eventos_recientes: { fecha: string; tipo: string; ip: string; ruta: string; detalle: string }[];
+}
+
+const EVENTOS: Record<string, string> = {
+  limite_superado: 'Superó el límite de peticiones',
+  admin_sin_permiso: 'Intentó entrar al panel sin permiso',
+  token_revocado: 'Usó una sesión cerrada',
+};
+
 /** Cómo se lee cada acción en español. */
 const ACCIONES: Record<string, string> = {
   configuracion: 'Cambió un parámetro',
@@ -49,6 +69,9 @@ const ACCIONES: Record<string, string> = {
   pqrs_resuelto: 'Respondió una PQRS',
   pqrs_cerrado: 'Cerró una PQRS',
   pqrs_: 'Cambió la prioridad de una PQRS',
+  comunicado_enviado: 'Envió un comunicado',
+  servicio_cancelado: 'Canceló un servicio',
+  servicio_reasignado: 'Reasignó un servicio',
 };
 const OPERACION: Record<string, string> = { I: 'Creó', U: 'Cambió', D: 'Borró' };
 /** Columnas que no aportan al leer un cambio. */
@@ -64,6 +87,7 @@ const RUIDO = new Set(['actualizado_en', 'creado_en', 'estado_ambito']);
   standalone: true,
   imports: [CommonModule, FormsModule, AdminIcoComponent],
   templateUrl: './admin-auditoria.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../home-admin.css', './admin-auditoria.css'],
 })
 export class AdminAuditoriaComponent implements OnInit {
@@ -71,6 +95,7 @@ export class AdminAuditoriaComponent implements OnInit {
   acciones: Accion[] = [];
   cambios: CambioBd[] = [];
   accesos: AccesoSospechoso[] = [];
+  actividad: Actividad | null = null;
   busqueda = '';
   cargando = false;
   error = '';
@@ -83,16 +108,44 @@ export class AdminAuditoriaComponent implements OnInit {
 
   get accionesVisibles(): Accion[] {
     const q = this.busqueda.trim().toLowerCase();
-    return q ? this.acciones.filter(a => `${a.admin_nombre} ${a.accion} ${a.entidad} ${this.texto(a.detalle)}`.toLowerCase().includes(q)) : this.acciones;
+    return q
+      ? this.acciones.filter((a) =>
+          `${a.admin_nombre} ${a.accion} ${a.entidad} ${this.texto(a.detalle)}`
+            .toLowerCase()
+            .includes(q),
+        )
+      : this.acciones;
   }
 
   get cambiosVisibles(): CambioBd[] {
     const q = this.busqueda.trim().toLowerCase();
-    return q ? this.cambios.filter(c => `${c.tabla} ${c.registro_id} ${c.usuario_nombre}`.toLowerCase().includes(q)) : this.cambios;
+    return q
+      ? this.cambios.filter((c) =>
+          `${c.tabla} ${c.registro_id} ${c.usuario_nombre}`.toLowerCase().includes(q),
+        )
+      : this.cambios;
   }
 
   accion(a: Accion): string {
     return ACCIONES[a.accion] ?? a.accion.replace(/_/g, ' ');
+  }
+
+  /** Alertas de la pestaña "Accesos sospechosos": IPs de la última hora + eventos del sistema. */
+  get alertasAccesos(): number {
+    return this.accesos.length + (this.actividad?.eventos_recientes.length ?? 0);
+  }
+
+  evento(tipo: string): string {
+    return EVENTOS[tipo] ?? tipo.replace(/_/g, ' ');
+  }
+
+  /** "regla=login max=20/300s" → "login · máximo 20 cada 5 min". */
+  detalleEvento(d: string): string {
+    const m = /regla=(\w+) max=(\d+)\/(\d+)s/.exec(d || '');
+    if (!m) return d || '';
+    const seg = Number(m[3]);
+    const cada = seg >= 3600 ? `${seg / 3600} h` : seg >= 60 ? `${seg / 60} min` : `${seg} s`;
+    return `${m[1]} · máximo ${m[2]} cada ${cada}`;
   }
 
   operacion(c: CambioBd): string {
@@ -102,7 +155,12 @@ export class AdminAuditoriaComponent implements OnInit {
   /** Detalle JSON en una línea legible: "clave: radio_busqueda_km · valor: 6". */
   texto(d: unknown): string {
     const o = this.objeto(d);
-    return o ? Object.entries(o).filter(([, v]) => v !== '' && v != null).map(([k, v]) => `${k}: ${v}`).join(' · ') : '';
+    return o
+      ? Object.entries(o)
+          .filter(([, v]) => v !== '' && v != null)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(' · ')
+      : '';
   }
 
   /** Lo que cambió en un UPDATE: "estado: pendiente → aprobado". En INSERT/DELETE, las columnas principales. */
@@ -111,11 +169,14 @@ export class AdminAuditoriaComponent implements OnInit {
     const despues = this.objeto(c.datos_despues) ?? {};
     if (c.operacion === 'U') {
       return Object.keys(despues)
-        .filter(k => !RUIDO.has(k) && JSON.stringify(antes[k]) !== JSON.stringify(despues[k]))
-        .map(k => `${k}: ${this.corto(antes[k])} → ${this.corto(despues[k])}`);
+        .filter((k) => !RUIDO.has(k) && JSON.stringify(antes[k]) !== JSON.stringify(despues[k]))
+        .map((k) => `${k}: ${this.corto(antes[k])} → ${this.corto(despues[k])}`);
     }
     const fuente = c.operacion === 'D' ? antes : despues;
-    return Object.entries(fuente).filter(([k, v]) => !RUIDO.has(k) && v != null).slice(0, 6).map(([k, v]) => `${k}: ${this.corto(v)}`);
+    return Object.entries(fuente)
+      .filter(([k, v]) => !RUIDO.has(k) && v != null)
+      .slice(0, 6)
+      .map(([k, v]) => `${k}: ${this.corto(v)}`);
   }
 
   private corto(v: unknown): string {
@@ -140,10 +201,18 @@ export class AdminAuditoriaComponent implements OnInit {
     this.cargando = true;
     this.error = '';
     try {
-      const r = await this.api.get<{ acciones: Accion[]; cambios: CambioBd[]; accesos_sospechosos: AccesoSospechoso[] }>('/admin/auditoria');
+      const r = await this.api.get<{
+        acciones: Accion[];
+        cambios: CambioBd[];
+        accesos_sospechosos: AccesoSospechoso[];
+      }>('/admin/auditoria');
       this.acciones = r.acciones;
       this.cambios = r.cambios;
       this.accesos = r.accesos_sospechosos;
+      // Vigilancia del backend (límites, intentos al panel, cuentas bloqueadas): si falla, la auditoría igual se ve
+      this.actividad = await this.api
+        .get<Actividad>('/admin/seguridad/actividad')
+        .catch(() => null);
     } catch (err) {
       this.error = ApiService.mensaje(err, 'No se pudo cargar la auditoría.');
     } finally {

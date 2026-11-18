@@ -1,19 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ConductorService } from '../../Base_de_datos/conductor.service';
 import { ApiService } from '../../core/api.service';
+import { cerrarSesionWeb } from '../../core/sesion.service';
 
 @Component({
   selector: 'app-ver-mi-perfil-conductor',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './ver-mi-perfil-conductor.html',
-  styleUrls: ['./ver-mi-perfil-conductor.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./ver-mi-perfil-conductor.css'],
 })
 export class VerMiPerfilConductorComponent implements OnInit {
-
   // ============================================================
   // DATOS DEL CONDUCTOR (solo lectura)
   // ============================================================
@@ -68,7 +69,7 @@ export class VerMiPerfilConductorComponent implements OnInit {
   constructor(
     private router: Router,
     private conductorService: ConductorService,
-    private api: ApiService
+    private api: ApiService,
   ) {}
 
   ngOnInit(): void {
@@ -80,29 +81,31 @@ export class VerMiPerfilConductorComponent implements OnInit {
 
     this.conductorService.obtenerPerfil(correoSession).subscribe({
       next: (data: any) => {
-        this.nombre    = data.nombre    || localStorage.getItem('nombre') || 'Conductor';
-        this.correo    = data.correo    || correoSession;
-        this.telefono  = data.telefono  || '';
-        this.foto      = data.foto      || localStorage.getItem('foto') || '';
-        this.ciudad    = data.ciudad    || 'Buenaventura';
-        this.placa     = data.placa     || data.placa_vehiculo  || 'No registrada';
-        this.modelo    = data.modelo    || data.modelo_vehiculo || 'No registrado';
+        this.nombre = data.nombre || localStorage.getItem('nombre') || 'Conductor';
+        this.correo = data.correo || correoSession;
+        this.telefono = data.telefono || '';
+        this.foto = data.foto || localStorage.getItem('foto') || '';
+        this.ciudad = data.ciudad || 'Buenaventura';
+        this.placa = data.placa || data.placa_vehiculo || 'No registrada';
+        this.modelo = data.modelo || data.modelo_vehiculo || 'No registrado';
         this.estadoCuenta = data.estado || 'pendiente';
         this.gananciasHoy = Number(data.gananciasHoy) || 0;
-        this.viajesHoy    = Number(data.viajesHoy)    || 0;
-        this.viajesTotal  = Number(data.viajesTotal)  || 0;
+        this.viajesHoy = Number(data.viajesHoy) || 0;
+        this.viajesTotal = Number(data.viajesTotal) || 0;
         this.calificacion = Number(data.calificacion) || 0;
-        this.miembroDesde = data.fecha_registro ? new Date(data.fecha_registro).getFullYear().toString() : '2024';
-        this.estadoSoat   = data.estado_soat || 'Al día ✓';
+        this.miembroDesde = data.fecha_registro
+          ? new Date(data.fecha_registro).getFullYear().toString()
+          : '2024';
+        this.estadoSoat = data.estado_soat || 'Al día ✓';
         this.cargando = false;
       },
       error: () => {
         // Fallback a localStorage si el backend falla
         this.nombre = localStorage.getItem('nombre') || 'Conductor';
         this.correo = correoSession;
-        this.foto   = localStorage.getItem('foto')   || '';
+        this.foto = localStorage.getItem('foto') || '';
         this.cargando = false;
-      }
+      },
     });
   }
 
@@ -110,12 +113,12 @@ export class VerMiPerfilConductorComponent implements OnInit {
   // EDICIÓN DE PERFIL
   // ============================================================
   activarEdicion(): void {
-    this.nombreEdit   = this.nombre;
-    this.correoEdit   = this.correo;
+    this.nombreEdit = this.nombre;
+    this.correoEdit = this.correo;
     this.telefonoEdit = this.telefono;
-    this.ciudadEdit   = this.ciudad;
-    this.modoEdicion  = true;
-    this.menuAbierto  = false;
+    this.ciudadEdit = this.ciudad;
+    this.modoEdicion = true;
+    this.menuAbierto = false;
     this.limpiarAlertas();
   }
 
@@ -137,7 +140,7 @@ export class VerMiPerfilConductorComponent implements OnInit {
         nombre: this.nombreEdit.trim(),
         telefono: this.telefonoEdit.trim(),
         ciudad: this.ciudadEdit.trim(),
-        foto: this.foto
+        foto: this.foto,
       });
       this.nombre = this.nombreEdit.trim();
       this.telefono = this.telefonoEdit.trim();
@@ -170,15 +173,18 @@ export class VerMiPerfilConductorComponent implements OnInit {
     }
 
     // Antes solo mostraba "actualizada" sin llamar al backend
-    this.api.put('/usuarios/password', { actual: this.passActual, nueva: this.passNueva })
+    this.api
+      .put('/usuarios/password', { actual: this.passActual, nueva: this.passNueva })
       .then(() => {
         this.modoPassword = false;
-        this.passActual   = '';
-        this.passNueva    = '';
-        this.passConfirm  = '';
+        this.passActual = '';
+        this.passNueva = '';
+        this.passConfirm = '';
         this.mostrarOk('Contraseña actualizada correctamente.');
       })
-      .catch(err => this.mensajeErr = ApiService.mensaje(err, 'No se pudo cambiar la contraseña.'));
+      .catch(
+        (err) => (this.mensajeErr = ApiService.mensaje(err, 'No se pudo cambiar la contraseña.')),
+      );
   }
 
   // ============================================================
@@ -198,20 +204,20 @@ export class VerMiPerfilConductorComponent implements OnInit {
   // ============================================================
   get estadoTexto(): string {
     const estados: { [k: string]: string } = {
-      aprobado:  'Aprobado',
+      aprobado: 'Aprobado',
       pendiente: 'En revisión',
       rechazado: 'Rechazado',
-      activo:    'Activo'
+      activo: 'Activo',
     };
     return estados[this.estadoCuenta?.toLowerCase()] || 'Pendiente';
   }
 
   get estadoClase(): string {
     const clases: { [k: string]: string } = {
-      aprobado:  'chip-verde',
-      activo:    'chip-verde',
+      aprobado: 'chip-verde',
+      activo: 'chip-verde',
       pendiente: 'chip-amarillo',
-      rechazado: 'chip-rojo'
+      rechazado: 'chip-rojo',
     };
     return clases[this.estadoCuenta?.toLowerCase()] || 'chip-amarillo';
   }
@@ -238,18 +244,18 @@ export class VerMiPerfilConductorComponent implements OnInit {
   }
 
   cerrarSesion(): void {
-    localStorage.clear();
+    cerrarSesionWeb();
     this.router.navigate(['/login']);
   }
 
   private mostrarOk(msg: string): void {
-    this.mensajeOk  = msg;
+    this.mensajeOk = msg;
     this.mensajeErr = '';
-    setTimeout(() => this.mensajeOk = '', 4000);
+    setTimeout(() => (this.mensajeOk = ''), 4000);
   }
 
   private limpiarAlertas(): void {
-    this.mensajeOk  = '';
+    this.mensajeOk = '';
     this.mensajeErr = '';
   }
 }

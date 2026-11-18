@@ -1,12 +1,14 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../core/api.service';
-import { SesionService } from '../../core/sesion.service';
+import { SesionService, cerrarSesionWeb } from '../../core/sesion.service';
 import { AdminCatalogosComponent } from './admin-catalogos/admin-catalogos';
 import { AdminEnVivoComponent } from './admin-en-vivo/admin-en-vivo';
 import { AdminSeguridadComponent } from './admin-seguridad/admin-seguridad';
+import { AdminSelfiesComponent } from './admin-selfies/admin-selfies';
+import { AdminDomiciliosComponent } from './admin-domicilios/admin-domicilios';
 import { AdminReportesComponent } from './admin-reportes/admin-reportes';
 import { AdminTarifasComponent } from './admin-tarifas/admin-tarifas';
 import { AdminConfiguracionComponent } from './admin-configuracion/admin-configuracion';
@@ -22,16 +24,40 @@ import { AdminCalificacionesComponent } from './admin-calificaciones/admin-calif
 import { AdminEquipoComponent } from './admin-equipo/admin-equipo';
 import { AdminOperacionComponent } from './admin-operacion/admin-operacion';
 import { AdminIcoComponent } from './admin-ico';
+import { AdminComunicadosComponent } from './admin-comunicados/admin-comunicados';
+import { AlarmaSos } from './alarma-sos';
 
-type Seccion = 'dashboard' | 'vivo' | 'seguridad' | 'soporte' | 'servicios' | 'conductores' | 'usuarios' | 'calificaciones'
-  | 'reportes' | 'tarifas' | 'configuracion' | 'catalogos' | 'equipo' | 'auditoria';
+type Seccion =
+  | 'dashboard'
+  | 'vivo'
+  | 'seguridad'
+  | 'soporte'
+  | 'servicios'
+  | 'conductores'
+  | 'usuarios'
+  | 'calificaciones'
+  | 'reportes'
+  | 'tarifas'
+  | 'configuracion'
+  | 'catalogos'
+  | 'equipo'
+  | 'auditoria'
+  | 'comunicados'
+  | 'domicilios';
 
 /** Secciones que solo ve el admin: soporte no tiene configuracion.ver, auditoria.ver ni seguridad.ver. */
-const SOLO_ADMIN: Seccion[] = ['configuracion', 'equipo', 'auditoria'];
+const SOLO_ADMIN: Seccion[] = ['configuracion', 'equipo', 'auditoria', 'comunicados'];
 /** Secciones que usan los íconos propios de home-admin (las demás usan adm-ico). */
-const ICONOS_LOCALES = ['dashboard', 'conductores', 'usuarios', 'servicios', 'reportes', 'catalogos'];
-/** Cada cuánto se refrescan los números del menú (SOS, PQRS, conductores por validar). */
-const RESUMEN_MS = 30000;
+const ICONOS_LOCALES = [
+  'dashboard',
+  'conductores',
+  'usuarios',
+  'servicios',
+  'reportes',
+  'catalogos',
+];
+/** Cada cuánto se refrescan los números del menú (SOS, PQRS, conductores por validar). Corto: un SOS no espera. */
+const RESUMEN_MS = 15000;
 
 /** Documento vigente del conductor (GET /admin/conductor/{id}/detalle → documentos). */
 interface DocumentoConductor {
@@ -48,10 +74,29 @@ interface DocumentoConductor {
 /** GET /api/admin/conductores/{id}/expediente: checklist de su tipo de vehículo, actividad e historial. */
 interface Expediente {
   tipo_vehiculo: 'moto' | 'taxi' | null;
-  requisitos: { codigo: string; nombre: string; obligatorio: boolean; exigir_desde_anios: number | null; estado: string | null; dias_para_vencer: number | null }[];
+  requisitos: {
+    codigo: string;
+    nombre: string;
+    obligatorio: boolean;
+    exigir_desde_anios: number | null;
+    estado: string | null;
+    dias_para_vencer: number | null;
+  }[];
   obligatorios_sin_aprobar: number;
-  actividad: { total_servicios: number; total_cancelaciones: number; calificacion_promedio: number | null; tasa_cancelacion: number; cobrado_30_dias: number };
-  servicios: { id: number; estado_codigo: string; estado_nombre: string; solicitado_en: string; destino: string }[];
+  actividad: {
+    total_servicios: number;
+    total_cancelaciones: number;
+    calificacion_promedio: number | null;
+    tasa_cancelacion: number;
+    cobrado_30_dias: number;
+  };
+  servicios: {
+    id: number;
+    estado_codigo: string;
+    estado_nombre: string;
+    solicitado_en: string;
+    destino: string;
+  }[];
   calificaciones: { servicio_id: number; puntuacion: number; comentario: string | null }[];
   historial_estado: { accion: string; creado_en: string; por: string | null }[];
 }
@@ -65,16 +110,36 @@ interface Expediente {
 @Component({
   selector: 'app-home-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, AdminCatalogosComponent, AdminEnVivoComponent, AdminSeguridadComponent,
-    AdminReportesComponent, AdminTarifasComponent, AdminConfiguracionComponent, AdminAuditoriaComponent,
-    AdminServicioDetalleComponent, AdminDocumentosVencerComponent, AdminDashboardComponent, AdminServiciosComponent,
-    AdminUsuariosComponent, AdminConductoresComponent, AdminEstadisticasComponent, AdminCalificacionesComponent,
-    AdminEquipoComponent, AdminOperacionComponent, AdminIcoComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AdminCatalogosComponent,
+    AdminEnVivoComponent,
+    AdminSeguridadComponent,
+    AdminSelfiesComponent,
+    AdminDomiciliosComponent,
+    AdminReportesComponent,
+    AdminTarifasComponent,
+    AdminConfiguracionComponent,
+    AdminAuditoriaComponent,
+    AdminServicioDetalleComponent,
+    AdminDocumentosVencerComponent,
+    AdminDashboardComponent,
+    AdminServiciosComponent,
+    AdminUsuariosComponent,
+    AdminConductoresComponent,
+    AdminEstadisticasComponent,
+    AdminCalificacionesComponent,
+    AdminEquipoComponent,
+    AdminOperacionComponent,
+    AdminIcoComponent,
+    AdminComunicadosComponent,
+  ],
   templateUrl: './home-admin.html',
-  styleUrls: ['./home-admin.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./home-admin.css'],
 })
 export class HomeAdminComponent implements OnInit, OnDestroy {
-
   // NAV
   nombre = '';
   foto = '';
@@ -85,35 +150,101 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
   seccionActiva: Seccion = 'dashboard';
   private readonly todasLasSecciones: { id: Seccion; titulo: string; subtitulo: string }[] = [
     { id: 'dashboard', titulo: 'Resumen', subtitulo: 'Lo que pasa hoy y lo que necesita atención' },
-    { id: 'vivo', titulo: 'En vivo', subtitulo: 'Conductores conectados y servicios en este momento' },
-    { id: 'seguridad', titulo: 'Seguridad', subtitulo: 'Alertas SOS y "¿Todo bien?" de los viajes' },
-    { id: 'soporte', titulo: 'Soporte (PQRS)', subtitulo: 'Peticiones, quejas, reclamos y objetos olvidados' },
-    { id: 'servicios', titulo: 'Solicitudes', subtitulo: 'Supervisión de todos los servicios, con su línea de tiempo' },
-    { id: 'conductores', titulo: 'Conductores', subtitulo: 'Valida documentos según el vehículo y gestiona a los conductores' },
-    { id: 'usuarios', titulo: 'Clientes y usuarios', subtitulo: 'Perfiles, actividad y bloqueos por mal uso' },
-    { id: 'calificaciones', titulo: 'Calificaciones', subtitulo: 'Calificaciones bajas para darles seguimiento' },
-    { id: 'reportes', titulo: 'Reportes', subtitulo: 'Estadísticas por periodo y exportación a Excel' },
-    { id: 'tarifas', titulo: 'Tarifas', subtitulo: 'Cuánto cuesta cada servicio: de día, de noche y con lluvia' },
-    { id: 'configuracion', titulo: 'Configuración', subtitulo: 'Parámetros de búsqueda, viajes, seguridad y cuentas' },
-    { id: 'catalogos', titulo: 'Datos básicos', subtitulo: 'Motivos, documentos, vehículos, servicios y contenido prohibido' },
-    { id: 'equipo', titulo: 'Equipo y permisos', subtitulo: 'Quién es admin o soporte y qué puede hacer cada uno' },
-    { id: 'auditoria', titulo: 'Auditoría', subtitulo: 'Quién hizo qué, cuándo y por qué' }
+    {
+      id: 'vivo',
+      titulo: 'En vivo',
+      subtitulo: 'Conductores conectados y servicios en este momento',
+    },
+    {
+      id: 'seguridad',
+      titulo: 'Seguridad',
+      subtitulo: 'Alertas SOS, "¿Todo bien?" de los viajes y selfies de los conductores',
+    },
+    {
+      id: 'soporte',
+      titulo: 'Soporte (PQRS)',
+      subtitulo: 'Peticiones, quejas, reclamos y objetos olvidados',
+    },
+    {
+      id: 'comunicados',
+      titulo: 'Comunicados',
+      subtitulo: 'Avisos a clientes y conductores en la app y como notificación',
+    },
+    {
+      id: 'servicios',
+      titulo: 'Solicitudes',
+      subtitulo: 'Supervisión de todos los servicios, con su línea de tiempo',
+    },
+    {
+      id: 'conductores',
+      titulo: 'Conductores',
+      subtitulo: 'Valida documentos según el vehículo y gestiona a los conductores',
+    },
+    {
+      id: 'usuarios',
+      titulo: 'Clientes y usuarios',
+      subtitulo: 'Perfiles, actividad y bloqueos por mal uso',
+    },
+    {
+      id: 'calificaciones',
+      titulo: 'Calificaciones',
+      subtitulo: 'Calificaciones bajas para darles seguimiento',
+    },
+    {
+      id: 'reportes',
+      titulo: 'Reportes',
+      subtitulo: 'Estadísticas por periodo y exportación a Excel',
+    },
+    {
+      id: 'domicilios',
+      titulo: 'Domicilios',
+      subtitulo: 'Comercios aliados, productos con opciones y cupones del catálogo',
+    },
+    {
+      id: 'tarifas',
+      titulo: 'Tarifas',
+      subtitulo: 'Cuánto cuesta cada servicio: de día, de noche y con lluvia',
+    },
+    {
+      id: 'configuracion',
+      titulo: 'Configuración',
+      subtitulo: 'Parámetros de búsqueda, viajes, seguridad y cuentas',
+    },
+    {
+      id: 'catalogos',
+      titulo: 'Datos básicos',
+      subtitulo: 'Motivos, documentos, vehículos, servicios y contenido prohibido',
+    },
+    {
+      id: 'equipo',
+      titulo: 'Equipo y permisos',
+      subtitulo: 'Quién es admin o soporte y qué puede hacer cada uno',
+    },
+    { id: 'auditoria', titulo: 'Auditoría', subtitulo: 'Quién hizo qué, cuándo y por qué' },
   ];
 
   get secciones() {
-    return this.todasLasSecciones.filter(s => !this.esSoporte || !SOLO_ADMIN.includes(s.id));
+    return this.todasLasSecciones.filter((s) => !this.esSoporte || !SOLO_ADMIN.includes(s.id));
   }
 
   get seccion() {
-    return this.secciones.find(s => s.id === this.seccionActiva) ?? this.secciones[0];
+    return this.secciones.find((s) => s.id === this.seccionActiva) ?? this.secciones[0];
   }
 
   get esSoporte(): boolean {
     return this.sesion.rol === 'soporte';
   }
 
-  /** Números del menú (del backend, cada 30 s). */
+  /** Números del menú (del backend, cada 15 s). */
   pendientesSeguridad = 0;
+  sosAbiertas = 0;
+  /** null hasta la primera lectura: así una SOS que ya estaba abierta al entrar no suena como nueva. */
+  private sosAnteriores: number | null = null;
+  private readonly alarma = new AlarmaSos();
+  permisoAvisos: NotificationPermission | 'no-soportado' = AlarmaSos.permiso();
+
+  /** Menú lateral en el celular (cajón). */
+  menuAbierto = false;
   pqrsAbiertas = 0;
   conductoresPendientes = 0;
   private relojResumen?: ReturnType<typeof setInterval>;
@@ -154,14 +285,18 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private api: ApiService,
-    private sesion: SesionService
+    private sesion: SesionService,
   ) {}
 
   ngOnInit(): void {
     this.nombre = localStorage.getItem('nombre') || 'Admin';
     this.foto = localStorage.getItem('foto') || '';
     this.rolEtiqueta = this.esSoporte ? 'Soporte' : 'Administrador';
-    const hoy = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+    const hoy = new Date().toLocaleDateString('es-CO', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
     this.hoyTexto = hoy.charAt(0).toUpperCase() + hoy.slice(1);
     this.cargarResumen();
     this.relojResumen = setInterval(() => this.cargarResumen(), RESUMEN_MS);
@@ -169,6 +304,7 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearInterval(this.relojResumen);
+    this.alarma.detener();
     this.liberarDocumentos();
   }
 
@@ -185,15 +321,25 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
 
   irA(seccion: Seccion, filtroConductor?: string) {
     this.seccionActiva = seccion;
+    this.menuAbierto = false;
     this.filtroConductor = filtroConductor ?? 'todos';
   }
 
   /** Contadores del backend (GET /admin/resumen) para el menú. */
   cargarResumen(): void {
-    this.api.get<{ totales: Record<string, number> }>('/admin/resumen')
-      .then(r => {
+    this.api
+      .get<{ totales: Record<string, number> }>('/admin/resumen')
+      .then((r) => {
         const t = r.totales;
-        this.pendientesSeguridad = Number(t['sos_abiertas'] || 0) + Number(t['alertas_viaje_pendientes'] || 0);
+        const sos = Number(t['sos_abiertas'] || 0);
+        this.pendientesSeguridad = sos + Number(t['alertas_viaje_pendientes'] || 0);
+        // SOS NUEVA: sonido, título de la pestaña y notificación del navegador (aunque esté en otra pestaña)
+        if (this.sosAnteriores !== null && sos > this.sosAnteriores) {
+          this.alarma.sonar(sos, () => this.irA('seguridad'));
+        }
+        this.sosAnteriores = sos;
+        this.sosAbiertas = sos;
+        this.alarma.titulo(sos);
         this.pqrsAbiertas = Number(t['pqrs_abiertas'] || 0);
         this.conductoresPendientes = Number(t['conductores_pendientes'] || 0);
       })
@@ -236,10 +382,12 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
     this.rechazandoDoc = null;
     this.liberarDocumentos();
 
-    this.api.get<Expediente>(`/admin/conductores/${c.conductor_id}/expediente`)
-      .then(e => (this.expediente = e))
+    this.api
+      .get<Expediente>(`/admin/conductores/${c.conductor_id}/expediente`)
+      .then((e) => (this.expediente = e))
       .catch(() => undefined);
-    this.api.get(`/transporte/admin/conductor/${c.conductor_id}/detalle`)
+    this.api
+      .get(`/transporte/admin/conductor/${c.conductor_id}/detalle`)
       .then((data: any) => {
         this.conductorDetalle = data;
         this.cargandoDetalle = false;
@@ -247,7 +395,7 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
           if (d.archivo) this.cargarDocumento(String(d.id), d.archivo);
         }
       })
-      .catch(err => {
+      .catch((err) => {
         this.cargandoDetalle = false;
         this.errorModal = ApiService.mensaje(err, 'No se pudo cargar el detalle del conductor.');
       });
@@ -258,7 +406,7 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
   }
 
   get documentosPorRevisar(): number {
-    return this.documentosDetalle.filter(d => d.estado === 'pendiente').length;
+    return this.documentosDetalle.filter((d) => d.estado === 'pendiente').length;
   }
 
   /**
@@ -266,8 +414,9 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
    * no se puede aprobar (los "por revisar" sí: el admin los está viendo y quedan aprobados al aprobar).
    */
   get faltanRequisitos(): number {
-    return (this.expediente?.requisitos ?? [])
-      .filter(r => r.obligatorio && (!r.estado || r.estado === 'rechazado' || r.estado === 'vencido')).length;
+    return (this.expediente?.requisitos ?? []).filter(
+      (r) => r.obligatorio && (!r.estado || r.estado === 'rechazado' || r.estado === 'vencido'),
+    ).length;
   }
 
   cerrarModalDocumentos() {
@@ -287,7 +436,8 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
       return;
     }
     if (estado === 'rechazado' && !this.observacionDoc.trim()) {
-      this.errorModal = 'Escribe por qué rechazas el documento para que el conductor sepa qué corregir.';
+      this.errorModal =
+        'Escribe por qué rechazas el documento para que el conductor sepa qué corregir.';
       return;
     }
     this.procesandoDoc = d.id;
@@ -295,13 +445,13 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
     try {
       await this.api.patch(`/admin/documentos/${d.id}`, {
         estado,
-        observacion: estado === 'rechazado' ? this.observacionDoc.trim() : null
+        observacion: estado === 'rechazado' ? this.observacionDoc.trim() : null,
       });
       d.estado = estado;
       d.estado_nombre = estado === 'aprobado' ? 'Aprobado' : 'Rechazado';
       d.observacion = estado === 'rechazado' ? this.observacionDoc.trim() : null;
       this.rechazandoDoc = null;
-      const req = this.expediente?.requisitos.find(r => r.codigo === d.tipo_documento);
+      const req = this.expediente?.requisitos.find((r) => r.codigo === d.tipo_documento);
       if (req) req.estado = estado;
       this.versionConductores++;
     } catch (err) {
@@ -323,16 +473,19 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
    * se muestran con una URL local; el servidor valida el tipo real del archivo.
    */
   private cargarDocumento(campo: string, nombreArchivo: string) {
-    this.api.blob(`/conductor/documento/${encodeURIComponent(nombreArchivo)}`)
-      .then(blob => {
+    this.api
+      .blob(`/conductor/documento/${encodeURIComponent(nombreArchivo)}`)
+      .then((blob) => {
         this.docTipos[campo] = blob.type;
         this.docUrls[campo] = URL.createObjectURL(blob);
       })
-      .catch(() => { this.docUrls[campo] = ''; });
+      .catch(() => {
+        this.docUrls[campo] = '';
+      });
   }
 
   private liberarDocumentos() {
-    Object.values(this.docUrls).forEach(u => u && URL.revokeObjectURL(u));
+    Object.values(this.docUrls).forEach((u) => u && URL.revokeObjectURL(u));
     this.docUrls = {};
     this.docTipos = {};
   }
@@ -368,7 +521,10 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
     this.abrirMotivo(c, 'suspendido');
   }
 
-  private abrirMotivo(c: { conductor_id: number; nombre?: string }, accion: 'rechazado' | 'suspendido') {
+  private abrirMotivo(
+    c: { conductor_id: number; nombre?: string },
+    accion: 'rechazado' | 'suspendido',
+  ) {
     this.conductorSeleccionado = c;
     this.accionModal = accion;
     this.motivoRechazo = '';
@@ -391,7 +547,10 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
   async cambiarEstado(conductorId: number, nuevoEstado: string, enModal = false): Promise<boolean> {
     const conMotivo = nuevoEstado === 'rechazado' || nuevoEstado === 'suspendido';
     if (conMotivo && this.motivoRechazo.trim().length < 5) {
-      this.avisar('error', 'Escribe el motivo (al menos 5 letras) para que el conductor sepa qué pasó.');
+      this.avisar(
+        'error',
+        'Escribe el motivo (al menos 5 letras) para que el conductor sepa qué pasó.',
+      );
       return false;
     }
     if (this.procesandoConductor) return false;
@@ -399,12 +558,12 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
     try {
       await this.api.patch(`/transporte/admin/conductor/${conductorId}/estado`, {
         estado: nuevoEstado,
-        motivo_rechazo: conMotivo ? this.motivoRechazo.trim() : ''
+        motivo_rechazo: conMotivo ? this.motivoRechazo.trim() : '',
       });
       const textos: Record<string, string> = {
         aprobado: 'Conductor aprobado: ya puede conectarse y recibir servicios.',
         rechazado: 'Conductor rechazado. Verá el motivo en la app para corregir.',
-        suspendido: 'Conductor suspendido: deja de recibir servicios.'
+        suspendido: 'Conductor suspendido: deja de recibir servicios.',
       };
       this.avisar('ok', textos[nuevoEstado] || `Conductor ${nuevoEstado}.`);
       this.cerrarModal();
@@ -427,9 +586,16 @@ export class HomeAdminComponent implements OnInit, OnDestroy {
     this.relojAviso = setTimeout(() => (this.aviso = null), 6000);
   }
 
+  /** Pide permiso al navegador para avisar de un SOS aunque el panel esté en otra pestaña. */
+  async activarAvisos(): Promise<void> {
+    this.permisoAvisos = await this.alarma.pedirPermiso();
+    if (this.permisoAvisos === 'granted')
+      this.avisar('ok', 'Listo: te avisaremos con sonido y notificación cuando entre un SOS.');
+  }
+
   // ─── SESIÓN ────────────────────────────────────
   cerrarSesion() {
-    localStorage.clear();
+    cerrarSesionWeb();
     this.router.navigate(['/login']);
   }
 

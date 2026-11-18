@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SelectorPuntos, TipoPunto } from '../../core/mapa-ciudad';
 
@@ -13,7 +13,8 @@ import { SelectorPuntos, TipoPunto } from '../../core/mapa-ciudad';
   imports: [FormsModule],
   templateUrl: './puntos-ruta.html',
   styleUrls: ['./puntos-ruta.css'],
-  host: { '[style.--acento]': 'acento' }
+  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { '[style.--acento]': 'acento' },
 })
 export class PuntosRutaComponent {
   @Input({ required: true }) selector!: SelectorPuntos;

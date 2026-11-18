@@ -1,4 +1,10 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +12,7 @@ import { ConductorService } from '../../Base_de_datos/conductor.service';
 import { ApiService } from '../../core/api.service';
 
 import { cargarChartJs } from '../../core/cargar-script';
+import { cerrarSesionWeb } from '../../core/sesion.service';
 
 // Chart.js es global: se descarga solo al abrir esta pantalla (cargarChartJs), no desde index.html
 declare var Chart: any;
@@ -15,10 +22,10 @@ declare var Chart: any;
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './ganancias-conductor.html',
-  styleUrls: ['./ganancias-conductor.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./ganancias-conductor.css'],
 })
 export class GananciasConductorComponent implements OnInit, OnDestroy, AfterViewInit {
-
   // ── DATOS USUARIO ────────────────────────────────────────────
   nombre: string = '';
   conductorId: number | null = null;
@@ -38,20 +45,20 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
 
   // ── ESTADÍSTICAS ─────────────────────────────────────────────
   stats = {
-    ganancias_hoy:     0,
-    viajes_hoy:        0,
-    trend_hoy:         0,
-    ganancias_semana:  0,
-    viajes_semana:     0,
-    trend_semana:      0,
-    ganancias_mes:     0,
-    viajes_mes:        0,
-    trend_mes:         0,
-    saldo_disponible:  0,
-    total_acumulado:   0,
-    ganancia_viajes:   0,
-    propinas:          0,
-    incentivos:        0
+    ganancias_hoy: 0,
+    viajes_hoy: 0,
+    trend_hoy: 0,
+    ganancias_semana: 0,
+    viajes_semana: 0,
+    trend_semana: 0,
+    ganancias_mes: 0,
+    viajes_mes: 0,
+    trend_mes: 0,
+    saldo_disponible: 0,
+    total_acumulado: 0,
+    ganancia_viajes: 0,
+    propinas: 0,
+    incentivos: 0,
   };
 
   // ── GRÁFICA ──────────────────────────────────────────────────
@@ -74,7 +81,7 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
   constructor(
     private conductorService: ConductorService,
     private router: Router,
-    private api: ApiService
+    private api: ApiService,
   ) {}
 
   // ════════════════════════════════════════════════════════════
@@ -82,11 +89,14 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
   // ════════════════════════════════════════════════════════════
   ngOnInit(): void {
     const correo = localStorage.getItem('correo');
-    if (!correo) { this.router.navigate(['/login']); return; }
+    if (!correo) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
     this.conductorService.obtenerPerfil(correo).subscribe({
       next: (p: any) => {
-        this.nombre      = p.nombre || 'Conductor';
+        this.nombre = p.nombre || 'Conductor';
         this.conductorId = p.conductor_id || p.id;
         this.cargarTodo();
         // Refresca estadísticas cada 30 s
@@ -97,7 +107,7 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
         this.cargando = false;
         const msg = err.error?.error || 'No eres un conductor registrado.';
         this.mensajeErr = `Error: ${msg}`;
-      }
+      },
     });
   }
 
@@ -108,7 +118,7 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
   ngOnDestroy(): void {
     if (this.pollingInterval) clearInterval(this.pollingInterval);
     if (this.chartLinea) this.chartLinea.destroy();
-    if (this.chartDona)  this.chartDona.destroy();
+    if (this.chartDona) this.chartDona.destroy();
   }
 
   // ════════════════════════════════════════════════════════════
@@ -121,7 +131,7 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
       this.cargarStats(),
       this.cargarTransacciones(),
       this.cargarGrafica(),
-      cargarChartJs().catch(() => undefined) // sin CDN: los datos se ven igual, sin las gráficas
+      cargarChartJs().catch(() => undefined), // sin CDN: los datos se ven igual, sin las gráficas
     ]).finally(() => {
       this.cargando = false;
       // Pequeño delay para que el DOM renderice el canvas
@@ -147,31 +157,32 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
    */
   cargarStats(): Promise<void> {
     if (!this.conductorId) return Promise.resolve();
-    return this.api.get(`/transporte/ganancias-stats/${this.conductorId}`, { filtro: this.filtro })
+    return this.api
+      .get(`/transporte/ganancias-stats/${this.conductorId}`, { filtro: this.filtro })
       .then((d: any) => {
         this.stats = {
-          ganancias_hoy:    Number(d.ganancias_hoy)    || 0,
-          viajes_hoy:       Number(d.viajes_hoy)       || 0,
-          trend_hoy:        Number(d.trend_hoy)        || 0,
+          ganancias_hoy: Number(d.ganancias_hoy) || 0,
+          viajes_hoy: Number(d.viajes_hoy) || 0,
+          trend_hoy: Number(d.trend_hoy) || 0,
           ganancias_semana: Number(d.ganancias_semana) || 0,
-          viajes_semana:    Number(d.viajes_semana)    || 0,
-          trend_semana:     Number(d.trend_semana)     || 0,
-          ganancias_mes:    Number(d.ganancias_mes)    || 0,
-          viajes_mes:       Number(d.viajes_mes)       || 0,
-          trend_mes:        Number(d.trend_mes)        || 0,
+          viajes_semana: Number(d.viajes_semana) || 0,
+          trend_semana: Number(d.trend_semana) || 0,
+          ganancias_mes: Number(d.ganancias_mes) || 0,
+          viajes_mes: Number(d.viajes_mes) || 0,
+          trend_mes: Number(d.trend_mes) || 0,
           saldo_disponible: Number(d.saldo_disponible) || 0,
-          total_acumulado:  Number(d.total_acumulado)  || 0,
-          ganancia_viajes:  Number(d.ganancia_viajes)  || 0,
-          propinas:         Number(d.propinas)         || 0,
-          incentivos:       Number(d.incentivos)       || 0
+          total_acumulado: Number(d.total_acumulado) || 0,
+          ganancia_viajes: Number(d.ganancia_viajes) || 0,
+          propinas: Number(d.propinas) || 0,
+          incentivos: Number(d.incentivos) || 0,
         };
         this.ultimosCuatro = d.ultimos_cuatro || '';
         if (d.metodos_pago && Array.isArray(d.metodos_pago)) {
           this.metodosPago = d.metodos_pago.map((m: any) => ({
-            icono:  m.nombre === 'Efectivo' ? '💵' : m.nombre === 'Tarjeta' ? '💳' : '📱',
+            icono: m.nombre === 'Efectivo' ? '💵' : m.nombre === 'Tarjeta' ? '💳' : '📱',
             nombre: m.nombre,
-            monto:  Number(m.monto) || 0,
-            pct:    Number(m.pct)   || 0
+            monto: Number(m.monto) || 0,
+            pct: Number(m.pct) || 0,
           }));
         }
       })
@@ -199,10 +210,14 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
    */
   cargarTransacciones(pagina: number = 0): Promise<void> {
     if (!this.conductorId) return Promise.resolve();
-    return this.api.get<any[]>(`/transporte/transacciones-conductor/${this.conductorId}`,
-        { filtro: this.filtro, page: pagina, size: this.PAGE_SIZE })
+    return this.api
+      .get<any[]>(`/transporte/transacciones-conductor/${this.conductorId}`, {
+        filtro: this.filtro,
+        page: pagina,
+        size: this.PAGE_SIZE,
+      })
       .then((data: any[]) => {
-        const mapeadas = data.map(t => this.mapearTransaccion(t));
+        const mapeadas = data.map((t) => this.mapearTransaccion(t));
         this.transacciones = pagina === 0 ? mapeadas : [...this.transacciones, ...mapeadas];
         this.paginaTransacciones = pagina;
       })
@@ -220,7 +235,8 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
    */
   cargarGrafica(): Promise<void> {
     if (!this.conductorId) return Promise.resolve();
-    return this.api.get(`/transporte/grafica-conductor/${this.conductorId}`, { filtro: this.filtro })
+    return this.api
+      .get(`/transporte/grafica-conductor/${this.conductorId}`, { filtro: this.filtro })
       .then((data: { dia: string; valor: number }[]) => {
         this.puntosGrafica = data;
       })
@@ -237,12 +253,16 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
   // ── HELPERS MAPEO ────────────────────────────────────────────
   private mapearTransaccion(t: any): any {
     const tipoMap: Record<string, { icono: string; iconClass: string; badgeClass: string }> = {
-      'Pago':      { icono: '✅', iconClass: 'ti-green',  badgeClass: 'badge-pago' },
-      'Propina':   { icono: '🎁', iconClass: 'ti-orange', badgeClass: 'badge-propina' },
-      'Incentivo': { icono: '⭐', iconClass: 'ti-blue',   badgeClass: 'badge-incentivo' },
-      'Retiro':    { icono: '🏦', iconClass: 'ti-purple', badgeClass: 'badge-retiro' }
+      Pago: { icono: '✅', iconClass: 'ti-green', badgeClass: 'badge-pago' },
+      Propina: { icono: '🎁', iconClass: 'ti-orange', badgeClass: 'badge-propina' },
+      Incentivo: { icono: '⭐', iconClass: 'ti-blue', badgeClass: 'badge-incentivo' },
+      Retiro: { icono: '🏦', iconClass: 'ti-purple', badgeClass: 'badge-retiro' },
     };
-    const meta = tipoMap[t.tipo] || { icono: '💳', iconClass: 'ti-green', badgeClass: 'badge-pago' };
+    const meta = tipoMap[t.tipo] || {
+      icono: '💳',
+      iconClass: 'ti-green',
+      badgeClass: 'badge-pago',
+    };
     return { ...t, ...meta };
   }
 
@@ -260,24 +280,26 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
     if (!canvas || typeof Chart === 'undefined') return;
     if (this.chartLinea) this.chartLinea.destroy();
 
-    const labels = this.puntosGrafica.map(p => p.dia);
-    const valores = this.puntosGrafica.map(p => p.valor);
+    const labels = this.puntosGrafica.map((p) => p.dia);
+    const valores = this.puntosGrafica.map((p) => p.valor);
 
     this.chartLinea = new Chart(canvas, {
       type: 'line',
       data: {
         labels,
-        datasets: [{
-          data: valores,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16,185,129,0.10)',
-          borderWidth: 2.5,
-          pointBackgroundColor: '#10b981',
-          pointRadius: 4,
-          pointHoverRadius: 7,
-          fill: true,
-          tension: 0.4
-        }]
+        datasets: [
+          {
+            data: valores,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16,185,129,0.10)',
+            borderWidth: 2.5,
+            pointBackgroundColor: '#10b981',
+            pointRadius: 4,
+            pointHoverRadius: 7,
+            fill: true,
+            tension: 0.4,
+          },
+        ],
       },
       options: {
         responsive: true,
@@ -292,25 +314,25 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
             borderWidth: 1,
             padding: 12,
             callbacks: {
-              label: (ctx: any) => ` $${ctx.parsed.y.toLocaleString('es-CO')}`
-            }
-          }
+              label: (ctx: any) => ` $${ctx.parsed.y.toLocaleString('es-CO')}`,
+            },
+          },
         },
         scales: {
           x: {
             grid: { display: false },
-            ticks: { color: '#94a3b8', font: { size: 12 } }
+            ticks: { color: '#94a3b8', font: { size: 12 } },
           },
           y: {
             grid: { color: '#f1f5f9' },
             ticks: {
               color: '#94a3b8',
               font: { size: 12 },
-              callback: (v: any) => `$${(v / 1000).toFixed(0)}K`
-            }
-          }
-        }
-      }
+              callback: (v: any) => `$${(v / 1000).toFixed(0)}K`,
+            },
+          },
+        },
+      },
     });
   }
 
@@ -322,19 +344,21 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
     this.chartDona = new Chart(canvas, {
       type: 'doughnut',
       data: {
-        datasets: [{
-          data: [this.stats.ganancia_viajes, this.stats.propinas, this.stats.incentivos],
-          backgroundColor: ['#10b981', '#f97316', '#3b82f6'],
-          borderWidth: 0,
-          hoverOffset: 6
-        }]
+        datasets: [
+          {
+            data: [this.stats.ganancia_viajes, this.stats.propinas, this.stats.incentivos],
+            backgroundColor: ['#10b981', '#f97316', '#3b82f6'],
+            borderWidth: 0,
+            hoverOffset: 6,
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         cutout: '72%',
-        plugins: { legend: { display: false }, tooltip: { enabled: true } }
-      }
+        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+      },
     });
   }
 
@@ -361,17 +385,18 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
     this.filtro = f;
     this.paginaTransacciones = 0;
     this.cargando = true;
-    Promise.all([this.cargarStats(), this.cargarTransacciones(0), this.cargarGrafica()])
-      .finally(() => {
+    Promise.all([this.cargarStats(), this.cargarTransacciones(0), this.cargarGrafica()]).finally(
+      () => {
         this.cargando = false;
         setTimeout(() => this.renderizarCharts(), 150);
-      });
+      },
+    );
   }
 
   get rangoLabel(): string {
     const hoy = new Date();
     const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const lastDay   = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    const lastDay = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
     const fmt = (d: Date) => d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
     return `${fmt(primerDia)} – ${fmt(lastDay)}`;
   }
@@ -381,13 +406,21 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
   // ════════════════════════════════════════════════════════════
   exportarCSV(): void {
     const cabeceras = ['ID', 'Tipo', 'Título', 'Subtítulo', 'Fecha', 'Hora', 'Monto'];
-    const filas = this.transacciones.map(t => [
-      t.id, t.tipo, t.titulo, t.subtitulo, t.fecha, t.hora, t.monto
+    const filas = this.transacciones.map((t) => [
+      t.id,
+      t.tipo,
+      t.titulo,
+      t.subtitulo,
+      t.fecha,
+      t.hora,
+      t.monto,
     ]);
-    const csv = [cabeceras, ...filas].map(r => r.join(',')).join('\n');
+    // Cada celda va entre comillas y sin fórmulas: una dirección escrita por un cliente como
+    // "=HYPERLINK(...)" no debe ejecutarse al abrir el archivo en Excel (inyección CSV)
+    const csv = [cabeceras, ...filas].map((r) => r.map(celdaCsv).join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
     a.href = url;
     a.download = `ganancias_conductor_${this.conductorId}_${this.filtro}.csv`;
     a.click();
@@ -402,14 +435,19 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
     this.retirando = true;
 
     // El servidor valida el saldo; el conductor sale del token
-    this.api.post('/transporte/solicitar-retiro', { monto: this.stats.saldo_disponible })
+    this.api
+      .post('/transporte/solicitar-retiro', { monto: this.stats.saldo_disponible })
       .then((r: any) => {
         this.mostrarOk('Retiro solicitado exitosamente. Llegará en 1-2 días hábiles.');
         this.stats.saldo_disponible = Number(r?.saldo_restante) || 0;
         this.cargarTransacciones(0);
       })
-      .catch((err) => this.mostrarErr(ApiService.mensaje(err, 'No se pudo procesar el retiro. Intenta más tarde.')))
-      .finally(() => this.retirando = false);
+      .catch((err) =>
+        this.mostrarErr(
+          ApiService.mensaje(err, 'No se pudo procesar el retiro. Intenta más tarde.'),
+        ),
+      )
+      .finally(() => (this.retirando = false));
   }
 
   verHistorialRetiros(): void {
@@ -441,20 +479,30 @@ export class GananciasConductorComponent implements OnInit, OnDestroy, AfterView
     else this.sidebarColapsado = !this.sidebarColapsado;
   }
 
-  toggleMenu(): void { this.menuAbierto = !this.menuAbierto; }
+  toggleMenu(): void {
+    this.menuAbierto = !this.menuAbierto;
+  }
 
   cerrarSesion(): void {
-    localStorage.clear();
+    cerrarSesionWeb();
     this.router.navigate(['/login']);
   }
 
   private mostrarOk(msg: string): void {
-    this.mensajeOk = msg; this.mensajeErr = '';
-    setTimeout(() => this.mensajeOk = '', 5000);
+    this.mensajeOk = msg;
+    this.mensajeErr = '';
+    setTimeout(() => (this.mensajeOk = ''), 5000);
   }
 
   private mostrarErr(msg: string): void {
-    this.mensajeErr = msg; this.mensajeOk = '';
-    setTimeout(() => this.mensajeErr = '', 5000);
+    this.mensajeErr = msg;
+    this.mensajeOk = '';
+    setTimeout(() => (this.mensajeErr = ''), 5000);
   }
+}
+/** Celda CSV segura: comillas escapadas y sin =, +, -, @ al inicio (Excel los toma como fórmula). */
+export function celdaCsv(valor: unknown): string {
+  let s = valor == null ? '' : String(valor);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g, '""') + '"';
 }

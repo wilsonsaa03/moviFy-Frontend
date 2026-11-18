@@ -1,4 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -29,15 +36,50 @@ interface UsuarioDetalle extends Omit<UsuarioFila, 'servicios_pedidos'> {
   total_calificaciones: number;
   es_conductor: boolean;
   actividad: { pedidos: number; finalizados: number; cancelados_por_el: number; pagado: number };
-  servicios: { id: number; tipo_servicio: string; tipo_vehiculo: string; estado_codigo: string; estado_nombre: string; solicitado_en: string; tarifa: number; como: string; origen: string; destino: string }[];
-  calificaciones: { servicio_id: number; puntuacion: number; comentario: string | null; creado_en: string; de: string }[];
+  servicios: {
+    id: number;
+    tipo_servicio: string;
+    tipo_vehiculo: string;
+    estado_codigo: string;
+    estado_nombre: string;
+    solicitado_en: string;
+    tarifa: number;
+    como: string;
+    origen: string;
+    destino: string;
+  }[];
+  calificaciones: {
+    servicio_id: number;
+    puntuacion: number;
+    comentario: string | null;
+    creado_en: string;
+    de: string;
+  }[];
   pqrs: { id: number; tipo: string; asunto: string; estado: string; creado_en: string }[];
-  reportes_en_contra: { id: number; tipo: string; asunto: string; estado: string; creado_en: string; reporta: string }[];
-  historial_estado: { accion: string; detalle: Record<string, unknown> | string | null; creado_en: string; por: string | null }[];
+  reportes_en_contra: {
+    id: number;
+    tipo: string;
+    asunto: string;
+    estado: string;
+    creado_en: string;
+    reporta: string;
+  }[];
+  historial_estado: {
+    accion: string;
+    detalle: Record<string, unknown> | string | null;
+    creado_en: string;
+    por: string | null;
+  }[];
 }
 
 const ROLES = ['cliente', 'conductor', 'soporte', 'admin'];
-const NOMBRE_ROL: Record<string, string> = { cliente: 'Cliente', conductor: 'Conductor', soporte: 'Soporte', admin: 'Admin', aspirante: 'Aspirante' };
+const NOMBRE_ROL: Record<string, string> = {
+  cliente: 'Cliente',
+  conductor: 'Conductor',
+  soporte: 'Soporte',
+  admin: 'Admin',
+  aspirante: 'Aspirante',
+};
 const ESPERA_MS = 350;
 
 /**
@@ -51,6 +93,7 @@ const ESPERA_MS = 350;
   standalone: true,
   imports: [CommonModule, FormsModule, AdminIcoComponent],
   templateUrl: './admin-usuarios.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../home-admin.css', './admin-usuarios.css'],
 })
 export class AdminUsuariosComponent implements OnInit {
@@ -127,7 +170,10 @@ export class AdminUsuariosComponent implements OnInit {
 
   /** "usuario_bloqueado" → "Bloqueado"; detalle JSON → "motivo: …". */
   accion(a: string): string {
-    return a.replace(/^usuario_/, '').replace(/^rol_/, 'rol ').replace(/_/g, ' ');
+    return a
+      .replace(/^usuario_/, '')
+      .replace(/^rol_/, 'rol ')
+      .replace(/_/g, ' ');
   }
 
   texto(d: unknown): string {
@@ -139,7 +185,12 @@ export class AdminUsuariosComponent implements OnInit {
         return d;
       }
     }
-    return o && typeof o === 'object' ? Object.entries(o).filter(([, v]) => v !== '' && v != null).map(([k, v]) => `${k}: ${v}`).join(' · ') : '';
+    return o && typeof o === 'object'
+      ? Object.entries(o)
+          .filter(([, v]) => v !== '' && v != null)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(' · ')
+      : '';
   }
 
   async abrir(u: UsuarioFila): Promise<void> {
@@ -166,10 +217,15 @@ export class AdminUsuariosComponent implements OnInit {
   async bloquear(): Promise<void> {
     if (!this.detalle || this.guardando) return;
     if (this.motivo.trim().length < 5) {
-      this.errorDetalle = 'Escribe el motivo del bloqueo (al menos 5 letras): queda en el historial de la cuenta.';
+      this.errorDetalle =
+        'Escribe el motivo del bloqueo (al menos 5 letras): queda en el historial de la cuenta.';
       return;
     }
-    await this.cambiarEstado('bloqueado', this.motivo.trim(), `${this.detalle.nombre} quedó bloqueado. Se cerraron sus sesiones.`);
+    await this.cambiarEstado(
+      'bloqueado',
+      this.motivo.trim(),
+      `${this.detalle.nombre} quedó bloqueado. Se cerraron sus sesiones.`,
+    );
   }
 
   async activar(): Promise<void> {
@@ -186,9 +242,15 @@ export class AdminUsuariosComponent implements OnInit {
     try {
       if (quitar) await this.api.delete(`/admin/usuarios/${d.id}/roles/${r}`);
       else await this.api.post(`/admin/usuarios/${d.id}/roles`, { rol: r });
-      const lista = (d.roles || '').split(',').filter(Boolean).filter(x => x !== r);
+      const lista = (d.roles || '')
+        .split(',')
+        .filter(Boolean)
+        .filter((x) => x !== r);
       d.roles = (quitar ? lista : [...lista, r]).sort().join(',');
-      this.aviso.emit({ tipo: 'ok', texto: `${d.nombre}: rol ${this.nombreRol(r)} ${quitar ? 'quitado' : 'asignado'}. Aplica al volver a iniciar sesión.` });
+      this.aviso.emit({
+        tipo: 'ok',
+        texto: `${d.nombre}: rol ${this.nombreRol(r)} ${quitar ? 'quitado' : 'asignado'}. Aplica al volver a iniciar sesión.`,
+      });
       this.cargar();
     } catch (err) {
       this.errorDetalle = ApiService.mensaje(err, 'No se pudo cambiar el rol.');
@@ -219,9 +281,16 @@ export class AdminUsuariosComponent implements OnInit {
     this.cargando = true;
     this.error = '';
     try {
-      const r = await this.api.get<{ items: UsuarioFila[]; total: number }>('/admin/usuarios/buscar', {
-        q: this.q.trim() || null, rol: this.rol || null, estado: this.estado || null, pagina: this.pagina, tamano: this.tamano,
-      });
+      const r = await this.api.get<{ items: UsuarioFila[]; total: number }>(
+        '/admin/usuarios/buscar',
+        {
+          q: this.q.trim() || null,
+          rol: this.rol || null,
+          estado: this.estado || null,
+          pagina: this.pagina,
+          tamano: this.tamano,
+        },
+      );
       this.items = r.items;
       this.total = Number(r.total);
     } catch (err) {

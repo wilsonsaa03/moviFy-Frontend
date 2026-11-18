@@ -3,3 +3,7 @@
 
 /* Lo único propio del login: el espacio donde Google dibuja su botón */
 .lg-google { display: flex; justify-content: center; min-height: 44px; }
+
+/* Código del segundo factor: números grandes y espaciados, fáciles de copiar del SMS */
+.lg-codigo { letter-spacing: 8px; font-size: 22px !important; font-variant-numeric: tabular-nums; }
+.lg-codigo::placeholder { letter-spacing: 8px; }

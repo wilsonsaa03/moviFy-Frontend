@@ -1,4 +1,42 @@
-/* You can add global styles to this file, and also import other style files */
+/* Estilos globales. OJO: "body { ... }" dentro del CSS de un componente NO llega al body real
+   (Angular encapsula los estilos de cada componente); lo de la página entera va aquí. */
+
+/* Sin el marco blanco de 8 px que el navegador le pone al body */
+html, body { margin: 0; padding: 0; }
+
+/* Pantallas oscuras (landing): el fondo de la página y la barra de scroll combinan */
+html.fondo-oscuro { background: #03274D; color-scheme: dark; }
+
+/* ── Scroll suave (Lenis, core/scroll-suave.ts) ── */
+html.lenis, html.lenis body { height: auto; }
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: clip; }
+.lenis [data-lenis-prevent], .lenis [data-sin-scroll-suave] { overscroll-behavior: contain; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* ── Barra de scroll con los colores de MoviFY ── */
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #02AAB4 0%, #5FD3D9 55%, #FE7B13 100%);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #007C84 0%, #02AAB4 55%, #FE7B13 100%);
+  background-clip: padding-box;
+  border-width: 2px;
+}
+::-webkit-scrollbar-corner { background: transparent; }
+/* Firefox no tiene los ::-webkit-*: color sólido y barra delgada */
+@supports (-moz-appearance: none) {
+  * { scrollbar-width: thin; scrollbar-color: #02AAB4 transparent; }
+}
+
+/* Quien pide "reducir movimiento" en su sistema no recibe animaciones de scroll */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+}
 
 /* CONTENEDOR GENERAL */
 .landing-container {

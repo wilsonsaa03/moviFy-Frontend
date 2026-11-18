@@ -1,4 +1,10 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -17,10 +23,10 @@ declare let window: any;
   standalone: true,
   imports: [CommonModule, FormsModule, PuntosRutaComponent],
   templateUrl: './solicitar-encomienda.html',
-  styleUrls: ['./solicitar-encomienda.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./solicitar-encomienda.css'],
 })
 export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
-
   /* ===================== VARIABLES PÚBLICAS ===================== */
   origen: string = 'Detectando ubicación...';
   nombreRemitente: string = '';
@@ -53,9 +59,27 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
 
   /** Tamaños del Figma (Encomienda 2 · Paquete). El backend los traduce a pequeno/mediano. */
   tiposPaquete = [
-    { valor: 'sobre',   label: 'Sobre',   detalle: 'Documentos o cartas',      icon: '✉️', vehiculo: 'moto' },
-    { valor: 'pequeno', label: 'Pequeño', detalle: 'Cabe en una mochila',       icon: '🎒', vehiculo: 'moto' },
-    { valor: 'mediano', label: 'Mediano', detalle: 'Cabe en el baúl de un carro', icon: '🧳', vehiculo: 'taxi' }
+    {
+      valor: 'sobre',
+      label: 'Sobre',
+      detalle: 'Documentos o cartas',
+      icon: '✉️',
+      vehiculo: 'moto',
+    },
+    {
+      valor: 'pequeno',
+      label: 'Pequeño',
+      detalle: 'Cabe en una mochila',
+      icon: '🎒',
+      vehiculo: 'moto',
+    },
+    {
+      valor: 'mediano',
+      label: 'Mediano',
+      detalle: 'Cabe en el baúl de un carro',
+      icon: '🧳',
+      vehiculo: 'taxi',
+    },
   ];
   fragil: boolean = false;
   /** "Lo recibo yo mismo": quien recibe es la misma persona que envía. */
@@ -88,7 +112,11 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   private lineaSimulacion?: L.Polyline;
   private lineaRecorrida?: L.Polyline;
 
-  constructor(private router: Router, private api: ApiService, private sesion: SesionService) {}
+  constructor(
+    private router: Router,
+    private api: ApiService,
+    private sesion: SesionService,
+  ) {}
 
   /* ===================== LIFECYCLE ===================== */
   ngOnInit(): void {
@@ -116,7 +144,10 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   /* ===================== MAPA ===================== */
   private initMap(): void {
     const container = document.getElementById('map');
-    if (!container) { setTimeout(() => this.initMap(), 300); return; }
+    if (!container) {
+      setTimeout(() => this.initMap(), 300);
+      return;
+    }
     if ((container as any)._leaflet_id) (container as any)._leaflet_id = null;
 
     // Abre en Buenaventura aunque el GPS no responda
@@ -126,12 +157,22 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     this.puntos = new SelectorPuntos(
       this.map,
       {
-        origen: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35] }),
-        destino: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/679/679821.png', iconSize: [42, 42], iconAnchor: [21, 42], popupAnchor: [0, -35] })
+        origen: L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+          iconSize: [42, 42],
+          iconAnchor: [21, 42],
+          popupAnchor: [0, -35],
+        }),
+        destino: L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/679/679821.png',
+          iconSize: [42, 42],
+          iconAnchor: [21, 42],
+          popupAnchor: [0, -35],
+        }),
       },
       { origen: '📍 Punto de recogida', destino: '📦 Entregar aquí' },
       () => this.alCambiarPuntos(),
-      () => this.puedeEditarPuntos
+      () => this.puedeEditarPuntos,
     );
     this.puntos.iniciar();
   }
@@ -175,16 +216,19 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   private dibujarConductoresEnMapa(conductores: any[]): void {
     const motoIcon = L.icon({
       iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
-      iconSize: [35, 35], iconAnchor: [17, 35], popupAnchor: [0, -30]
+      iconSize: [35, 35],
+      iconAnchor: [17, 35],
+      popupAnchor: [0, -30],
     });
 
-    conductores.forEach(c => {
+    conductores.forEach((c) => {
       const id = c.conductor_id || c.id;
       if (this.conductoresMarkers.has(id)) {
         this.conductoresMarkers.get(id)!.setLatLng([c.latitud, c.longitud]);
       } else {
         const m = L.marker([c.latitud, c.longitud], { icon: motoIcon })
-          .addTo(this.map).bindPopup('<b>🛵 Conductor disponible</b>');
+          .addTo(this.map)
+          .bindPopup('<b>🛵 Conductor disponible</b>');
         this.conductoresMarkers.set(id, m);
       }
     });
@@ -219,8 +263,12 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     if (!o || !d) return;
     try {
       const c = await this.api.get('/tarifas/cotizar', {
-        tipo_servicio: 'encomienda', tipo_vehiculo: this.vehiculo,
-        origen_lat: o.lat, origen_lng: o.lng, destino_lat: d.lat, destino_lng: d.lng
+        tipo_servicio: 'encomienda',
+        tipo_vehiculo: this.vehiculo,
+        origen_lat: o.lat,
+        origen_lng: o.lng,
+        destino_lat: d.lat,
+        destino_lng: d.lng,
       });
       this.tarifaEstimada = Number(c.opciones?.[0]?.valor_estimado) || 0;
       if (c.duracion_min) this.tiempoEstimado = Number(c.duracion_min);
@@ -237,7 +285,7 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   /* ===================== PAQUETE ===================== */
   /** Como en el Figma: el mediano va en taxi; y la moto no lleva más de 15 kg (regla de la BD). */
   get vehiculo(): 'moto' | 'taxi' {
-    const tipo = this.tiposPaquete.find(t => t.valor === this.tipoPaquete);
+    const tipo = this.tiposPaquete.find((t) => t.valor === this.tipoPaquete);
     return tipo?.vehiculo === 'taxi' || Number(this.pesoAproximado) > 15 ? 'taxi' : 'moto';
   }
 
@@ -274,12 +322,20 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     const f: { campo: string; texto: string }[] = [];
     if (!this.ubicacionEncontrada) f.push({ campo: 'recogida', texto: 'el lugar de recogida' });
     if (!this.destinoMarker) f.push({ campo: 'entrega', texto: 'la dirección de entrega' });
-    if (!this.nombreRemitente.trim()) f.push({ campo: 'nombreRemitente', texto: 'el nombre de quien envía' });
-    if (!SolicitarEncomienda.telefonoValido(this.telefonoRemitente)) f.push({ campo: 'telefonoRemitente', texto: 'un celular válido de quien envía' });
-    if (!this.nombreDestinatario.trim()) f.push({ campo: 'nombreDestinatario', texto: 'el nombre de quien recibe' });
-    if (!SolicitarEncomienda.telefonoValido(this.telefonoDestinatario)) f.push({ campo: 'telefonoDestinatario', texto: 'un celular válido de quien recibe' });
+    if (!this.nombreRemitente.trim())
+      f.push({ campo: 'nombreRemitente', texto: 'el nombre de quien envía' });
+    if (!SolicitarEncomienda.telefonoValido(this.telefonoRemitente))
+      f.push({ campo: 'telefonoRemitente', texto: 'un celular válido de quien envía' });
+    if (!this.nombreDestinatario.trim())
+      f.push({ campo: 'nombreDestinatario', texto: 'el nombre de quien recibe' });
+    if (!SolicitarEncomienda.telefonoValido(this.telefonoDestinatario))
+      f.push({ campo: 'telefonoDestinatario', texto: 'un celular válido de quien recibe' });
     if (!this.descripcion.trim()) f.push({ campo: 'descripcion', texto: 'qué vas a enviar' });
-    else if (this.prohibido) f.push({ campo: 'descripcion', texto: `quitar lo que no podemos llevar (${this.prohibido})` });
+    else if (this.prohibido)
+      f.push({
+        campo: 'descripcion',
+        texto: `quitar lo que no podemos llevar (${this.prohibido})`,
+      });
     return f;
   }
 
@@ -290,12 +346,12 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
 
   /** Campo marcado en rojo (solo después de intentar enviar, para no regañar mientras escribe). */
   invalido(campo: string): boolean {
-    return this.intentoEnviar && this.faltantes.some(f => f.campo === campo);
+    return this.intentoEnviar && this.faltantes.some((f) => f.campo === campo);
   }
 
   /** "Falta: el nombre de quien recibe y la dirección de entrega." */
   get mensajeFaltantes(): string {
-    const t = this.faltantes.map(f => f.texto);
+    const t = this.faltantes.map((f) => f.texto);
     if (!t.length) return '';
     const lista = t.length === 1 ? t[0] : `${t.slice(0, -1).join(', ')} y ${t[t.length - 1]}`;
     return `Para enviar tu encomienda falta ${lista}.`;
@@ -311,7 +367,9 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     if (!this.puedeEnviar()) {
       // No se crea nada: se dice qué falta y se lleva al primer campo pendiente
       this.intentoEnviar = true;
-      const primero = document.querySelector<HTMLElement>(`[data-campo="${this.faltantes[0].campo}"]`);
+      const primero = document.querySelector<HTMLElement>(
+        `[data-campo="${this.faltantes[0].campo}"]`,
+      );
       primero?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       primero?.focus?.();
       return;
@@ -340,7 +398,7 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
       telefono_destinatario: this.telefonoDestinatario,
       tipo_paquete: this.tipoPaquete,
       fragil: this.fragil,
-      peso_kg: String(this.pesoAproximado ?? '').slice(0, 10)
+      peso_kg: String(this.pesoAproximado ?? '').slice(0, 10),
     };
 
     try {
@@ -376,7 +434,14 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   /* ===================== PROCESAR ESTADOS (datos reales del backend) ===================== */
   private procesarEstadoServicio(s: any): void {
     if (s.codigo_entrega) this.codigoEntrega = s.codigo_entrega;
-    const enCurso = ['ACEPTADO', 'EN_CAMINO_AL_USUARIO', 'LLEGO_AL_ORIGEN', 'EN_CAMINO', 'EN_VIAJE', 'PAQUETE_RECOGIDO'];
+    const enCurso = [
+      'ACEPTADO',
+      'EN_CAMINO_AL_USUARIO',
+      'LLEGO_AL_ORIGEN',
+      'EN_CAMINO',
+      'EN_VIAJE',
+      'PAQUETE_RECOGIDO',
+    ];
     if (enCurso.includes(s.estado)) {
       this.transicionFinalizada = true;
       this.buscandoConductor = false;
@@ -385,11 +450,20 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
       }
     }
 
-    if ((s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO_AL_USUARIO') && this.faseRuta !== 'recogida') {
+    if (
+      (s.estado === 'ACEPTADO' || s.estado === 'EN_CAMINO_AL_USUARIO') &&
+      this.faseRuta !== 'recogida'
+    ) {
       this.faseRuta = 'recogida';
       this.mensajeEstado = '🛵 ¡Conductor encontrado! En camino a recoger el paquete.';
       if (s.conductor_lat != null) {
-        this.iniciarSimulacion(Number(s.conductor_lat), Number(s.conductor_lng), this.userLat, this.userLng, '#f59e0b');
+        this.iniciarSimulacion(
+          Number(s.conductor_lat),
+          Number(s.conductor_lng),
+          this.userLat,
+          this.userLng,
+          '#f59e0b',
+        );
       }
     }
 
@@ -397,7 +471,10 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
       this.mensajeEstado = '📍 ¡El conductor llegó al punto de recogida!';
     }
 
-    if (['PAQUETE_RECOGIDO', 'EN_VIAJE', 'EN_CAMINO'].includes(s.estado) && this.faseRuta !== 'destino') {
+    if (
+      ['PAQUETE_RECOGIDO', 'EN_VIAJE', 'EN_CAMINO'].includes(s.estado) &&
+      this.faseRuta !== 'destino'
+    ) {
       this.faseRuta = 'destino';
       this.mensajeEstado = '📦 Paquete recogido — en camino al destino.';
       const dest = this.destinoMarker?.getLatLng();
@@ -424,9 +501,12 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     if (!this.conductorMarker) {
       const motoIcon = L.icon({
         iconUrl: 'https://cdn-icons-png.flaticon.com/512/3721/3721619.png',
-        iconSize: [45, 45], iconAnchor: [22, 45]
+        iconSize: [45, 45],
+        iconAnchor: [22, 45],
       });
-      this.conductorMarker = L.marker([lat, lng], { icon: motoIcon }).addTo(this.map).bindPopup('<b>🛵 Tu conductor</b>');
+      this.conductorMarker = L.marker([lat, lng], { icon: motoIcon })
+        .addTo(this.map)
+        .bindPopup('<b>🛵 Tu conductor</b>');
     } else {
       this.conductorMarker.setLatLng([lat, lng]);
     }
@@ -434,9 +514,11 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
 
   /* ===================== SIMULACIÓN DE MOVIMIENTO ===================== */
   public iniciarSimulacion(
-    origenLat: number, origenLng: number,
-    destinoLat: number, destinoLng: number,
-    colorLinea: string
+    origenLat: number,
+    origenLng: number,
+    destinoLat: number,
+    destinoLng: number,
+    colorLinea: string,
   ): void {
     this.detenerSimulacion();
     this.simulacionActiva = true;
@@ -446,23 +528,33 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     const url = `https://router.project-osrm.org/route/v1/driving/${origenLng},${origenLat};${destinoLng},${destinoLat}?overview=full&geometries=geojson`;
 
     fetch(url)
-      .then(r => r.json())
-      .then(data => {
-        if (!data.routes?.length) { this.simulacionActiva = false; return; }
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.routes?.length) {
+          this.simulacionActiva = false;
+          return;
+        }
 
         const coords = data.routes[0].geometry.coordinates;
         this.puntosRuta = coords.map((c: number[]) => L.latLng(c[1], c[0]));
 
-        if (this.puntosRuta.length < 2) { this.simulacionActiva = false; return; }
+        if (this.puntosRuta.length < 2) {
+          this.simulacionActiva = false;
+          return;
+        }
 
         // Línea de ruta restante
         this.lineaSimulacion = L.polyline(this.puntosRuta, {
-          color: colorLinea, weight: 6, opacity: 0.85
+          color: colorLinea,
+          weight: 6,
+          opacity: 0.85,
         }).addTo(this.map);
 
         // Estela del recorrido ya hecho
         this.lineaRecorrida = L.polyline([this.puntosRuta[0]], {
-          color: colorLinea, weight: 3, opacity: 0.35
+          color: colorLinea,
+          weight: 3,
+          opacity: 0.35,
         }).addTo(this.map);
 
         // Ajustar cámara
@@ -471,7 +563,7 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
         // La moto la ubica moverConductor() con el GPS real del conductor
         this.simulacionActiva = false;
       })
-      .catch(e => {
+      .catch((e) => {
         console.error('Error obteniendo ruta OSRM:', e);
         this.simulacionActiva = false;
       });
@@ -483,11 +575,15 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
       this.intervaloSimulacion = null;
     }
     if (this.lineaSimulacion) {
-      try { this.map.removeLayer(this.lineaSimulacion); } catch (e) {}
+      try {
+        this.map.removeLayer(this.lineaSimulacion);
+      } catch (e) {}
       this.lineaSimulacion = undefined;
     }
     if (this.lineaRecorrida) {
-      try { this.map.removeLayer(this.lineaRecorrida); } catch (e) {}
+      try {
+        this.map.removeLayer(this.lineaRecorrida);
+      } catch (e) {}
       this.lineaRecorrida = undefined;
     }
     this.simulacionActiva = false;
@@ -502,14 +598,16 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
       await this.api.post(`${this.apiBase}/calificar`, {
         servicio_id: servicioId,
         puntos: Math.min(5, Math.max(1, parseInt(puntos) || 5)),
-        comentario: 'Calificado desde Encomiendas'
+        comentario: 'Calificado desde Encomiendas',
       });
     } catch (e) {
       alert(ApiService.mensaje(e, 'No se pudo guardar la calificación.'));
     }
   }
 
-  seleccionarEstrella(n: number): void { this.calificacionSeleccionada = n; }
+  seleccionarEstrella(n: number): void {
+    this.calificacionSeleccionada = n;
+  }
 
   async confirmarCalificacion(): Promise<void> {
     await this.enviarCalificacion(this.idServicioFinal, String(this.calificacionSeleccionada));
@@ -551,7 +649,10 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
 
     this.puntos?.quitarDestino();
     this.destinoMarker = undefined;
-    if (this.conductorMarker) { this.map.removeLayer(this.conductorMarker); this.conductorMarker = undefined; }
+    if (this.conductorMarker) {
+      this.map.removeLayer(this.conductorMarker);
+      this.conductorMarker = undefined;
+    }
 
     this.router.navigate(['/home-usuario']);
   }
@@ -560,9 +661,13 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
   enviarMensaje(): void {
     if (this.conductorInfo?.conductor_telefono) {
       const msg = encodeURIComponent(
-        `Hola ${this.conductorInfo.conductor_nombre}, soy ${this.conductorInfo.usuario_nombre ?? 'el remitente'}. Estoy esperando en ${this.origen}.`
+        `Hola ${this.conductorInfo.conductor_nombre}, soy ${this.conductorInfo.usuario_nombre ?? 'el remitente'}. Estoy esperando en ${this.origen}.`,
       );
-      window.open(`https://wa.me/${this.conductorInfo.conductor_telefono}?text=${msg}`, '_blank');
+      window.open(
+        `https://wa.me/${String(this.conductorInfo.conductor_telefono).replace(/\D/g, '')}?text=${msg}`,
+        '_blank',
+        'noopener',
+      );
     } else {
       alert('No se encontró el número de teléfono del conductor.');
     }
@@ -588,32 +693,44 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  volver(): void { this.router.navigate(['/home-usuario']); }
+  volver(): void {
+    this.router.navigate(['/home-usuario']);
+  }
 
   /** Pendiente o aceptada: el cliente todavía puede cancelar (después ya va con el paquete). */
   get puedeCancelar(): boolean {
     const e = this.conductorInfo?.estado;
-    return this.buscandoConductor || e === 'PENDIENTE' || e === 'ACEPTADO' || e === 'EN_CAMINO_AL_USUARIO';
+    return (
+      this.buscandoConductor ||
+      e === 'PENDIENTE' ||
+      e === 'ACEPTADO' ||
+      e === 'EN_CAMINO_AL_USUARIO'
+    );
   }
 
   /** Para que quien envía se lo pase a quien recibe (WhatsApp o copiar). */
   compartirCodigo(): void {
     const texto = `Te envío un paquete por MoviFY. Cuando llegue, dale al conductor este código de entrega: ${this.codigoEntrega}`;
     const tel = (this.telefonoDestinatario || '').replace(/\D/g, '').replace(/^57(?=\d{10}$)/, '');
-    if (tel) window.open(`https://wa.me/57${tel}?text=${encodeURIComponent(texto)}`, '_blank');
+    if (tel)
+      window.open(
+        `https://wa.me/57${String(tel).replace(/\D/g, '')}?text=${encodeURIComponent(texto)}`,
+        '_blank',
+        'noopener',
+      );
     else navigator.clipboard?.writeText(this.codigoEntrega);
   }
 
   /* ===================== HELPERS UI ===================== */
   getProgresoPorcentaje(estado: string): number {
     const pasos: { [key: string]: number } = {
-      'PENDIENTE': 10,
-      'ACEPTADO': 25,
-      'EN_CAMINO_AL_USUARIO': 40,
-      'LLEGO_AL_ORIGEN': 55,
-      'PAQUETE_RECOGIDO': 70,
-      'EN_VIAJE': 85,
-      'FINALIZADO': 100
+      PENDIENTE: 10,
+      ACEPTADO: 25,
+      EN_CAMINO_AL_USUARIO: 40,
+      LLEGO_AL_ORIGEN: 55,
+      PAQUETE_RECOGIDO: 70,
+      EN_VIAJE: 85,
+      FINALIZADO: 100,
     };
     return pasos[estado] || 0;
   }
@@ -622,13 +739,11 @@ export class SolicitarEncomienda implements OnInit, AfterViewInit, OnDestroy {
     if (!this.conductorInfo) return paso === 'PENDIENTE';
     const p = this.getProgresoPorcentaje(this.conductorInfo.estado);
     const umbrales: { [key: string]: number } = {
-      'PENDIENTE': 10,
-      'ACEPTADO': 25,
-      'PAQUETE_RECOGIDO': 70,
-      'FINALIZADO': 100
+      PENDIENTE: 10,
+      ACEPTADO: 25,
+      PAQUETE_RECOGIDO: 70,
+      FINALIZADO: 100,
     };
     return p >= (umbrales[paso] || 0);
   }
-
-
 }

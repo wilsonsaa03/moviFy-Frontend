@@ -1,188 +1,214 @@
-
 <div class="solicitar-wrapper">
-  
   <nav class="navbar">
-    <button class="btn-volver" (click)="volver()">
-      <span class="icon-back">←</span> Volver
-    </button>
+    <button class="btn-volver" (click)="volver()"><span class="icon-back">←</span> Volver</button>
     <span class="nav-brand">
-      <img src="/assets/brand/movify-icono.png" class="nav-logo" alt="MoviFY">
+      <img src="/assets/brand/movify-icono.png" class="nav-logo" alt="MoviFY" />
       Movi<span class="text-neon">FY</span>
     </span>
   </nav>
 
   <div class="content-grid">
-    
     <div class="form-panel">
-      
       <div class="form-header">
         <h2>Solicitar Transporte 🏍️</h2>
         <p>Ingresa tu ruta para conectarte con un conductor disponible al instante.</p>
       </div>
 
       @if (puntos) {
-        <app-puntos-ruta [selector]="puntos" [editable]="puedeEditarPuntos" acento="#16a34a"></app-puntos-ruta>
+        <app-puntos-ruta
+          [selector]="puntos"
+          [editable]="puedeEditarPuntos"
+          acento="#16a34a"
+        ></app-puntos-ruta>
       }
 
-      <div class="tarifa-box slide-up" *ngIf="tarifaEstimada > 0 && !buscandoConductor && !conductorInfo">
-        <div class="tarifa-item">
-          <span class="label">💰 Tarifa estimada</span>
-          <strong class="value highlight-text">${{ tarifaEstimada | number }}</strong>
-        </div>
-        <div class="divider"></div>
-        <div class="tarifa-item">
-          <span class="label">📏 Distancia</span>
-          <strong class="value">{{ distanciaViaje.toFixed(2) }} km</strong>
-        </div>
-      </div>
-
-      <div class="info-mapa" *ngIf="tarifaEstimada === 0 && !buscandoConductor && !conductorInfo">
-        🗺️ Marca la recogida y el destino en el mapa o escríbelos arriba
-      </div>
-
-      <!-- ESTADO DE BÚSQUEDA CON CONTADOR -->
-      <div class="busqueda-estado" *ngIf="buscandoConductor">
-        <div class="busqueda-pulso">
-          <div class="pulso-ring"></div>
-          <div class="pulso-ring pulso-ring-2"></div>
-          <span class="pulso-icon">🛵</span>
-        </div>
-        <p class="busqueda-texto">Buscando conductores cerca...</p>
-        <p class="busqueda-contador">{{ segundosBuscando }}s</p>
-        <div class="busqueda-barra">
-          <div class="busqueda-barra-fill" 
-               [style.width.%]="(segundosBuscando / TIMEOUT_BUSQUEDA_SEG) * 100">
+      @if (tarifaEstimada > 0 && !buscandoConductor && !conductorInfo) {
+        <div class="tarifa-box slide-up">
+          <div class="tarifa-item">
+            <span class="label">💰 Tarifa estimada</span>
+            <strong class="value highlight-text">${{ tarifaEstimada | number }}</strong>
+          </div>
+          <div class="divider"></div>
+          <div class="tarifa-item">
+            <span class="label">📏 Distancia</span>
+            <strong class="value">{{ distanciaViaje.toFixed(2) }} km</strong>
           </div>
         </div>
-        <p class="busqueda-hint">Conectando con la red de conductores MoviFY</p>
-      </div>
+      }
 
-      <button 
-        class="btn-solicitar" 
-        [class.is-loading]="buscandoConductor"
-        [disabled]="distanciaViaje === 0 || buscandoConductor || !!conductorInfo"
-        (click)="solicitarViaje()"
-        *ngIf="!conductorInfo"
-      >
-        <span *ngIf="!buscandoConductor" class="btn-content">
-          🏍️ Solicitar Moto
-        </span>
-        <span *ngIf="buscandoConductor" class="btn-content">
-          <div class="spinner"></div> Buscando conductor...
-        </span>
-      </button>
+      @if (tarifaEstimada === 0 && !buscandoConductor && !conductorInfo) {
+        <div class="info-mapa">
+          🗺️ Marca la recogida y el destino en el mapa o escríbelos arriba
+        </div>
+      }
 
+      <!-- ESTADO DE BÚSQUEDA CON CONTADOR -->
+      @if (buscandoConductor) {
+        <div class="busqueda-estado">
+          <div class="busqueda-pulso">
+            <div class="pulso-ring"></div>
+            <div class="pulso-ring pulso-ring-2"></div>
+            <span class="pulso-icon">🛵</span>
+          </div>
+          <p class="busqueda-texto">Buscando conductores cerca...</p>
+          <p class="busqueda-contador">{{ segundosBuscando }}s</p>
+          <div class="busqueda-barra">
+            <div
+              class="busqueda-barra-fill"
+              [style.width.%]="(segundosBuscando / TIMEOUT_BUSQUEDA_SEG) * 100"
+            ></div>
+          </div>
+          <p class="busqueda-hint">Conectando con la red de conductores MoviFY</p>
+        </div>
+      }
+
+      @if (!conductorInfo) {
+        <button
+          class="btn-solicitar"
+          [class.is-loading]="buscandoConductor"
+          [disabled]="distanciaViaje === 0 || buscandoConductor || !!conductorInfo"
+          (click)="solicitarViaje()"
+        >
+          @if (!buscandoConductor) {
+            <span class="btn-content"> 🏍️ Solicitar Moto </span>
+          }
+          @if (buscandoConductor) {
+            <span class="btn-content">
+              <div class="spinner"></div>
+              Buscando conductor...
+            </span>
+          }
+        </button>
+      }
     </div>
 
     <div class="map-panel">
       <div id="map"></div>
 
       <!-- Overlay radar mientras busca -->
-      <div class="map-overlay" *ngIf="buscandoConductor">
-        <div class="radar"></div>
-      </div>
+      @if (buscandoConductor) {
+        <div class="map-overlay">
+          <div class="radar"></div>
+        </div>
+      }
 
       <!-- Indicador "Conductor en punto de recogida" (pausa 3s) -->
-      <div class="origen-aviso" *ngIf="conductorEnOrigen">
-        <div class="origen-aviso-inner">
-          <span class="origen-aviso-icon">📍</span>
-          <div>
-            <strong>¡Tu conductor llegó!</strong>
-            <span>Esperando en el punto de recogida...</span>
+      @if (conductorEnOrigen) {
+        <div class="origen-aviso">
+          <div class="origen-aviso-inner">
+            <span class="origen-aviso-icon">📍</span>
+            <div>
+              <strong>¡Tu conductor llegó!</strong>
+              <span>Esperando en el punto de recogida...</span>
+            </div>
           </div>
         </div>
-      </div>
+      }
     </div>
-
   </div>
 
   <!-- PANEL DEL CONDUCTOR (Aparece cuando el viaje es aceptado) -->
-  <div class="panel-conductor" *ngIf="conductorInfo && !buscandoConductor">
-    
-    <!-- Barra de progreso dinámica -->
-    <div class="progress-section">
-      <div class="steps-icons">
-        <div class="step-item" [class.active]="esPasoActivo('solicitado')">
-          <span class="step-icon">📩</span>
-          <span class="step-text">Pedido</span>
+  @if (conductorInfo && !buscandoConductor) {
+    <div class="panel-conductor">
+      <!-- Barra de progreso dinámica -->
+      <div class="progress-section">
+        <div class="steps-icons">
+          <div class="step-item" [class.active]="esPasoActivo('solicitado')">
+            <span class="step-icon">📩</span>
+            <span class="step-text">Pedido</span>
+          </div>
+          <div class="step-item" [class.active]="esPasoActivo('encamino')">
+            <span class="step-icon">🛵</span>
+            <span class="step-text">Camino</span>
+          </div>
+          <div class="step-item" [class.active]="esPasoActivo('enviaje')">
+            <span class="step-icon">🛣️</span>
+            <span class="step-text">Viaje</span>
+          </div>
+          <div class="step-item" [class.active]="esPasoActivo('finalizado')">
+            <span class="step-icon">🏁</span>
+            <span class="step-text">Llegada</span>
+          </div>
         </div>
-        <div class="step-item" [class.active]="esPasoActivo('encamino')">
-          <span class="step-icon">🛵</span>
-          <span class="step-text">Camino</span>
-        </div>
-        <div class="step-item" [class.active]="esPasoActivo('enviaje')">
-          <span class="step-icon">🛣️</span>
-          <span class="step-text">Viaje</span>
-        </div>
-        <div class="step-item" [class.active]="esPasoActivo('finalizado')">
-          <span class="step-icon">🏁</span>
-          <span class="step-text">Llegada</span>
+        <div class="progress-container">
+          <div
+            class="progress-bar-fill"
+            [style.width.%]="getProgresoPorcentaje(conductorInfo.estado)"
+          ></div>
         </div>
       </div>
-      <div class="progress-container">
-        <div class="progress-bar-fill" [style.width.%]="getProgresoPorcentaje(conductorInfo.estado)"></div>
+      <div class="conductor-header">
+        <img
+          [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'"
+          class="foto-conductor"
+        />
+        <div class="info-texto">
+          <h3>{{ conductorInfo.conductor_nombre }}</h3>
+          <p>Tu conductor MoviFY · ⭐️ 4.9</p>
+        </div>
+        <div class="tarifa-tag">${{ conductorInfo.tarifa | number }}</div>
+      </div>
+      <div class="viaje-footer">
+        <span class="badge-estado" [class.badge-origen]="conductorEnOrigen">{{
+          mensajeEstado
+        }}</span>
+        <div class="acciones-viaje">
+          <!-- BOTÓN CANCELAR: Solo visible antes de EN_VIAJE -->
+          @if (
+            conductorInfo.estado === 'ACEPTADO' || conductorInfo.estado === 'EN_CAMINO_AL_USUARIO'
+          ) {
+            <button class="btn-cancelar" (click)="cancelarViaje()">Cancelar Viaje</button>
+          }
+          <button class="btn-accion chat" (click)="enviarMensajeConductor()">💬</button>
+          <button class="btn-accion llamar">📞</button>
+        </div>
       </div>
     </div>
-
-    <div class="conductor-header">
-      <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="foto-conductor">
-      
-      <div class="info-texto">
-        <h3>{{ conductorInfo.conductor_nombre }}</h3>
-        <p>Tu conductor MoviFY · ⭐️ 4.9</p>
-      </div>
-
-      <div class="tarifa-tag">
-        ${{ conductorInfo.tarifa | number }}
-      </div>
-    </div>
-    
-    <div class="viaje-footer">
-      <span class="badge-estado" [class.badge-origen]="conductorEnOrigen">{{ mensajeEstado }}</span>
-      <div class="acciones-viaje">
-        <!-- BOTÓN CANCELAR: Solo visible antes de EN_VIAJE -->
-        <button class="btn-cancelar" 
-          *ngIf="conductorInfo.estado === 'ACEPTADO' || conductorInfo.estado === 'EN_CAMINO_AL_USUARIO'" 
-          (click)="cancelarViaje()">
-          Cancelar Viaje
-        </button>
-        <button class="btn-accion chat" (click)="enviarMensajeConductor()">
-          💬
-        </button>
-        <button class="btn-accion llamar">📞</button>
-      </div>
-    </div>
-  </div>
+  }
 
   <!-- MODAL LLEGADA AL DESTINO -->
-  <div class="modal-destino-overlay" *ngIf="mostrarModalDestino">
-    <div class="modal-destino-card">
-      <div class="modal-destino-icono">🏁</div>
-      <h2 class="modal-destino-titulo">¡Llegaste a tu destino!</h2>
-      <p class="modal-destino-sub">Esperamos que tu viaje haya sido excelente. <br>¡Gracias por usar <strong>MoviFY</strong>!</p>
-      <div class="modal-destino-conductor" *ngIf="conductorInfo">
-        <img [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'" class="modal-foto">
-        <div>
-          <strong>{{ conductorInfo.conductor_nombre }}</strong>
-          <small>Tu conductor MoviFY · ⭐ 4.9</small>
+  @if (mostrarModalDestino) {
+    <div class="modal-destino-overlay">
+      <div class="modal-destino-card">
+        <div class="modal-destino-icono">🏁</div>
+        <h2 class="modal-destino-titulo">¡Llegaste a tu destino!</h2>
+        <p class="modal-destino-sub">
+          Esperamos que tu viaje haya sido excelente. <br />¡Gracias por usar
+          <strong>MoviFY</strong>!
+        </p>
+        @if (conductorInfo) {
+          <div class="modal-destino-conductor">
+            <img
+              [src]="conductorInfo.conductor_foto || 'assets/default-avatar.png'"
+              class="modal-foto"
+            />
+            <div>
+              <strong>{{ conductorInfo.conductor_nombre }}</strong>
+              <small>Tu conductor MoviFY · ⭐ 4.9</small>
+            </div>
+            <div class="modal-destino-tarifa">${{ conductorInfo.tarifa | number }}</div>
+          </div>
+        }
+        <div class="modal-estrellas">
+          <p>¿Cómo calificarías el servicio?</p>
+          <div class="estrellas-row">
+            @for (e of estrellasArray; track e) {
+              <span
+                class="estrella"
+                [class.activa]="e <= calificacionSeleccionada"
+                (click)="seleccionarEstrella(e)"
+                >★</span
+              >
+            }
+          </div>
         </div>
-        <div class="modal-destino-tarifa">${{ conductorInfo.tarifa | number }}</div>
+        <button class="modal-btn-confirmar" (click)="confirmarCalificacion()">
+          ✅ Calificar e ir al inicio
+        </button>
+        <button class="modal-btn-saltar" (click)="saltarCalificacion()">
+          Omitir y volver al inicio
+        </button>
       </div>
-      <div class="modal-estrellas">
-        <p>¿Cómo calificarías el servicio?</p>
-        <div class="estrellas-row">
-          <span *ngFor="let e of estrellasArray" class="estrella"
-            [class.activa]="e <= calificacionSeleccionada"
-            (click)="seleccionarEstrella(e)">★</span>
-        </div>
-      </div>
-      <button class="modal-btn-confirmar" (click)="confirmarCalificacion()">
-        ✅ Calificar e ir al inicio
-      </button>
-      <button class="modal-btn-saltar" (click)="saltarCalificacion()">
-        Omitir y volver al inicio
-      </button>
     </div>
-  </div>
-
+  }
 </div>

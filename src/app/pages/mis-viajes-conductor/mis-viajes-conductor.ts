@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ConductorService } from '../../Base_de_datos/conductor.service';
 import { ApiService } from '../../core/api.service';
+import { cerrarSesionWeb } from '../../core/sesion.service';
 
 // ─────────────────────────────────────────────
 // INTERFACES (tipos que llegan del backend)
@@ -11,7 +12,7 @@ import { ApiService } from '../../core/api.service';
 export interface ViajeItem {
   servicio_id: number;
   estado: string;
-  fecha_solicitud: string;          // ISO 8601: "2026-06-01T15:45:00"
+  fecha_solicitud: string; // ISO 8601: "2026-06-01T15:45:00"
   origen_lat: number;
   origen_lng: number;
   destino_lat: number;
@@ -23,9 +24,9 @@ export interface ViajeItem {
   distancia_km: number;
   duracion_min: number;
   tarifa: number;
-  metodo_pago: string;              // "Efectivo" | "Nequi" | "Daviplata"
+  metodo_pago: string; // "Efectivo" | "Nequi" | "Daviplata"
   usuario_nombre: string;
-  tipo: string;                     // "TRANSPORTE" | "DOMICILIO"
+  tipo: string; // "TRANSPORTE" | "DOMICILIO"
   razon_cancelacion?: string;
 }
 
@@ -43,10 +44,10 @@ export interface StatsViajes {
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './mis-viajes-conductor.html',
-  styleUrls: ['./mis-viajes-conductor.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./mis-viajes-conductor.css'],
 })
 export class MisViajesConductorComponent implements OnInit, OnDestroy {
-
   // ── DATOS CONDUCTOR ──
   nombre: string = '';
   conductorId: number | null = null;
@@ -71,15 +72,15 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
     activos: 0,
     total_viajes: 0,
     tendencia_hoy: 0,
-    tendencia_ganancia: 0
+    tendencia_ganancia: 0,
   };
 
   // ── FILTROS ──
   filtros = [
     { label: 'Todos ▾', valor: 'todos' },
-    { label: 'Hoy',     valor: 'hoy'   },
-    { label: 'Semana',  valor: 'semana' },
-    { label: 'Mes',     valor: 'mes'   }
+    { label: 'Hoy', valor: 'hoy' },
+    { label: 'Semana', valor: 'semana' },
+    { label: 'Mes', valor: 'mes' },
   ];
   filtroActivo: string = 'todos';
   busqueda: string = '';
@@ -97,7 +98,7 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   constructor(
     private conductorService: ConductorService,
     private router: Router,
-    private api: ApiService
+    private api: ApiService,
   ) {}
 
   // ══════════════════════════════════════════
@@ -106,14 +107,17 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const correo = localStorage.getItem('correo');
-    if (!correo) { this.router.navigate(['/login']); return; }
+    if (!correo) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
     this.conductorService.obtenerPerfil(correo).subscribe({
       next: (perfil: any) => {
-        this.nombre       = perfil.nombre        || 'Conductor';
-        this.conductorId  = perfil.conductor_id  || perfil.id;
+        this.nombre = perfil.nombre || 'Conductor';
+        this.conductorId = perfil.conductor_id || perfil.id;
         this.calificacion = Number(perfil.calificacion) || 4.9;
-        this.enLinea      = perfil.en_linea      || false;
+        this.enLinea = perfil.en_linea || false;
 
         if (this.conductorId) {
           this.cargarTodo();
@@ -122,7 +126,7 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.cargando = false;
-      }
+      },
     });
   }
 
@@ -136,40 +140,46 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
 
   cargarTodo(): void {
     this.cargando = true;
-    Promise.all([
-      this.fetchStats(),
-      this.fetchViajes()
-    ]).finally(() => {
+    Promise.all([this.fetchStats(), this.fetchViajes()]).finally(() => {
       this.cargando = false;
     });
   }
 
   private fetchStats(): Promise<void> {
-    return this.api.get<StatsViajes>(`/transporte/stats-conductor/${this.conductorId}`)
+    return this.api
+      .get<StatsViajes>(`/transporte/stats-conductor/${this.conductorId}`)
       .then((data: StatsViajes) => {
         this.stats = data;
       })
-      .catch(err => {
+      .catch((err) => {
         console.warn('Stats no disponibles, usando valores por defecto:', err);
         this.calcularStatsFallback();
       });
   }
 
   private fetchViajes(): Promise<void> {
-    return this.api.get(`/transporte/historial-conductor/${this.conductorId}`, {
-      filtro:   this.filtroActivo,
-      busqueda: this.busqueda,
-      pagina:   this.paginaActual,
-      limite:   this.itemsPorPagina
-    })
-      .then((data: { viajes: ViajeItem[]; total: number; total_paginas: number; pagina_actual: number }) => {
-        this.viajes          = data.viajes        || [];
-        this.totalPaginas    = data.total_paginas || 1;
-        this.paginaActual    = data.pagina_actual || 1;
-        this.viajesFiltrados = [...this.viajes];
-        this.construirPaginas();
+    return this.api
+      .get(`/transporte/historial-conductor/${this.conductorId}`, {
+        filtro: this.filtroActivo,
+        busqueda: this.busqueda,
+        pagina: this.paginaActual,
+        limite: this.itemsPorPagina,
       })
-      .catch(err => {
+      .then(
+        (data: {
+          viajes: ViajeItem[];
+          total: number;
+          total_paginas: number;
+          pagina_actual: number;
+        }) => {
+          this.viajes = data.viajes || [];
+          this.totalPaginas = data.total_paginas || 1;
+          this.paginaActual = data.pagina_actual || 1;
+          this.viajesFiltrados = [...this.viajes];
+          this.construirPaginas();
+        },
+      )
+      .catch((err) => {
         console.error('Error cargando historial:', err);
         this.viajes = [];
         this.viajesFiltrados = [];
@@ -184,19 +194,17 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
 
   private calcularStatsFallback(): void {
     const hoy = new Date().toDateString();
-    const viajesHoy = this.viajes.filter(v =>
-      new Date(v.fecha_solicitud).toDateString() === hoy
-    );
+    const viajesHoy = this.viajes.filter((v) => new Date(v.fecha_solicitud).toDateString() === hoy);
     this.stats = {
-      viajes_hoy:         viajesHoy.filter(v => v.estado === 'FINALIZADO').length,
-      ganancias_hoy:      viajesHoy.filter(v => v.estado === 'FINALIZADO')
-                                   .reduce((acc, v) => acc + (v.tarifa || 0), 0),
-      activos:            this.viajes.filter(v =>
-                            ['EN_VIAJE','ACEPTADO','EN_CAMINO'].includes(v.estado)
-                          ).length,
-      total_viajes:       this.viajes.filter(v => v.estado === 'FINALIZADO').length,
-      tendencia_hoy:      0,
-      tendencia_ganancia: 0
+      viajes_hoy: viajesHoy.filter((v) => v.estado === 'FINALIZADO').length,
+      ganancias_hoy: viajesHoy
+        .filter((v) => v.estado === 'FINALIZADO')
+        .reduce((acc, v) => acc + (v.tarifa || 0), 0),
+      activos: this.viajes.filter((v) => ['EN_VIAJE', 'ACEPTADO', 'EN_CAMINO'].includes(v.estado))
+        .length,
+      total_viajes: this.viajes.filter((v) => v.estado === 'FINALIZADO').length,
+      tendencia_hoy: 0,
+      tendencia_ganancia: 0,
     };
   }
 
@@ -207,7 +215,7 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   cambiarFiltro(valor: string): void {
     this.filtroActivo = valor;
     this.paginaActual = 1;
-    this.fetchViajes().then(() => this.cargando = false);
+    this.fetchViajes().then(() => (this.cargando = false));
   }
 
   filtrarViajes(): void {
@@ -239,8 +247,9 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
 
   /** El CSV exige el token: se descarga como Blob y se guarda con un enlace local. */
   exportarGanancias(): void {
-    this.api.blob(`/transporte/exportar-ganancias/${this.conductorId}`)
-      .then(blob => {
+    this.api
+      .blob(`/transporte/exportar-ganancias/${this.conductorId}`)
+      .then((blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -257,7 +266,7 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
 
   verDetalle(viajeId: number): void {
     // No existe pantalla de detalle: se abre el viaje en el mapa del conductor
-    const viaje = this.viajes.find(v => v.servicio_id === viajeId);
+    const viaje = this.viajes.find((v) => v.servicio_id === viajeId);
     if (viaje) this.abrirMapa(viaje);
   }
 
@@ -275,32 +284,42 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
 
   getBadgeClass(estado: string): string {
     switch (estado?.toUpperCase()) {
-      case 'FINALIZADO':                     return 'badge-completado';
+      case 'FINALIZADO':
+        return 'badge-completado';
       case 'EN_VIAJE':
       case 'ACEPTADO':
       case 'EN_CAMINO':
       case 'EN_CAMINO_AL_USUARIO':
       case 'LLEGO_AL_ORIGEN':
-      case 'PAQUETE_RECOGIDO':               return 'badge-en-curso';
+      case 'PAQUETE_RECOGIDO':
+        return 'badge-en-curso';
       case 'CANCELADO':
-      case 'RECHAZADO':                      return 'badge-cancelado';
-      default:                               return 'badge-pendiente';
+      case 'RECHAZADO':
+        return 'badge-cancelado';
+      default:
+        return 'badge-pendiente';
     }
   }
 
   getFriendlyEstado(estado: string): string {
     switch (estado?.toUpperCase()) {
-      case 'FINALIZADO':                     return 'COMPLETADO';
-      case 'CANCELADO':                      return 'CANCELADO';
-      case 'RECHAZADO':                      return 'RECHAZADO';
+      case 'FINALIZADO':
+        return 'COMPLETADO';
+      case 'CANCELADO':
+        return 'CANCELADO';
+      case 'RECHAZADO':
+        return 'RECHAZADO';
       case 'EN_VIAJE':
       case 'ACEPTADO':
       case 'EN_CAMINO':
       case 'EN_CAMINO_AL_USUARIO':
       case 'LLEGO_AL_ORIGEN':
-      case 'PAQUETE_RECOGIDO':               return 'EN CURSO';
-      case 'PENDIENTE':                      return 'PENDIENTE';
-      default:                               return estado || '—';
+      case 'PAQUETE_RECOGIDO':
+        return 'EN CURSO';
+      case 'PENDIENTE':
+        return 'PENDIENTE';
+      default:
+        return estado || '—';
     }
   }
 
@@ -313,9 +332,7 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
    * Mapea menuNavAbierto (móvil) o el inverso de sidebarColapsado (desktop).
    */
   get sidebarVisible(): boolean {
-    return window.innerWidth <= 992
-      ? this.menuNavAbierto
-      : !this.sidebarColapsado;
+    return window.innerWidth <= 992 ? this.menuNavAbierto : !this.sidebarColapsado;
   }
 
   toggleSidebar(): void {
@@ -351,7 +368,7 @@ export class MisViajesConductorComponent implements OnInit, OnDestroy {
   }
 
   cerrarSesion(): void {
-    localStorage.clear();
+    cerrarSesionWeb();
     this.router.navigate(['/login']);
   }
 }

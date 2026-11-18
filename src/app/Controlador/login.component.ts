@@ -1,5 +1,12 @@
-import { Component, NgZone, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  ElementRef,
+  NgZone,
+  OnInit,
+  ViewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
@@ -15,12 +22,12 @@ declare const google: any;
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AuthLayoutComponent],
+  imports: [FormsModule, RouterModule, AuthLayoutComponent],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./login.component.css'],
 })
 export class LoginComponent implements OnInit {
-
   usuario: Usuario = { correo: '', password: '', rol: '' };
   error = '';
   mostrarPassword = false;
@@ -28,12 +35,21 @@ export class LoginComponent implements OnInit {
   /** Evita enviar el formulario dos veces mientras el servidor responde. */
   cargando = false;
 
+  /** Paso 2 del equipo (admin/soporte): el backend pide el código que mandó por SMS o correo. */
+  desafio: string | null = null;
+  canal: 'sms' | 'correo' = 'sms';
+  destino = '';
+  codigo = '';
+  errorCodigo = '';
+  @ViewChild('campoCodigo') campoCodigo?: ElementRef<HTMLInputElement>;
+
   constructor(
     private usuarioService: UsuarioService,
     private sesion: SesionService,
     private router: Router,
     private route: ActivatedRoute,
-    private zone: NgZone
+    private zone: NgZone,
+    private api: ApiService,
   ) {}
 
   ngOnInit(): void {
@@ -54,10 +70,13 @@ export class LoginComponent implements OnInit {
         if (typeof google === 'undefined' || !google?.accounts?.id) return;
         google.accounts.id.initialize({
           client_id: '613651963678-99u5b1boql9q6fj65l0kairjh8ptdk4h.apps.googleusercontent.com',
-          callback: (response: any) => this.zone.run(() => this.handleGoogleResponse(response))
+          callback: (response: any) => this.zone.run(() => this.handleGoogleResponse(response)),
         });
         google.accounts.id.renderButton(document.getElementById('google-btn'), {
-          theme: 'outline', size: 'large', width: '100', text: 'signin_with'
+          theme: 'outline',
+          size: 'large',
+          width: '100',
+          text: 'signin_with',
         });
       })
       .catch(() => undefined); // sin internet hacia Google: queda el login con correo
@@ -68,7 +87,8 @@ export class LoginComponent implements OnInit {
     this.error = '';
     this.usuarioService.loginGoogle({ token: response.credential }).subscribe({
       next: (res: any) => this.handleLoginExitoso(res),
-      error: (err: any) => this.error = ApiService.mensaje(err, 'Error al iniciar sesión con Google')
+      error: (err: any) =>
+        (this.error = ApiService.mensaje(err, 'Error al iniciar sesión con Google')),
     });
   }
 
@@ -94,7 +114,8 @@ export class LoginComponent implements OnInit {
     if (this.cargando || !this.validarCampos()) return;
     this.error = '';
     this.cargando = true;
-    this.usuarioService.login({ correo: this.usuario.correo.trim(), password: this.usuario.password })
+    this.usuarioService
+      .login({ correo: this.usuario.correo.trim(), password: this.usuario.password })
       .subscribe({
         next: (res: any) => this.handleLoginExitoso(res),
         error: (err: any) => {
@@ -105,12 +126,60 @@ export class LoginComponent implements OnInit {
             // 401: correo o clave incorrectos · 403: cuenta en revisión, rechazada o bloqueada
             this.error = ApiService.mensaje(err, 'Error al iniciar sesión. Intenta de nuevo.');
           }
+        },
+      });
+  }
+
+  // =========================
+  // SEGUNDO FACTOR (admin y soporte)
+  // =========================
+
+  soloNumeros(v: string): string {
+    return (v || '').replace(/\D/g, '').slice(0, 6);
+  }
+
+  verificarCodigo(): void {
+    if (this.cargando || !this.desafio) return;
+    this.errorCodigo = '';
+    if (!/^\d{6}$/.test(this.codigo)) {
+      this.errorCodigo = 'El código tiene 6 números.';
+      return;
+    }
+    this.cargando = true;
+    this.api
+      .post('/auth/login-verificar', { desafio: this.desafio, codigo: this.codigo })
+      .then((res) => this.handleLoginExitoso(res))
+      .catch((err) => {
+        this.cargando = false;
+        this.codigo = '';
+        // 401: el desafío venció o ya se usó → hay que volver a poner la contraseña
+        if (err?.status === 401 || err?.status === 429) {
+          this.volverAlInicio();
+          this.error = ApiService.mensaje(err, 'Vuelve a iniciar sesión.');
+        } else {
+          this.errorCodigo = ApiService.mensaje(err, 'Ese código no es correcto.');
         }
       });
   }
 
+  volverAlInicio(evento?: Event): void {
+    evento?.preventDefault();
+    this.desafio = null;
+    this.codigo = '';
+    this.errorCodigo = '';
+    this.usuario.password = '';
+  }
+
   private handleLoginExitoso(res: any): void {
     this.cargando = false;
+    if (res?.segundoFactor) {
+      this.desafio = res.desafio;
+      this.canal = res.canal === 'correo' ? 'correo' : 'sms';
+      this.destino = res.destino || '';
+      this.codigo = '';
+      setTimeout(() => this.campoCodigo?.nativeElement.focus());
+      return;
+    }
     this.sesion.guardar(res, this.usuario.correo);
     this.router.navigate([this.sesion.rutaInicio()]);
   }

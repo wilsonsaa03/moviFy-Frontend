@@ -1,34 +1,35 @@
 <div class="registro-wrapper">
-
   <button class="btn-volver" routerLink="/registro">← Volver</button>
 
   <!-- LADO IZQUIERDO - FONDO -->
   <div class="lado-izquierdo">
-    <img src="/assets/fondoregistro.png" class="fondo-img">
+    <img src="/assets/fondoregistro.png" class="fondo-img" />
   </div>
 
   <!-- LADO DERECHO - FORMULARIO -->
   <div class="lado-derecho">
     <div class="form-card">
-
-      <img src="/assets/brand/movify-icono.png" class="form-logo">
+      <img src="/assets/brand/movify-icono.png" class="form-logo" />
       <h1>Registro Usuario</h1>
       <p class="subtitle">Solicita transporte, envíos y domicilios</p>
 
       <div class="input-group">
         <span class="icon">👤</span>
-        <input type="text" placeholder="Nombre completo" [(ngModel)]="datos.nombre">
+        <input type="text" placeholder="Nombre completo" [(ngModel)]="datos.nombre" />
       </div>
 
       <div class="input-group">
         <span class="icon">✉️</span>
-        <input type="email" placeholder="Correo electrónico" [(ngModel)]="datos.correo">
+        <input type="email" placeholder="Correo electrónico" [(ngModel)]="datos.correo" />
       </div>
 
       <div class="input-group">
         <span class="icon">🔒</span>
-        <input [type]="mostrarPassword ? 'text' : 'password'"
-          placeholder="Contraseña" [(ngModel)]="datos.password">
+        <input
+          [type]="mostrarPassword ? 'text' : 'password'"
+          placeholder="Contraseña"
+          [(ngModel)]="datos.password"
+        />
         <span class="toggle" (click)="mostrarPassword = !mostrarPassword">
           {{ mostrarPassword ? '🙈' : '👁️' }}
         </span>
@@ -36,15 +37,22 @@
 
       <div class="input-group">
         <span class="icon">🔒</span>
-        <input [type]="mostrarConfirmar ? 'text' : 'password'"
-          placeholder="Confirmar contraseña" [(ngModel)]="confirmar">
+        <input
+          [type]="mostrarConfirmar ? 'text' : 'password'"
+          placeholder="Confirmar contraseña"
+          [(ngModel)]="confirmar"
+        />
         <span class="toggle" (click)="mostrarConfirmar = !mostrarConfirmar">
           {{ mostrarConfirmar ? '🙈' : '👁️' }}
         </span>
       </div>
 
-      <p class="msg-error" *ngIf="error">❌ {{ error }}</p>
-      <p class="msg-exito" *ngIf="exito">✅ {{ exito }}</p>
+      @if (error) {
+        <p class="msg-error">❌ {{ error }}</p>
+      }
+      @if (exito) {
+        <p class="msg-exito">✅ {{ exito }}</p>
+      }
 
       <button class="btn-crear" (click)="registrar()" [disabled]="cargando">
         👤 {{ cargando ? 'Registrando...' : 'Crear cuenta' }}
@@ -54,10 +62,10 @@
 
       <div class="social-buttons">
         <button class="btn-social">
-          <img src="https://www.google.com/favicon.ico" width="18"> Google
+          <img src="https://www.google.com/favicon.ico" width="18" /> Google
         </button>
         <button class="btn-social">
-          <img src="https://www.facebook.com/favicon.ico" width="18"> Facebook
+          <img src="https://www.facebook.com/favicon.ico" width="18" /> Facebook
         </button>
       </div>
 
@@ -65,8 +73,6 @@
         ¿Ya tienes cuenta?
         <span routerLink="/login">Iniciar sesión ›</span>
       </p>
-
     </div>
   </div>
-
 </div>

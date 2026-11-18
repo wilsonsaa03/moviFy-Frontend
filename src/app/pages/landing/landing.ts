@@ -10,12 +10,14 @@ import {
   ViewChildren,
   computed,
   inject,
-  signal
+  signal,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MagiaService } from '../../shared/efectos/magia.service';
 import { RevelarDirective } from '../../shared/efectos/revelar.directive';
+import { ScrollSuave } from '../../core/scroll-suave';
 
 type TipoServicio = 'moto' | 'taxi' | 'domicilio' | 'encomienda';
 
@@ -47,11 +49,13 @@ interface EstadoSolicitud {
   standalone: true,
   imports: [RouterModule, NgTemplateOutlet, RevelarDirective],
   templateUrl: './landing.html',
-  styleUrls: ['./landing.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./landing.css'],
 })
 export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   private zone = inject(NgZone);
   private magia = inject(MagiaService);
+  private scroll = inject(ScrollSuave);
 
   @ViewChild('hero') heroRef!: ElementRef<HTMLElement>;
   @ViewChild('escena') escenaRef!: ElementRef<HTMLElement>;
@@ -73,17 +77,18 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         'Marcar el punto de recogida y el destino',
         'Ver la tarifa estimada antes de pedir',
         'Conocer al conductor y los datos de la moto',
-        'Seguir el estado y la ubicación del viaje'
+        'Seguir el estado y la ubicación del viaje',
       ],
       fondoIcono: '#02AAB4',
       trazoIcono: '#03274D',
-      sombraIcono: 'rgba(2, 124, 132, 0.8)'
+      sombraIcono: 'rgba(2, 124, 132, 0.8)',
     },
     {
       id: 'taxi',
       nombre: 'Taxi',
       titulo: 'Transporte en taxi',
-      resumen: 'Viaja cómodo y bajo techo. Ves los datos del conductor y del vehículo antes de subir.',
+      resumen:
+        'Viaja cómodo y bajo techo. Ves los datos del conductor y del vehículo antes de subir.',
       pregunta: '¿A dónde te llevamos?',
       accion: 'Pedir un taxi',
       ruta: '/solicitar-transporte',
@@ -91,17 +96,18 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         'Indicar el origen y el destino',
         'Consultar la tarifa estimada del taxi',
         'Ver los datos del conductor y del vehículo',
-        'Seguir la ubicación del taxi en el mapa'
+        'Seguir la ubicación del taxi en el mapa',
       ],
       fondoIcono: '#FFC93C',
       trazoIcono: '#03274D',
-      sombraIcono: 'rgba(160, 110, 0, 0.7)'
+      sombraIcono: 'rgba(160, 110, 0, 0.7)',
     },
     {
       id: 'domicilio',
       nombre: 'Domicilios',
       titulo: 'Domicilios y diligencias',
-      resumen: 'Comida, compras, documentos y diligencias. Tú describes el pedido y nosotros lo llevamos.',
+      resumen:
+        'Comida, compras, documentos y diligencias. Tú describes el pedido y nosotros lo llevamos.',
       pregunta: '¿Qué te llevamos?',
       accion: 'Pedir un domicilio',
       ruta: '/solicitar-domicilio',
@@ -109,11 +115,11 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         'Registrar dónde recoger y dónde entregar',
         'Describir el pedido o la diligencia',
         'Dejar instrucciones para el conductor',
-        'Seguir el estado de la entrega'
+        'Seguir el estado de la entrega',
       ],
       fondoIcono: '#FE7B13',
       trazoIcono: '#03274D',
-      sombraIcono: 'rgba(200, 90, 0, 0.8)'
+      sombraIcono: 'rgba(200, 90, 0, 0.8)',
     },
     {
       id: 'encomienda',
@@ -127,32 +133,57 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         'Registrar remitente y destinatario',
         'Describir el paquete que envías',
         'Seguir la encomienda en cada estado',
-        'Confirmar la entrega al final'
+        'Confirmar la entrega al final',
       ],
       fondoIcono: '#03274D',
       trazoIcono: '#5FD3D9',
-      sombraIcono: 'rgba(3, 39, 77, 0.8)'
-    }
+      sombraIcono: 'rgba(3, 39, 77, 0.8)',
+    },
   ];
 
   readonly estados: EstadoSolicitud[] = [
-    { nombre: 'Pendiente', descripcion: 'Tu solicitud llega a los conductores disponibles cerca de ti.', punto: [70, 300], avance: 0 },
-    { nombre: 'Aceptada', descripcion: 'Un conductor la aceptó. Ves su nombre, su vehículo y la placa.', punto: [70, 300], avance: 0 },
-    { nombre: 'Conductor en camino', descripcion: 'Sigues su ubicación en el mapa mientras llega a recogerte.', punto: [230, 150], avance: 39.5 },
-    { nombre: 'Servicio iniciado', descripcion: 'Van rumbo al destino y el recorrido queda registrado.', punto: [400, 150], avance: 70 },
-    { nombre: 'Servicio completado', descripcion: 'Llegaste. El servicio queda guardado en tu historial.', punto: [540, 60], avance: 100 }
+    {
+      nombre: 'Pendiente',
+      descripcion: 'Tu solicitud llega a los conductores disponibles cerca de ti.',
+      punto: [70, 300],
+      avance: 0,
+    },
+    {
+      nombre: 'Aceptada',
+      descripcion: 'Un conductor la aceptó. Ves su nombre, su vehículo y la placa.',
+      punto: [70, 300],
+      avance: 0,
+    },
+    {
+      nombre: 'Conductor en camino',
+      descripcion: 'Sigues su ubicación en el mapa mientras llega a recogerte.',
+      punto: [230, 150],
+      avance: 39.5,
+    },
+    {
+      nombre: 'Servicio iniciado',
+      descripcion: 'Van rumbo al destino y el recorrido queda registrado.',
+      punto: [400, 150],
+      avance: 70,
+    },
+    {
+      nombre: 'Servicio completado',
+      descripcion: 'Llegaste. El servicio queda guardado en tu historial.',
+      punto: [540, 60],
+      avance: 100,
+    },
   ];
 
   /** Capas para dar grosor 3D al teléfono y al pin del logo. */
   readonly capasTelefono = Array.from({ length: 8 }, (_, i) => ({
     transform: `translateZ(${-(i + 1) * 2.2}px)`,
-    fondo: i < 7 ? '#13314F' : '#050D17'
+    fondo: i < 7 ? '#13314F' : '#050D17',
   }));
   readonly capasPin = Array.from({ length: 12 }, (_, i) => {
     const profundidad = 11 - i;
     return {
       transform: `translateZ(${-profundidad * 1.8}px)`,
-      filtro: `brightness(${profundidad === 0 ? 1 : 0.55})`
+      filtro: `brightness(${profundidad === 0 ? 1 : 0.55})`,
     };
   });
 
@@ -182,12 +213,15 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     if (typeof window === 'undefined') return;
+    document.documentElement.classList.add('fondo-oscuro');
     this.magia.conectar(this.lienzoRef.nativeElement);
 
     // Todos estos eventos pasan muchísimas veces por segundo. Los escuchamos FUERA
     // de Angular y cambiamos variables CSS directamente, así no se recalcula la vista.
     this.zone.runOutsideAngular(() => {
-      this.escuchar(this.heroRef.nativeElement, 'mousemove', (e) => this.inclinarEscena(e as MouseEvent));
+      this.escuchar(this.heroRef.nativeElement, 'mousemove', (e) =>
+        this.inclinarEscena(e as MouseEvent),
+      );
       this.escuchar(this.heroRef.nativeElement, 'mouseleave', () => this.inclinarEscena(null));
 
       this.tarjetasRef.forEach(({ nativeElement: tarjeta }) => {
@@ -218,6 +252,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearInterval(this.intervalo);
+    if (typeof document !== 'undefined') document.documentElement.classList.remove('fondo-oscuro');
     this.limpiezas.forEach((quitar) => quitar());
     this.magia.desconectar();
   }
@@ -240,7 +275,8 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   irA(evento: Event, id: string): void {
     evento.preventDefault();
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // "inicio" va hasta arriba; las demás secciones quedan debajo de la barra fija
+    this.scroll.irA(id, id === 'inicio' ? 0 : 64);
   }
 
   // ---------- Efecto 3D con el mouse ----------
@@ -278,7 +314,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     destino: Window | HTMLElement,
     evento: string,
     manejador: (e: Event) => void,
-    opciones?: AddEventListenerOptions
+    opciones?: AddEventListenerOptions,
   ): void {
     destino.addEventListener(evento, manejador, opciones);
     this.limpiezas.push(() => destino.removeEventListener(evento, manejador, opciones));

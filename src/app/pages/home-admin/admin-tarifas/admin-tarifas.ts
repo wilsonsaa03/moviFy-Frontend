@@ -1,4 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -30,7 +37,11 @@ interface Combinacion {
 }
 
 /** Combinaciones permitidas (servicio_vehiculo_permitido): el domicilio solo va en moto. */
-const COMBINACIONES: { servicio: Tarifa['tipo_servicio']; vehiculo: Tarifa['tipo_vehiculo']; nombre: string }[] = [
+const COMBINACIONES: {
+  servicio: Tarifa['tipo_servicio'];
+  vehiculo: Tarifa['tipo_vehiculo'];
+  nombre: string;
+}[] = [
   { servicio: 'transporte', vehiculo: 'moto', nombre: 'Viaje en moto' },
   { servicio: 'transporte', vehiculo: 'taxi', nombre: 'Viaje en taxi' },
   { servicio: 'domicilio', vehiculo: 'moto', nombre: 'Domicilio' },
@@ -52,6 +63,7 @@ const EJEMPLO_MIN = 10;
   standalone: true,
   imports: [CommonModule, FormsModule, AdminIcoComponent],
   templateUrl: './admin-tarifas.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['../home-admin.css', '../admin-catalogos/admin-catalogos.css', './admin-tarifas.css'],
 })
 export class AdminTarifasComponent implements OnInit {
@@ -66,7 +78,14 @@ export class AdminTarifasComponent implements OnInit {
 
   /** Combinación que se está editando y los valores del formulario. */
   editando: Combinacion | null = null;
-  form = { tarifa_base: 0, valor_km: 0, valor_minuto: 0, tarifa_minima: 0, recargo_nocturno_pct: 0, recargo_lluvia_pct: 0 };
+  form = {
+    tarifa_base: 0,
+    valor_km: 0,
+    valor_minuto: 0,
+    tarifa_minima: 0,
+    recargo_nocturno_pct: 0,
+    recargo_lluvia_pct: 0,
+  };
   /** Recargo por lluvia prendido ahora (configuracion_sistema.lluvia_activa). */
   lluvia = false;
   cambiandoLluvia = false;
@@ -78,21 +97,38 @@ export class AdminTarifasComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargar();
-    this.api.get<{ lluvia_activa: boolean }>('/admin/resumen-dia').then(r => (this.lluvia = !!r.lluvia_activa)).catch(() => undefined);
+    this.api
+      .get<{ lluvia_activa: boolean }>('/admin/resumen-dia')
+      .then((r) => (this.lluvia = !!r.lluvia_activa))
+      .catch(() => undefined);
   }
 
   /** "Está lloviendo": prende o apaga el recargo por lluvia de todas las tarifas (queda en la auditoría). */
   async alternarLluvia(): Promise<void> {
     if (this.cambiandoLluvia) return;
     const prender = !this.lluvia;
-    if (prender && !confirm('¿Prender el recargo por lluvia? Desde ya, los servicios nuevos cuestan más según el % de lluvia de cada tarifa.')) return;
+    if (
+      prender &&
+      !confirm(
+        '¿Prender el recargo por lluvia? Desde ya, los servicios nuevos cuestan más según el % de lluvia de cada tarifa.',
+      )
+    )
+      return;
     this.cambiandoLluvia = true;
     try {
       await this.api.put('/admin/configuracion/lluvia_activa', { valor: prender ? '1' : '0' });
       this.lluvia = prender;
-      this.aviso.emit({ tipo: 'ok', texto: prender ? 'Recargo por lluvia prendido. Apágalo cuando escampe.' : 'Recargo por lluvia apagado.' });
+      this.aviso.emit({
+        tipo: 'ok',
+        texto: prender
+          ? 'Recargo por lluvia prendido. Apágalo cuando escampe.'
+          : 'Recargo por lluvia apagado.',
+      });
     } catch (err) {
-      this.aviso.emit({ tipo: 'error', texto: ApiService.mensaje(err, 'No se pudo cambiar el recargo por lluvia.') });
+      this.aviso.emit({
+        tipo: 'error',
+        texto: ApiService.mensaje(err, 'No se pudo cambiar el recargo por lluvia.'),
+      });
     } finally {
       this.cambiandoLluvia = false;
     }
@@ -102,10 +138,26 @@ export class AdminTarifasComponent implements OnInit {
    * Misma fórmula que la base (fn_calcular_tarifa): base + km × valor_km + min × valor_minuto, recargo nocturno,
    * nunca menos de la mínima y redondeado a la centena hacia arriba (para el efectivo).
    */
-  precio(t: Pick<Tarifa, 'tarifa_base' | 'valor_km' | 'valor_minuto' | 'tarifa_minima' | 'recargo_nocturno_pct' | 'recargo_lluvia_pct'>,
-      noche: boolean, lluvia = false): number {
-    let v = Number(t.tarifa_base) + EJEMPLO_KM * Number(t.valor_km) + EJEMPLO_MIN * Number(t.valor_minuto);
-    const recargo = (noche ? Number(t.recargo_nocturno_pct) : 0) + (lluvia ? Number(t.recargo_lluvia_pct || 0) : 0);
+  precio(
+    t: Pick<
+      Tarifa,
+      | 'tarifa_base'
+      | 'valor_km'
+      | 'valor_minuto'
+      | 'tarifa_minima'
+      | 'recargo_nocturno_pct'
+      | 'recargo_lluvia_pct'
+    >,
+    noche: boolean,
+    lluvia = false,
+  ): number {
+    let v =
+      Number(t.tarifa_base) +
+      EJEMPLO_KM * Number(t.valor_km) +
+      EJEMPLO_MIN * Number(t.valor_minuto);
+    const recargo =
+      (noche ? Number(t.recargo_nocturno_pct) : 0) +
+      (lluvia ? Number(t.recargo_lluvia_pct || 0) : 0);
     v *= 1 + recargo / 100;
     v = Math.max(v, Number(t.tarifa_minima));
     return Math.ceil(v / 100) * 100;
@@ -113,7 +165,9 @@ export class AdminTarifasComponent implements OnInit {
 
   /** Diferencia del precio de ejemplo frente a la tarifa activa ("+$600" / "−$300"). */
   get diferencia(): number {
-    return this.editando?.activa ? this.precio(this.form, false) - this.precio(this.editando.activa, false) : 0;
+    return this.editando?.activa
+      ? this.precio(this.form, false) - this.precio(this.editando.activa, false)
+      : 0;
   }
 
   editar(c: Combinacion): void {
@@ -134,8 +188,15 @@ export class AdminTarifasComponent implements OnInit {
     const c = this.editando;
     if (!c || this.guardando) return;
     const f = this.form;
-    const valores = [f.tarifa_base, f.valor_km, f.valor_minuto, f.tarifa_minima, f.recargo_nocturno_pct, f.recargo_lluvia_pct];
-    if (valores.some(v => v === null || isNaN(Number(v)) || Number(v) < 0)) {
+    const valores = [
+      f.tarifa_base,
+      f.valor_km,
+      f.valor_minuto,
+      f.tarifa_minima,
+      f.recargo_nocturno_pct,
+      f.recargo_lluvia_pct,
+    ];
+    if (valores.some((v) => v === null || isNaN(Number(v)) || Number(v) < 0)) {
       this.errorForm = 'Todos los valores son obligatorios y no pueden ser negativos.';
       return;
     }
@@ -144,14 +205,22 @@ export class AdminTarifasComponent implements OnInit {
       return;
     }
     if (Number(f.tarifa_minima) <= 0) {
-      this.errorForm = 'La tarifa mínima tiene que ser mayor que 0 (es lo menos que cobra un servicio corto).';
+      this.errorForm =
+        'La tarifa mínima tiene que ser mayor que 0 (es lo menos que cobra un servicio corto).';
       return;
     }
     this.guardando = true;
     this.errorForm = '';
     try {
-      await this.api.post('/admin/tarifas', { tipo_servicio: c.servicio, tipo_vehiculo: c.vehiculo, ...f });
-      this.aviso.emit({ tipo: 'ok', texto: `Nueva tarifa de "${c.nombre}" activa. Los servicios ya pedidos conservan su precio.` });
+      await this.api.post('/admin/tarifas', {
+        tipo_servicio: c.servicio,
+        tipo_vehiculo: c.vehiculo,
+        ...f,
+      });
+      this.aviso.emit({
+        tipo: 'ok',
+        texto: `Nueva tarifa de "${c.nombre}" activa. Los servicios ya pedidos conservan su precio.`,
+      });
       this.editando = null;
       await this.cargar();
     } catch (err) {
@@ -166,13 +235,17 @@ export class AdminTarifasComponent implements OnInit {
     this.error = '';
     try {
       const todas = await this.api.get<Tarifa[]>('/admin/tarifas');
-      this.combinaciones = COMBINACIONES.map(c => {
-        const propias = todas.filter(t => t.tipo_servicio === c.servicio && t.tipo_vehiculo === c.vehiculo);
+      this.combinaciones = COMBINACIONES.map((c) => {
+        const propias = todas.filter(
+          (t) => t.tipo_servicio === c.servicio && t.tipo_vehiculo === c.vehiculo,
+        );
         return {
           ...c,
           clave: `${c.servicio}-${c.vehiculo}`,
-          activa: propias.find(t => t.activo) ?? null,
-          historial: propias.filter(t => !t.activo).sort((a, b) => b.creado_en.localeCompare(a.creado_en)),
+          activa: propias.find((t) => t.activo) ?? null,
+          historial: propias
+            .filter((t) => !t.activo)
+            .sort((a, b) => b.creado_en.localeCompare(a.creado_en)),
         };
       });
     } catch (err) {

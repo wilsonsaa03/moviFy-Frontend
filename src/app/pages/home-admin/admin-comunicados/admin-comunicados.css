@@ -1,0 +1,41 @@
+.com { display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.com-form { padding: 20px; }
+.com-h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 17px; font-weight: 800; color: #03274D; }
+
+.com-audiencias { border: 0; padding: 0; margin: 16px 0 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.com-audiencias legend { padding: 0; margin-bottom: 8px; font-weight: 800; font-size: 13px; color: #03274D; }
+.com-audiencia {
+  display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 10px 12px; cursor: pointer;
+  border-radius: 12px; border: 2px solid #E2E8F0; background: #fff; font: inherit; color: #03274D;
+}
+.com-audiencia span { font-size: 12px; color: #4C6680; }
+.com-audiencia.activo { border-color: #02AAB4; background: #EEF8F9; }
+
+.com-label { display: flex; justify-content: space-between; margin: 14px 0 6px; font-weight: 800; font-size: 13px; color: #03274D; }
+.com-cuenta { font-weight: 600; color: #8A9BB0; }
+.com-input {
+  width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; border: 2px solid #E2E8F0;
+  font: inherit; font-size: 14px; color: #03274D; background: #F8FAFC;
+}
+.com-input:focus { outline: none; border-color: #02AAB4; background: #fff; }
+.com-texto { resize: vertical; min-height: 96px; }
+
+/* Vista previa como notificación del celular */
+.com-vista { margin-top: 14px; padding: 12px 14px; border-radius: 16px; background: #03274D; color: #E8F1F8; box-shadow: 0 10px 24px -12px rgba(3, 39, 77, .6); }
+.com-vista-app { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #9BE6EA; margin-bottom: 4px; }
+.com-vista b { display: block; font-size: 14px; }
+.com-vista p { margin: 2px 0 0; font-size: 13px; line-height: 1.4; color: #C9D8E6; white-space: pre-line; }
+
+.com-acciones { margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.com-alcance { font-size: 13px; color: #4C6680; }
+.com-confirmar { margin-top: 16px; padding: 14px; border-radius: 14px; background: #FFF4EC; border: 1px solid #FBD3B4; color: #7C2D12; display: grid; grid-template-columns: auto 1fr; gap: 10px; }
+.com-confirmar p { margin: 0; font-size: 14px; line-height: 1.4; }
+.com-confirmar-botones { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+.com-lista-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 8px; }
+
+@media (max-width: 1100px) {
+  .com { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .com-audiencias { grid-template-columns: 1fr; }
+}

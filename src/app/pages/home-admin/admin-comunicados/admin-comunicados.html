@@ -1,0 +1,83 @@
+<div class="com">
+  <section class="adm-card com-form">
+    <h2 class="com-h2"><adm-ico n="campana" /> Nuevo comunicado</h2>
+    <p class="adm-ayuda">Llega a la bandeja de notificaciones de la app y como aviso en el celular. Úsalo para cosas que
+      afectan a todos: paros, lluvias fuertes, cambios de tarifa, mantenimiento.</p>
+
+    <fieldset class="com-audiencias">
+      <legend>¿A quién va?</legend>
+      @for (a of audiencias; track a.id) {
+        <button type="button" class="com-audiencia" [class.activo]="audiencia === a.id" [attr.aria-pressed]="audiencia === a.id"
+                (click)="elegir(a.id)">
+          <b>{{ a.nombre }}</b><span>{{ a.detalle }}</span>
+        </button>
+      }
+    </fieldset>
+
+    <label class="com-label" for="com-titulo">Título <span class="com-cuenta">{{ titulo.length }}/100</span></label>
+    <input id="com-titulo" class="com-input" maxlength="100" [(ngModel)]="titulo" (ngModelChange)="confirmando = false"
+           placeholder="Ej.: Paro en la vía Alterna">
+
+    <label class="com-label" for="com-mensaje">Mensaje <span class="com-cuenta">{{ mensaje.length }}/300</span></label>
+    <textarea id="com-mensaje" class="com-input com-texto" rows="4" maxlength="300" [(ngModel)]="mensaje"
+              (ngModelChange)="confirmando = false"
+              placeholder="Ej.: Hoy hay paro desde las 6 a. m. Los viajes hacia el centro pueden tardar más."></textarea>
+
+    @if (titulo.trim() || mensaje.trim()) {
+      <div class="com-vista" aria-label="Así se verá en el celular">
+        <span class="com-vista-app"><adm-ico n="campana" /> MoviFY · ahora</span>
+        <b>{{ titulo || 'Título' }}</b>
+        <p>{{ mensaje || 'Mensaje' }}</p>
+      </div>
+    }
+
+    @if (error) { <p class="adm-error" role="alert">{{ error }}</p> }
+
+    @if (!confirmando) {
+      <div class="com-acciones">
+        <span class="com-alcance">
+          @if (alcance === null) { Calculando a cuántas personas llega… }
+          @else { Llegará a <b>{{ alcance }}</b> {{ alcance === 1 ? 'persona' : 'personas' }} ({{ nombreAudiencia(audiencia) | lowercase }}). }
+        </span>
+        <button type="button" class="adm-btn adm-btn-primario" [disabled]="!valido" (click)="revisar()">Revisar y enviar</button>
+      </div>
+    } @else {
+      <div class="com-confirmar" role="alertdialog" aria-label="Confirmar envío">
+        <adm-ico n="alerta" />
+        <p>Se enviará a <b>{{ alcance ?? '…' }} {{ alcance === 1 ? 'persona' : 'personas' }}</b>. Una vez enviado no se puede
+          borrar de sus celulares. ¿Enviar ahora?</p>
+        <div class="com-confirmar-botones">
+          <button type="button" class="adm-btn adm-btn-borde" (click)="confirmando = false" [disabled]="enviando">Corregir</button>
+          <button type="button" class="adm-btn adm-btn-primario" (click)="enviar()" [disabled]="enviando">
+            {{ enviando ? 'Enviando…' : 'Sí, enviar' }}
+          </button>
+        </div>
+      </div>
+    }
+  </section>
+
+  <section class="adm-card adm-card-tabla">
+    <div class="com-lista-top">
+      <h2 class="com-h2">Enviados</h2>
+      <button type="button" class="adm-btn adm-btn-borde" (click)="cargar()"><adm-ico n="refrescar" /> Actualizar</button>
+    </div>
+    <div class="adm-tabla-scroll">
+      <table class="adm-tabla">
+        <thead><tr><th>Cuándo</th><th>Comunicado</th><th>Para</th><th class="der">Personas</th><th>Envió</th></tr></thead>
+        <tbody>
+          @for (c of enviados; track c.id) {
+            <tr>
+              <td class="adm-nowrap">{{ c.creado_en | date:'d MMM y, h:mm a' }}</td>
+              <td><b>{{ c.titulo }}</b><div class="adm-lista-sub">{{ c.mensaje }}</div></td>
+              <td class="adm-nowrap">{{ nombreAudiencia(c.audiencia) }}</td>
+              <td class="der"><b>{{ c.destinatarios }}</b></td>
+              <td class="adm-nowrap">{{ c.enviado_por || '—' }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="5" class="adm-vacio">{{ cargando ? 'Cargando…' : 'Todavía no se ha enviado ningún comunicado.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

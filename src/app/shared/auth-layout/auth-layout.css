@@ -165,6 +165,42 @@ a:focus-visible { outline: 3px solid var(--au-turquesa-claro); outline-offset: 3
   .au-escena { transform: scale(.72); transform-origin: top left; margin-bottom: -100px; }
   .au-tarjeta { padding: 30px 32px 24px; }
 }
+/* Pantallas bajas (laptops con zoom, ventanas de ~600-760 px de alto): todo cabe sin scroll */
+@media (max-height: 760px) and (min-width: 901px) {
+  .au-volver { top: 14px; left: 18px; padding: 7px 13px; font-size: 13px; }
+  .au-contenido { padding: 16px 24px; gap: 40px; }
+  /* El botón "Volver" está arriba a la izquierda: solo la columna izquierda le deja espacio */
+  .au-lado-escena { padding-top: 40px; }
+  .au-chip { padding: 8px 16px 8px 10px; font-size: 14.5px; }
+  /* Todo crece con el alto de la ventana (vh) y tiene un tope: nunca se sale de la pantalla */
+  .au-titulo { margin-top: 16px; max-width: 620px; font-size: clamp(44px, 10.5vh, 78px); letter-spacing: -1.5px; }
+  .au-texto { margin-top: 14px; max-width: 520px; font-size: clamp(16px, 2.8vh, 19px); line-height: 1.5; }
+  .au-etiquetas { margin-top: 18px; gap: 10px; }
+  .au-etiquetas li { padding: 7px 15px; font-size: 15px; }
+  .au-punto { width: 11px; height: 11px; }
+  /* Corrida a la derecha: la tarjeta "Tu conductor va en camino" sobresale a la izquierda y se cortaba */
+  .au-escena-caja { margin-top: 10px; padding-left: 52px; }
+  /* La escena está achicada: las letras de las tarjetas flotantes se agrandan para que se lean */
+  .au-card-blanca { width: 250px; gap: 12px; padding: 14px; }
+  .au-card-ico { width: 46px; height: 46px; }
+  .au-card-titulo { font-size: 16px; }
+  .au-card-sub { font-size: 14px; }
+  .au-chip-blanco { font-size: 16px; padding: 12px 18px; }
+  .au-card-etiqueta { font-size: 13px; }
+  .au-card-grande { font-size: 23px; }
+  /* La escena mide 460 x 360: a escala .74 ocupa ~266 px de alto (el margen negativo quita el sobrante) */
+  .au-escena { transform: scale(.74); transform-origin: top left; margin-bottom: -94px; }
+  .au-lado-form { flex-basis: 410px; }
+  .au-tarjeta { padding: 20px 28px 16px; border-radius: 26px; }
+}
+/* Bajas de verdad (~600-680 px): la escena se achica un poco más para no salirse */
+@media (max-height: 680px) and (min-width: 901px) {
+  .au-escena { transform: scale(.66); margin-bottom: -122px; }
+}
+/* Muy bajas: la escena 3D se quita y queda el mensaje y la tarjeta */
+@media (max-height: 560px) and (min-width: 901px) {
+  .au-escena-caja { display: none; }
+}
 @media (max-width: 900px) {
   /* En pantallas pequeñas solo se muestra la tarjeta: es lo que la persona vino a hacer */
   .au-lado-escena { display: none; }

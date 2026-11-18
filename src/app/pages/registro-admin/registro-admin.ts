@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { UsuarioService } from '../../Base_de_datos/usuario.service';
@@ -8,9 +8,10 @@ import { AuthLayoutComponent, EtiquetaAuth } from '../../shared/auth-layout/auth
 @Component({
   selector: 'app-registro-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AuthLayoutComponent],
+  imports: [FormsModule, RouterModule, AuthLayoutComponent],
   templateUrl: './registro-admin.html',
-  styleUrls: ['./registro-admin.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./registro-admin.css'],
 })
 export class RegistroAdminComponent {
   datos = {
@@ -18,7 +19,7 @@ export class RegistroAdminComponent {
     correo: '',
     password: '',
     codigoAdmin: '',
-    rol: 'admin'
+    rol: 'admin',
   };
   confirmar = '';
   error = '';
@@ -32,15 +33,23 @@ export class RegistroAdminComponent {
     { texto: 'Validar conductores', color: '#02AAB4' },
     { texto: 'Supervisar solicitudes', color: '#FE7B13' },
     { texto: 'Gestionar tarifas', color: '#FFC93C' },
-    { texto: 'Reportes', color: '#5FD3D9' }
+    { texto: 'Reportes', color: '#5FD3D9' },
   ];
 
-  constructor(private usuarioService: UsuarioService, private router: Router) {}
+  constructor(
+    private usuarioService: UsuarioService,
+    private router: Router,
+  ) {}
 
   registrar() {
     this.error = '';
 
-    if (!this.datos.nombre || !this.datos.correo || !this.datos.password || !this.datos.codigoAdmin) {
+    if (
+      !this.datos.nombre ||
+      !this.datos.correo ||
+      !this.datos.password ||
+      !this.datos.codigoAdmin
+    ) {
       this.error = 'Por favor, completa todos los campos.';
       return;
     }
@@ -60,7 +69,7 @@ export class RegistroAdminComponent {
       error: (err: any) => {
         this.cargando = false;
         this.error = err.error?.error || 'Error al registrar administrador.';
-      }
+      },
     });
   }
 }
