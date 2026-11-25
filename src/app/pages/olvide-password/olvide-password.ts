@@ -18,6 +18,8 @@ export class OlvidePasswordComponent {
   error = '';
   cargando = false;
   paso = 1;
+  /** Solo en modo desarrollo (SMS_CONSOLA=true en el backend): el enlace que iría en el correo. */
+  enlaceDesarrollo: string | null = null;
 
   constructor(private usuarioService: UsuarioService) {}
 
@@ -38,8 +40,11 @@ export class OlvidePasswordComponent {
     this.cargando = true;
 
     this.usuarioService.olvideClave(this.correo).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.cargando = false;
+        const enlace: unknown = res?.enlaceDesarrollo;
+        // Solo rutas internas de la propia web (nunca otro sitio)
+        this.enlaceDesarrollo = typeof enlace === 'string' && enlace.startsWith('/restablecer-password?') ? enlace : null;
         this.paso = 2;
       },
       error: (err: any) => {
