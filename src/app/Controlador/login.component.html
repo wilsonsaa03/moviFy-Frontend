@@ -28,6 +28,8 @@
       </div>
       @if (errorCodigo) {
         <p id="lg-error-codigo" class="fm-error-campo" role="alert">{{ errorCodigo }}</p>
+      } @else if (codigoDesarrollo) {
+        <p class="lg-codigo-dev">Modo desarrollo · código: <strong>{{ codigoDesarrollo }}</strong></p>
       }
 
       <button type="submit" class="fm-btn" [disabled]="cargando">

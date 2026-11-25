@@ -41,6 +41,8 @@ export class LoginComponent implements OnInit {
   destino = '';
   codigo = '';
   errorCodigo = '';
+  /** Solo en modo desarrollo (SMS_CONSOLA=true en el backend): el código viene en la respuesta. */
+  codigoDesarrollo: string | null = null;
   @ViewChild('campoCodigo') campoCodigo?: ElementRef<HTMLInputElement>;
 
   constructor(
@@ -167,6 +169,7 @@ export class LoginComponent implements OnInit {
     this.desafio = null;
     this.codigo = '';
     this.errorCodigo = '';
+    this.codigoDesarrollo = null;
     this.usuario.password = '';
   }
 
@@ -176,6 +179,7 @@ export class LoginComponent implements OnInit {
       this.desafio = res.desafio;
       this.canal = res.canal === 'correo' ? 'correo' : 'sms';
       this.destino = res.destino || '';
+      this.codigoDesarrollo = res.codigoDesarrollo || null;
       this.codigo = '';
       setTimeout(() => this.campoCodigo?.nativeElement.focus());
       return;
