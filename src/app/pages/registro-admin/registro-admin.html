@@ -76,6 +76,9 @@
       <input id="ra-codigo" type="text" name="codigoAdmin" autocomplete="off"
              [(ngModel)]="datos.codigoAdmin" placeholder="Código de acceso" required>
     </div>
+    @if (codigoDesarrollo) {
+      <p class="ra-codigo-dev">Modo desarrollo · código: <strong>{{ codigoDesarrollo }}</strong></p>
+    }
 
     @if (error) {
       <div class="fm-alerta fm-alerta-error" role="alert">

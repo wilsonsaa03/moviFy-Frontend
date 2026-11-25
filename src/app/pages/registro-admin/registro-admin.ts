@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { ApiService } from '../../core/api.service';
 
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -13,7 +14,9 @@ import { AuthLayoutComponent, EtiquetaAuth } from '../../shared/auth-layout/auth
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./registro-admin.css'],
 })
-export class RegistroAdminComponent {
+export class RegistroAdminComponent implements OnInit {
+  /** Solo en modo desarrollo (SMS_CONSOLA=true en el backend): el código de administrador para registrarse. */
+  codigoDesarrollo: string | null = null;
   datos = {
     nombre: '',
     correo: '',
@@ -39,7 +42,15 @@ export class RegistroAdminComponent {
   constructor(
     private usuarioService: UsuarioService,
     private router: Router,
+    private api: ApiService,
   ) {}
+
+  ngOnInit(): void {
+    this.api
+      .get<{ codigoDesarrollo?: string }>('/auth/registro-admin/pista')
+      .then((r) => (this.codigoDesarrollo = r?.codigoDesarrollo || null))
+      .catch(() => undefined); // backend sin modo desarrollo o sin conexión: no se muestra nada
+  }
 
   registrar() {
     this.error = '';
